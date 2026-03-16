@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* ── ROM Variable (local file — place in /public/fonts/) ─────────────────
+   If you have the ROM Variable .woff2 file, drop it in
+   public/fonts/ROMVariable.woff2 and uncomment these lines:
+
+@font-face {
+  font-family: "ROM Variable";
+  src: url("/fonts/ROMVariable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  /* Prefer ROM Variable; fall back through other grotesques */
+  --font-display: "ROM Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+html {
+  background: #ffffff;
+  overflow: hidden;
+}
+
+body {
+  background: #ffffff;
+  color: #000000;
+  overflow: hidden;
+  margin: 0;
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility class used in components */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Hide scrollbars on scroll-driver divs */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Selection */
+::selection {
+  background: #000;
+  color: #fff;
+}
