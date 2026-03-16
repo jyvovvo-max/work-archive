@@ -1,16 +1,11 @@
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Project } from "./ArchiveGallery";
 
 const HN = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+const MN = "'Courier New', Courier, monospace";
 
-export default function ProjectDetail({
-  project,
-  onClose,
-}: {
-  project: Project;
-  onClose: () => void;
-}) {
+export default function ProjectDetail({ project, onClose }: { project: Project; onClose: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -19,103 +14,70 @@ export default function ProjectDetail({
       transition={{ duration: 0.3 }}
       style={{
         position: "fixed", inset: 0, zIndex: 600,
-        background: "#fff", overflowY: "auto",
+        background: "radial-gradient(ellipse 70% 55% at 50% 52%, #1a1a1f 0%, #080808 55%, #000 100%)",
+        overflowY: "auto", color: "#fff",
       }}
     >
       {/* Close */}
-      <button
-        onClick={onClose}
-        style={{
-          position: "fixed", top: "24px", right: "40px",
-          fontFamily: HN, fontSize: "11px", fontWeight: 700,
-          letterSpacing: "0.25em", textTransform: "uppercase",
-          background: "none", border: "none", cursor: "pointer",
-          color: "#000", opacity: 0.4, zIndex: 700,
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-        onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.4")}
-      >
-        ✕ Close
-      </button>
+      <button onClick={onClose} style={{
+        position: "fixed", top: "22px", right: "40px",
+        fontFamily: HN, fontSize: "10px", fontWeight: 700,
+        letterSpacing: "0.25em", textTransform: "uppercase",
+        background: "none", border: "none", cursor: "pointer",
+        color: "rgba(255,255,255,0.3)", zIndex: 700, transition: "color 0.2s",
+      }}
+        onMouseEnter={e => (e.currentTarget.style.color="#fff")}
+        onMouseLeave={e => (e.currentTarget.style.color="rgba(255,255,255,0.3)")}
+      >✕ Close</button>
 
-      {/* Hero Image */}
+      {/* Hero */}
       <div style={{ width: "100%", aspectRatio: "21/9", overflow: "hidden" }}>
-        <img
-          src={project.img}
-          alt={project.title}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
+        <img src={project.img} alt={project.title}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
 
       {/* 4-column body */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 0.1fr 1fr 1fr",
-          gap: "0 40px",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          padding: "60px 40px 80px",
-        }}
-      >
+      <div style={{
+        display: "grid", gridTemplateColumns: "1fr 0.15fr 1fr 1fr",
+        gap: "0 48px", maxWidth: "1400px", margin: "0 auto",
+        padding: "64px 48px 100px",
+      }}>
         {/* Col 1 – Meta */}
         <div>
-          <h1
-            style={{
-              fontFamily: HN, fontSize: "clamp(28px, 4vw, 56px)",
-              fontWeight: 900, letterSpacing: "-0.03em", textTransform: "uppercase",
-              lineHeight: 1, margin: "0 0 40px",
-            }}
-          >
+          <h1 style={{
+            fontFamily: HN, fontSize: "clamp(26px, 4vw, 54px)", fontWeight: 900,
+            letterSpacing: "-0.03em", textTransform: "uppercase", lineHeight: 1,
+            color: "#fff", margin: "0 0 48px",
+          }}>
             {project.title}
           </h1>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Year */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
             <div>
-              <div style={{ fontFamily: HN, fontSize: "9px", fontWeight: 700,
-                letterSpacing: "0.35em", textTransform: "uppercase", opacity: 0.35, marginBottom: "6px" }}>
-                Year
-              </div>
-              <div style={{ fontFamily: HN, fontSize: "14px", fontWeight: 600 }}>
-                {project.year}
-              </div>
+              <div style={{ fontFamily: MN, fontSize: "8px", letterSpacing: "0.4em",
+                textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: "6px" }}>Year</div>
+              <div style={{ fontFamily: HN, fontSize: "14px", fontWeight: 600 }}>{project.year}</div>
             </div>
-
-            {/* Category */}
             <div>
-              <div style={{ fontFamily: HN, fontSize: "9px", fontWeight: 700,
-                letterSpacing: "0.35em", textTransform: "uppercase", opacity: 0.35, marginBottom: "6px" }}>
-                Category
-              </div>
+              <div style={{ fontFamily: MN, fontSize: "8px", letterSpacing: "0.4em",
+                textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: "8px" }}>Category</div>
               <span style={{
-                display: "inline-block",
-                fontFamily: HN, fontSize: "11px", fontWeight: 700,
-                letterSpacing: "0.1em", textTransform: "uppercase",
-                border: "1.5px solid #000", borderRadius: "100px",
-                padding: "4px 14px",
-              }}>
-                {project.category}
-              </span>
+                fontFamily: HN, fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+                border: "1px solid rgba(255,255,255,0.3)", borderRadius: "100px", padding: "4px 14px",
+                color: "#fff",
+              }}>{project.category}</span>
             </div>
-
-            {/* Coworkers */}
             {project.coworkers.length > 0 && (
               <div>
-                <div style={{ fontFamily: HN, fontSize: "9px", fontWeight: 700,
-                  letterSpacing: "0.35em", textTransform: "uppercase", opacity: 0.35, marginBottom: "8px" }}>
-                  With
-                </div>
+                <div style={{ fontFamily: MN, fontSize: "8px", letterSpacing: "0.4em",
+                  textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: "8px" }}>With</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {project.coworkers.map((c) => (
+                  {project.coworkers.map(c => (
                     <span key={c} style={{
-                      fontFamily: HN, fontSize: "10px", fontWeight: 700,
-                      letterSpacing: "0.08em", textTransform: "uppercase",
-                      background: "#f4f4f4", borderRadius: "100px",
-                      padding: "4px 12px",
-                    }}>
-                      {c}
-                    </span>
+                      fontFamily: HN, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em",
+                      textTransform: "uppercase", background: "rgba(255,255,255,0.07)",
+                      borderRadius: "100px", padding: "4px 12px", color: "#fff",
+                    }}>{c}</span>
                   ))}
                 </div>
               </div>
@@ -123,26 +85,21 @@ export default function ProjectDetail({
           </div>
         </div>
 
-        {/* Col 2 – Spacer */}
+        {/* Col 2 – spacer */}
         <div />
 
         {/* Col 3 – Description */}
         <div style={{ paddingTop: "8px" }}>
-          <p style={{
-            fontFamily: HN, fontSize: "15px", lineHeight: 1.8,
-            color: "#333", margin: 0,
-          }}>
+          <p style={{ fontFamily: HN, fontSize: "15px", lineHeight: 1.8,
+            color: "rgba(255,255,255,0.7)", margin: 0 }}>
             {project.description}
           </p>
         </div>
 
-        {/* Col 4 – Extra content / images */}
+        {/* Col 4 – Images */}
         <div style={{ paddingTop: "8px" }}>
           {project.images?.map((src, i) => (
-            <div
-              key={i}
-              style={{ borderRadius: "10px", overflow: "hidden", marginBottom: "16px" }}
-            >
+            <div key={i} style={{ borderRadius: "10px", overflow: "hidden", marginBottom: "16px" }}>
               <img src={src} alt="" style={{ width: "100%", display: "block", objectFit: "cover" }} />
             </div>
           ))}
