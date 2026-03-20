@@ -3,7 +3,9 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
-  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Monument Grotesk Variable placeholder — swap src to your @font-face when licensed */
+  --font-display: "Funnel Display", "Noto Sans KR", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-body: "Noto Sans KR", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 html, body {
