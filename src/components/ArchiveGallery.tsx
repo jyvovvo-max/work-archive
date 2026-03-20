@@ -41,9 +41,11 @@ function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile }: {
     let w = canvas.width = window.innerWidth;
     let h = canvas.height = window.innerHeight;
 
-    const BASE_COUNT = isMobile ? 80 : 200;
-    const MAX_STARS  = isMobile ? 80 : 2000;
-    const FRAME_MS   = isMobile ? 1000 / 30 : 0;
+    const cores = navigator.hardwareConcurrency ?? 4;
+    const isLowPerf = isMobile || cores <= 4;
+    const BASE_COUNT = isLowPerf ? 80 : 200;
+    const MAX_STARS  = isLowPerf ? 80 : 2000;
+    const FRAME_MS   = isLowPerf ? 1000 / 30 : 1000 / 60;
     let lastFrameTime = 0;
 
     const getPalette = () => {
@@ -98,7 +100,7 @@ function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile }: {
       const palette = getPalette();
 
       // idle: 3초마다 별 x1.1 증가 (모바일 비활성화)
-      if (!isMobile && stage === 0 && stars.length < MAX_STARS) {
+      if (!isLowPerf && stage === 0 && stars.length < MAX_STARS) {
         const now = performance.now();
         if (now - lastGrowthTime >= 1000) {
           const target = Math.min(Math.floor(stars.length * 1.2), MAX_STARS);
@@ -794,21 +796,12 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
   const [hovered,  setHovered]  = useState(false);
   const [clicking, setClicking] = useState(false);
 
-  // 랜딩 Phase1: 모든 카드 블러 상태로 stagger 등장
-  // 랜딩 Phase2: cleared 신호 오면 전체 동시에 클리어
-  const revealOp    = useMotionValue(0);
-  const revealBlur  = useMotionValue(11);
-  const revealScale = useMotionValue(0.97);
-  const revealFilter = useTransform(revealBlur, v => `blur(${v}px)`);
+  // 랜딩: opacity stagger만 (blur/scale 제거)
+  const revealOp = useMotionValue(0);
   useEffect(() => {
-    const t = setTimeout(() => animate(revealOp, 1, { duration: 0.45, ease: "easeOut" }), index * 40);
+    const t = setTimeout(() => animate(revealOp, 1, { duration: 0.5, ease: "easeOut" }), index * 50);
     return () => clearTimeout(t);
   }, []);
-  useEffect(() => {
-    if (!cleared) return;
-    animate(revealBlur,  0, { duration: 0.9, ease: [0.16, 1, 0.3, 1] });
-    animate(revealScale, 1, { type: "spring", stiffness: 120, damping: 18 });
-  }, [cleared]);
 
   const queueStep = useTransform(scrollY, (s: number) => (index * CARD_TRAVEL - s) / CARD_TRAVEL);
 
@@ -837,11 +830,6 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
     const limit = isMobile ? MOBILE_CARDS : 9;
     if (q > limit) return Math.max(0, limit + 1 - q); return 1;
   });
-
-  // Brightness
-  const dimF = useTransform(queueStep, (q: number) =>
-    q <= 0 ? "brightness(1)" : `brightness(${Math.max(isMobile ? 0.55 : 0.15, 1 - q * (isMobile ? 0.03 : 0.06))})`
-  );
 
   // 퇴장 기울기: 데스크탑 — 앞으로 넘어가며 사라짐 / 모바일 — 위로 슬라이드, 기울기 없음
   const exitRotateX = useTransform(queueStep, (q: number) => {
@@ -877,7 +865,7 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
       width: "clamp(240px, 70vw, 1120px)",
     }}>
       {/* 랜딩 reveal wrapper */}
-      <motion.div style={{ opacity: revealOp, filter: revealFilter, scale: revealScale }}>
+      <motion.div style={{ opacity: revealOp }}>
         <motion.div
           onHoverStart={() => { setHovered(true); onHoverChange(true); }}
           onHoverEnd={() => { setHovered(false); onHoverChange(false); }}
@@ -887,22 +875,16 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
           style={{ position: "relative", cursor: "pointer" }}
         >
           {/* 카드 이미지 영역 */}
-          <motion.div style={{ width: "100%", aspectRatio: "16/9", filter: hovered ? "brightness(1.07)" : dimF }}>
+          <div style={{ width: "100%", aspectRatio: "16/9" }}>
             <div style={{
               position: "relative", width: "100%", height: "100%",
               borderRadius: "4px", overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.13)",
-              background: "rgba(255,255,255,0.03)",
-              backdropFilter: "blur(12px) saturate(150%)",
-              WebkitBackdropFilter: "blur(12px) saturate(150%)",
-              boxShadow: hovered
-                ? "0 2px 0 0 rgba(255,255,255,0.14) inset, 0 -1px 0 0 rgba(0,0,0,0.5) inset, 0 40px 100px rgba(0,0,0,0.8), 0 8px 30px rgba(0,0,0,0.5)"
-                : "0 2px 0 0 rgba(255,255,255,0.08) inset, 0 -1px 0 0 rgba(0,0,0,0.45) inset, 0 32px 90px rgba(0,0,0,0.7), 0 4px 20px rgba(0,0,0,0.45)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              background: "#06060a",
             }}>
               <img src={project.img} alt={project.title}
                 style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
                 draggable={false} />
-              <Grain op={0.055} z={3} />
 
               {/* Hover overlay */}
               <motion.div
@@ -931,7 +913,7 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
                 )}
               </AnimatePresence>
             </div>
-          </motion.div>
+          </div>
 
         </motion.div>
       </motion.div>
