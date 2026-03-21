@@ -232,9 +232,9 @@ function MobileFeed({ projects, onOpen }: { projects: Project[]; onOpen: (p: Pro
           <div style={{ borderRadius: "4px", overflow: "hidden", aspectRatio: "16/9" }}>
             <img src={p.img} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </div>
-          <div style={{ paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div style={{ paddingTop: "8px", display: "flex", justifyContent: "center", alignItems: "baseline", gap: "8px" }}>
             <span style={{ fontFamily: F, fontSize: "13px", fontWeight: 600, color: "#fff", letterSpacing: "-0.01em" }}>{p.title}</span>
-            <span style={{ fontFamily: F, fontSize: "10px", color: "rgba(255,255,255,0.38)", letterSpacing: "0.02em" }}>{fmtDate(p.month, p.year)}</span>
+            <span style={{ fontFamily: F, fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.4)", letterSpacing: "0.03em" }}>{fmtDate(p.month, p.year)}</span>
           </div>
         </motion.div>
       ))}
@@ -500,7 +500,7 @@ export default function ArchiveGallery() {
             style={{
               position: "fixed", top: "60px", left: 0, right: 0, zIndex: 200,
               display: "flex", flexDirection: "row", alignItems: "center",
-              justifyContent: "flex-start", gap: "4px", padding: "6px 20px",
+              justifyContent: "center", gap: "2px", padding: "6px 16px",
             }}
           >
             {[null, ...YEARS].map((y) => {
