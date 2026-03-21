@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Project } from "./ArchiveGallery";
 
-const FONT = "'Funnel Display', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const FONT = "Lexend, 'Noto Sans KR', sans-serif";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtDate = (month: string, year: string) => `${MONTHS[parseInt(month,10)-1]}, ${year}`;
 
@@ -37,11 +37,15 @@ function ScrambleText({ text, onComplete }: { text: string; onComplete?: () => v
     }, 36);
     return () => clearInterval(id);
   }, [text]);
-  // Spacer (invisible real text) holds layout stable; scramble overlays absolutely
+  // Each character is individually width-locked to prevent reflow during scramble
   return (
-    <span aria-label={text} style={{ position: "relative", display: "block" }}>
-      <span style={{ visibility: "hidden", userSelect: "none" }} aria-hidden="true">{text}</span>
-      <span style={{ position: "absolute", top: 0, left: 0, right: 0, overflow: "hidden" }} aria-hidden="true">{display}</span>
+    <span aria-label={text} style={{ display: "block" }}>
+      {text.split("").map((ch, i) => (
+        <span key={i} style={{ position: "relative", display: "inline-block" }}>
+          <span style={{ visibility: "hidden", userSelect: "none" }} aria-hidden="true">{ch === " " ? "\u00a0" : ch}</span>
+          <span style={{ position: "absolute", top: 0, left: 0 }} aria-hidden="true">{display[i] ?? ch}</span>
+        </span>
+      ))}
     </span>
   );
 }
@@ -206,7 +210,7 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
               fontFamily: FONT,
               fontSize: isMobile ? "clamp(28px, 8vw, 48px)" : "clamp(28px, 3.8vw, 56px)",
               fontWeight: 700,
-              letterSpacing: "-0.03em", lineHeight: 1.0,
+              letterSpacing: "-0.03em", lineHeight: 1.1,
               color: "#fff", margin: "0 0 10px",
             }}
           >

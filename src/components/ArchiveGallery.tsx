@@ -7,7 +7,7 @@ import {
 import dynamic from "next/dynamic";
 const ProjectDetail = dynamic(() => import("./ProjectDetail"), { ssr: false });
 
-const F = "'Funnel Display', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const F = "Lexend, 'Noto Sans KR', sans-serif";
 
 const GRAIN_URL = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
@@ -197,6 +197,10 @@ const PROJECTS: Project[] = [
 const CARD_TRAVEL  = 260;
 const YEARS = [...new Set(PROJECTS.map(p => p.year))].sort((a,b) => +b - +a);
 
+// Editorial grid: varied aspect ratios per card (id-seeded, stable)
+const GRID_RATIOS = ["4/3", "3/4", "16/9", "1/1", "2/3", "5/4", "3/2", "4/5"];
+const gridRatio = (id: number) => GRID_RATIOS[id % GRID_RATIOS.length];
+
 // Grid scatter: genuinely varied — different rotate, x, y per card
 const GRID_SCATTER = PROJECTS.map((_, i) => ({
   rotate: ((i * 137 + 41) % 71) - 35,   // -35..+35
@@ -205,7 +209,6 @@ const GRID_SCATTER = PROJECTS.map((_, i) => ({
 }));
 
 // Random fade delay per card (seeded, 0–0.7s)
-const gDelay = (id: number) => ((id * 71 + 13) % 100) / 100 * 0.7;
 
 /* ── Mobile Feed ───────────────────────────────────────────── */
 function MobileFeed({ projects, onOpen }: { projects: Project[]; onOpen: (p: Project) => void }) {
@@ -259,12 +262,7 @@ export default function ArchiveGallery() {
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   const [activeCardIdx, setActiveCardIdx] = useState(0);
   const [anyCardHovered, setAnyCardHovered] = useState(false);
-  const [hoveredGridId, setHoveredGridId] = useState<number|null>(null);
   const [popup, setPopup] = useState<"info"|"contact"|"ig"|null>(null);
-  const [revealedGridIds, setRevealedGridIds] = useState<Set<number>>(new Set());
-  const gridHoverTimeout = useRef<ReturnType<typeof setTimeout>|null>(null);
-  const revealTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const [cleared, setCleared] = useState(false);
 
   const [windowWidth, setWindowWidth] = useState(1200);
   useEffect(() => {
@@ -274,6 +272,7 @@ export default function ArchiveGallery() {
     return () => window.removeEventListener("resize", update);
   }, []);
   const isMobile = windowWidth < 768;
+  const isLarge  = windowWidth >= 1440;
   const gridCols = windowWidth >= 1600 ? 5 : windowWidth >= 1200 ? 4 : windowWidth >= 900 ? 3 : windowWidth >= 600 ? 2 : 1;
   const selectedIdx = selected ? PROJECTS.findIndex(p => p.id === selected.id) : -1;
   const shuffledIds = PROJECTS.map(p => p.id);
@@ -286,7 +285,7 @@ export default function ArchiveGallery() {
   const swipingRef     = useRef(false);
 
   const rawScroll = useMotionValue(0);
-  const scrollY   = useSpring(rawScroll, { stiffness: 60, damping: 22, restDelta: 0.3 });
+  const scrollY   = useSpring(rawScroll, { stiffness: 280, damping: 30, restDelta: 0.5 });
   const scrollVel = useMotionValue(0);
 
   // 소실점 고정 (마우스 트래킹 제거)
@@ -306,10 +305,10 @@ export default function ArchiveGallery() {
     });
     const stepCard = (dir: 1 | -1) => {
       const now = Date.now();
-      if (now - lastScrollTime.current < 320) return;
+      if (now - lastScrollTime.current < 160) return;
       lastScrollTime.current = now;
       targetIdxRef.current = Math.max(0, Math.min(PROJECTS.length - 1, targetIdxRef.current + dir));
-      animate(rawScroll, targetIdxRef.current * CARD_TRAVEL, { type: "spring", stiffness: 70, damping: 18 });
+      animate(rawScroll, targetIdxRef.current * CARD_TRAVEL, { type: "spring", stiffness: 220, damping: 26 });
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -384,11 +383,6 @@ export default function ArchiveGallery() {
     setView("coverflow"); setTilting(false);
   }, []);
 
-  // 랜딩: Phase1(블러 등장) 후 Phase2(전체 클리어) 시그널
-  useEffect(() => {
-    const t = setTimeout(() => setCleared(true), 1100);
-    return () => clearTimeout(t);
-  }, []);
 
 
   const gridProjects = shuffledIds
@@ -407,12 +401,15 @@ export default function ArchiveGallery() {
       {/* ── Header ──────────────────────────────────────── */}
       <motion.header
         animate={{
-          opacity: (anyCardHovered || hoveredGridId !== null) ? 0.18 : 1,
-          filter: (anyCardHovered || hoveredGridId !== null) ? "blur(5px)" : "blur(0px)",
+          opacity: anyCardHovered ? 0.18 : 1,
+          filter: anyCardHovered ? "blur(5px)" : "blur(0px)",
         }}
         transition={{ duration: 0.22 }}
         style={{
           position: "fixed", top: 0, left: 0, width: "100%", height: "60px",
+          background: "rgba(0,0,0,0.55)",
+          backdropFilter: "blur(20px) saturate(160%)",
+          WebkitBackdropFilter: "blur(20px) saturate(160%)",
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr auto" : "1fr auto 1fr",
           alignItems: "center",
@@ -464,9 +461,9 @@ export default function ArchiveGallery() {
           <motion.div key="year-sidebar"
             initial={{ opacity: 0, x: -12 }}
             animate={{
-              opacity: (anyCardHovered || hoveredGridId !== null) ? 0.12 : 1,
+              opacity: anyCardHovered ? 0.12 : 1,
               x: 0,
-              filter: (anyCardHovered || hoveredGridId !== null) ? "blur(5px)" : "blur(0px)",
+              filter: anyCardHovered ? "blur(5px)" : "blur(0px)",
             }}
             exit={{ opacity: 0, x: -12 }}
             transition={{ duration: 0.22 }}
@@ -495,17 +492,15 @@ export default function ArchiveGallery() {
           <motion.div key="year-topbar"
             initial={{ opacity: 0, y: -10 }}
             animate={{
-              opacity: hoveredGridId !== null ? 0.12 : 1,
+              opacity: 1,
               y: 0,
-              filter: hoveredGridId !== null ? "blur(5px)" : "blur(0px)",
             }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.22 }}
             style={{
               position: "fixed", top: "60px", left: 0, right: 0, zIndex: 200,
               display: "flex", flexDirection: "row", alignItems: "center",
-              justifyContent: "center", gap: "4px", padding: "6px 16px",
-              background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
+              justifyContent: "flex-start", gap: "4px", padding: "6px 20px",
             }}
           >
             {[null, ...YEARS].map((y) => {
@@ -562,33 +557,31 @@ export default function ArchiveGallery() {
 
       {/* ── Coverflow Stage (desktop only) ─────────────── */}
       {!isMobile && (
-        <motion.div style={{
-          position: "absolute",
-          top: "60px", left: 0, right: 0, bottom: 0,
-          display: (view === "coverflow" || tilting) ? "flex" : "none",
-          alignItems: "center", justifyContent: "center",
-          perspective: "2000px",
-          perspectiveOrigin: "50% 34%",
-          overflow: "visible",
-          zIndex: 1,
-          pointerEvents: view === "coverflow" ? "auto" : "none",
-        }}>
-          {PROJECTS.map((project, index) => {
-            const diff = index - activeCardIdx;
-            if (diff < -2 || diff > 10) return null;
-            return (
-              <QueueCard
-                key={project.id} project={project} index={index}
-                scrollY={scrollY} isTilting={tilting}
-                scatter={GRID_SCATTER[index]}
-                onOpen={() => setSelected(project)}
-                onHoverChange={setAnyCardHovered}
-                swipingRef={swipingRef}
-                cleared={cleared}
-                isMobile={false}
-              />
-            );
-          })}
+        <motion.div
+          onPointerLeave={() => setAnyCardHovered(false)}
+          style={{
+            position: "absolute",
+            top: "60px", left: 0, right: 0, bottom: 0,
+            display: (view === "coverflow" || tilting) ? "flex" : "none",
+            alignItems: "center", justifyContent: "center",
+            perspective: "2000px",
+            perspectiveOrigin: "50% 34%",
+            overflow: "visible",
+            zIndex: 1,
+            pointerEvents: view === "coverflow" ? "auto" : "none",
+          }}>
+          {PROJECTS.map((project, index) => (
+            <QueueCard
+              key={project.id} project={project} index={index}
+              scrollY={scrollY} isTilting={tilting}
+              scatter={GRID_SCATTER[index]}
+              onOpen={() => setSelected(project)}
+              onHoverChange={setAnyCardHovered}
+              swipingRef={swipingRef}
+              isMobile={false}
+              isLarge={isLarge}
+            />
+          ))}
         </motion.div>
       )}
 
@@ -616,37 +609,12 @@ export default function ArchiveGallery() {
             <Grain op={0.042} z={10} />
 
             <div style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-              gap: "12px", maxWidth: "1800px", margin: "0 auto",
+              columns: gridCols, columnGap: "12px",
+              maxWidth: "1800px", margin: "0 auto",
             }}>
               {gridProjects.map((p) => (
                 <GridItem
                   key={p.id} p={p} onOpen={() => setSelected(p)}
-                  isOtherHovered={hoveredGridId !== null && hoveredGridId !== p.id && !revealedGridIds.has(p.id)}
-                  onHoverChange={(h) => {
-                    revealTimers.current.forEach(t => clearTimeout(t));
-                    revealTimers.current = [];
-                    if (gridHoverTimeout.current) clearTimeout(gridHoverTimeout.current);
-                    if (h) {
-                      setRevealedGridIds(new Set());
-                      setHoveredGridId(p.id);
-                      // 1초 후 다른 항목들을 랜덤 순서로 하나씩 해제
-                      const others = gridProjects.filter(pp => pp.id !== p.id).map(pp => pp.id);
-                      const shuffled = [...others].sort(() => Math.random() - 0.5);
-                      shuffled.forEach((id, i) => {
-                        const t = setTimeout(() => {
-                          setRevealedGridIds(prev => new Set([...prev, id]));
-                        }, 1000 + i * 300);
-                        revealTimers.current.push(t);
-                      });
-                    } else {
-                      gridHoverTimeout.current = setTimeout(() => {
-                        setHoveredGridId(null);
-                        setRevealedGridIds(new Set());
-                      }, 400);
-                    }
-                  }}
                 />
               ))}
             </div>
@@ -787,21 +755,15 @@ function ScrambleText({ text }: { text: string }) {
   return <>{display}</>;
 }
 
-function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHoverChange, swipingRef, cleared, isMobile }: {
+function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHoverChange, swipingRef, isMobile, isLarge }: {
   project: Project; index: number; scrollY: any;
   isTilting: boolean; scatter: { rotate: number; x: number; y: number };
   onOpen: () => void; onHoverChange: (h: boolean) => void;
-  swipingRef: React.RefObject<boolean>; cleared: boolean; isMobile: boolean;
+  swipingRef: React.RefObject<boolean>; isMobile: boolean; isLarge: boolean;
 }) {
   const [hovered,  setHovered]  = useState(false);
   const [clicking, setClicking] = useState(false);
 
-  // 랜딩: opacity stagger만 (blur/scale 제거)
-  const revealOp = useMotionValue(0);
-  useEffect(() => {
-    const t = setTimeout(() => animate(revealOp, 1, { duration: 0.5, ease: "easeOut" }), index * 50);
-    return () => clearTimeout(t);
-  }, []);
 
   const queueStep = useTransform(scrollY, (s: number) => (index * CARD_TRAVEL - s) / CARD_TRAVEL);
 
@@ -816,18 +778,17 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
     return q * 44;              // 아래로 44px 간격 스택
   });
 
-  // Scale: 데스크탑 q=9 → 64% / 모바일 q=0→100%, q=11→88% 등간격
   const MOBILE_CARDS = 12;
+  const DESK_LIMIT   = isLarge ? 7 : 5;
   const cardScale = useTransform(queueStep, (q: number) => {
     if (q <= 0) return Math.min(1.05, 1 - q * 0.08);
     if (isMobile) return Math.max(0.95, 1 - q * (0.05 / (MOBILE_CARDS - 1)));
-    return Math.max(0.60, 1 - q * 0.04);
+    return Math.max(0.60, 1 - q * (isLarge ? 0.04 : 0.07));
   });
 
-  // Opacity: 모바일 12장, 데스크탑 9장
   const cardOp = useTransform(queueStep, (q: number) => {
     if (q < -0.5) return 0; if (q < 0) return 1 + q * 2;
-    const limit = isMobile ? MOBILE_CARDS : 9;
+    const limit = isMobile ? MOBILE_CARDS : DESK_LIMIT;
     if (q > limit) return Math.max(0, limit + 1 - q); return 1;
   });
 
@@ -862,10 +823,14 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
       position: "absolute",
       y: yPos, scale: cardScale, opacity: cardOp, zIndex: zIdx,
       rotateX: exitRotateX,
-      width: "clamp(240px, 70vw, 1120px)",
+      width: isLarge ? "clamp(240px, 54.6vw, 903px)" : "clamp(240px, 52vw, 860px)",
     }}>
       {/* 랜딩 reveal wrapper */}
-      <motion.div style={{ opacity: revealOp }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, filter: "blur(18px)" }}
+        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+        transition={{ duration: 0.7, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+      >
         <motion.div
           onHoverStart={() => { setHovered(true); onHoverChange(true); }}
           onHoverEnd={() => { setHovered(false); onHoverChange(false); }}
@@ -879,7 +844,6 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
             <div style={{
               position: "relative", width: "100%", height: "100%",
               borderRadius: "4px", overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.1)",
               background: "#06060a",
             }}>
               <img src={project.img} alt={project.title}
@@ -922,56 +886,42 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
 }
 
 /* ── Grid Card ─────────────────────────────────────────────── */
-function GridCard({ project, hovered }: { project: Project; hovered: boolean }) {
-  return (
-    <div style={{ width:"100%", height:"100%", position:"relative", overflow:"hidden" }}>
-      <motion.img src={project.img} alt={project.title}
-        initial={{ filter: "blur(22px) saturate(0.3)", opacity: 0.6 }}
-        animate={{ scale: hovered ? 1.06 : 1, filter: "blur(0px) saturate(1)", opacity: 1 }}
-        transition={{
-          scale: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
-          filter: { duration: 1.1, delay: gDelay(project.id), ease: [0.16, 1, 0.3, 1] },
-          opacity: { duration: 0.7, delay: gDelay(project.id) },
-        }}
-        style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
-    </div>
-  );
-}
-
-/* ── Grid Item (hover 상태 통합 관리) ─────────────────────────── */
-function GridItem({ p, onOpen, isOtherHovered, onHoverChange }: {
-  p: Project; onOpen: () => void;
-  isOtherHovered: boolean; onHoverChange: (h: boolean) => void;
-}) {
+/* ── Grid Item ────────────────────────────────────────────────── */
+function GridItem({ p, onOpen }: { p: Project; onOpen: () => void }) {
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
-      layout
       initial={{ opacity: 0 }}
-      animate={{
-        opacity: isOtherHovered ? 0.22 : 1,
-        filter: isOtherHovered ? "blur(5px)" : "blur(0px)",
-      }}
+      animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: isOtherHovered ? 0.2 : 1.4, ease: [0.16, 1, 0.3, 1] }}
-      onHoverStart={() => { setHovered(true); onHoverChange(true); }}
-      onHoverEnd={() => { setHovered(false); onHoverChange(false); }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
       onClick={onOpen}
-      style={{ cursor: "pointer" }}
+      style={{ cursor: "pointer", breakInside: "avoid", marginBottom: "12px", display: "block" }}
     >
-      <div style={{ position: "relative", aspectRatio: "16/9", borderRadius: "4px", overflow: "hidden" }}>
-        <GridCard project={p} hovered={hovered} />
+      <div style={{ position: "relative", aspectRatio: gridRatio(p.id), borderRadius: "4px", overflow: "hidden" }}>
+        <motion.img
+          src={p.images && p.images.length > 0 ? p.images[p.id % p.images.length] : p.img} alt={p.title}
+          animate={{ scale: hovered ? 1.06 : 1 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
       </div>
-      <motion.div
-        style={{
-          fontFamily: F, fontSize: "10px", fontWeight: 500,
-          letterSpacing: "0.01em",
-          color: hovered ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.5)",
-          paddingTop: "7px", transition: "color 0.2s",
-        }}
-      >
-        {hovered ? <ScrambleText text={p.title} /> : p.title}
-      </motion.div>
+      <div style={{ paddingTop: "8px", textAlign: "center", display: "flex", justifyContent: "center", alignItems: "baseline", gap: "8px", flexWrap: "nowrap" }}>
+        <span style={{
+          fontFamily: F, fontSize: "13px", fontWeight: 600,
+          letterSpacing: "-0.01em", color: "#fff",
+        }}>
+          {hovered ? <ScrambleText text={p.title} /> : p.title}
+        </span>
+        <span style={{
+          fontFamily: F, fontSize: "11px", fontWeight: 300,
+          letterSpacing: "0.03em", color: "rgba(255,255,255,0.4)",
+        }}>
+          {fmtDate(p.month, p.year)}
+        </span>
+      </div>
     </motion.div>
   );
 }
