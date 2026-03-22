@@ -164,8 +164,15 @@ export interface Project {
   images?: string[];
 }
 
+// ── Cloudinary base ──
+const CLD = "https://res.cloudinary.com/doyfzvsly/image/upload/portfolio-images/";
+const cldImgs = (folder: string, count: number) =>
+  Array.from({length: count}, (_, i) => `${CLD}${folder}/${String(i+1).padStart(3,"0")}`);
+
 // ── Projects ──
 const PROJECTS: Project[] = [
+  { id:21, title:"Shinsegae Market",               year:"2025", month:"02", category:"Branding", coworkers:["MUCCA","RMS"], description:"신세계의 브랜드 아이덴티티와 헤리티지를 바탕으로 럭셔리 및 프리미엄 브랜드 이미지를 식품관 영역으로 확장했습니다. 이 과정에서 신세계 마켓의 브랜드 비주얼과 패키지를 통합적으로 개발하여 프리미엄 식품관으로서의 브랜드 포지셔닝을 강화했습니다.", img:`${CLD}shinsegae-market/cover`, images:cldImgs("shinsegae-market",10) },
+  { id:22, title:"Shinsegae Market Open Campaign",  year:"2025", month:"02", category:"Branding", coworkers:["MUCCA","RMS"], description:"신세계의 브랜드 아이덴티티와 헤리티지를 바탕으로 럭셔리 및 프리미엄 브랜드 이미지를 식품관 영역으로 확장했습니다. 이 과정에서 신세계 마켓의 브랜드 비주얼과 패키지를 통합적으로 개발하여 프리미엄 식품관으로서의 브랜드 포지셔닝을 강화했습니다.", img:`${CLD}shinsegae-market-open-campaign/cover`, images:cldImgs("shinsegae-market-open-campaign",6) },
   { id:1,  title:"Nexus Archive",    year:"2024", month:"11", category:"System Design", coworkers:["Studio Arc","Kim S."],        description:"A modular archive system for distributed knowledge management. Explores relational data structures across spatial contexts.", img:"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&w=900",
     images:["https://images.unsplash.com/photo-1558591710-4b4a1ae0f7b4?auto=format&w=1200","https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&w=800","https://images.unsplash.com/photo-1617791160588-241658ad7617?auto=format&w=1400","https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&w=600"] },
   { id:2,  title:"Hyper Flow",       year:"2024", month:"08", category:"Interaction",   coworkers:["Lee H."],                     description:"Real-time interaction design exploring haptic feedback loops and ambient interface patterns for wearable contexts.",         img:"https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&w=900",

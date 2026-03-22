@@ -38,14 +38,29 @@ function ScrambleText({ text, onComplete }: { text: string; onComplete?: () => v
     return () => clearInterval(id);
   }, [text]);
   // Each character is individually width-locked to prevent reflow during scramble
+  const words = text.split(" ");
+  let charIdx = 0;
   return (
     <span aria-label={text} style={{ display: "block" }}>
-      {text.split("").map((ch, i) => (
-        <span key={i} style={{ position: "relative", display: "inline-block" }}>
-          <span style={{ visibility: "hidden", userSelect: "none" }} aria-hidden="true">{ch === " " ? "\u00a0" : ch}</span>
-          <span style={{ position: "absolute", top: 0, left: 0 }} aria-hidden="true">{display[i] ?? ch}</span>
-        </span>
-      ))}
+      {words.map((word, wi) => {
+        const chars = word.split("");
+        const startIdx = charIdx;
+        charIdx += word.length + (wi < words.length - 1 ? 1 : 0);
+        return (
+          <span key={wi} style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+            {chars.map((ch, ci) => {
+              const idx = startIdx + ci;
+              return (
+                <span key={ci} style={{ position: "relative", display: "inline-block" }}>
+                  <span style={{ visibility: "hidden", userSelect: "none" }} aria-hidden="true">{ch}</span>
+                  <span style={{ position: "absolute", top: 0, left: 0 }} aria-hidden="true">{display[idx] ?? ch}</span>
+                </span>
+              );
+            })}
+            {wi < words.length - 1 && <span style={{ display: "inline-block", width: "0.28em" }} />}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -105,9 +120,10 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
   const images = getImages(project);
   const closeRight = Math.max((winW - 1200) / 2, 0) + 48;
 
-  // 프로젝트 변경 시 스크롤 초기화
+  // 프로젝트 변경 시 스크롤 잠금 + 초기화
   useEffect(() => {
-    cooldown.current = false;
+    setTitleDone(false);
+    cooldown.current = true;
     atBottom.current = false;
     if (containerRef.current) containerRef.current.scrollTop = 0;
   }, [project.id]);
@@ -211,10 +227,10 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
               fontSize: isMobile ? "clamp(28px, 8vw, 48px)" : "clamp(28px, 3.8vw, 56px)",
               fontWeight: 700,
               letterSpacing: "-0.03em", lineHeight: 1.1,
-              color: "#fff", margin: "0 0 10px",
+              color: "#fff", margin: "0 0 10px", wordBreak: "keep-all",
             }}
           >
-            <ScrambleText text={project.title} onComplete={() => setTitleDone(true)} />
+            <ScrambleText text={project.title} onComplete={() => { setTitleDone(true); cooldown.current = false; }} />
           </motion.h1>
           <motion.div
             initial={{ opacity: 0, filter: "blur(8px)" }}
@@ -236,7 +252,7 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
             style={{
               fontFamily: FONT, fontSize: "16px", fontWeight: 300,
               lineHeight: 1.65, color: "rgba(255,255,255,0.68)",
-              margin: "0 0 36px", letterSpacing: "-0.005em",
+              margin: "0 0 36px", letterSpacing: "-0.005em", wordBreak: "keep-all",
             }}
           >{project.description}</motion.p>
 
@@ -248,11 +264,6 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
               style={{ display: "flex", gap: "36px", flexWrap: "wrap" }}
             >
               <div>
-                <div style={{
-                  fontFamily: FONT, fontSize: "8px", fontWeight: 400,
-                  letterSpacing: "0.1em", textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.3)", marginBottom: "7px",
-                }}>Credits</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {project.coworkers.map(c => (
                     <span key={c} style={{
