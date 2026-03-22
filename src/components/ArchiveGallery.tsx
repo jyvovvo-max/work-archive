@@ -162,6 +162,7 @@ export interface Project {
   id: number; title: string; year: string; month: string; category: string;
   coworkers: string[]; description: string; img: string;
   images?: string[];
+  pairs?: string; // "2+3|6+7" → 002+003, 006+007 병렬 배치
 }
 
 // ── Cloudinary base ──

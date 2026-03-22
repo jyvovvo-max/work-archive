@@ -12,6 +12,32 @@ function getImages(project: Project): string[] {
   return Array.from({ length: 10 }, (_, i) => base[i % base.length]);
 }
 
+// pairs = "2+3|6+7" → [[2,3],[6,7]] (1-based, cover=0 제외)
+function buildRows(images: string[], pairs?: string): string[][] {
+  const pairGroups: number[][] = pairs
+    ? pairs.split("|").map(p => p.split("+").map(Number))
+    : [];
+  const pairedNums = new Set(pairGroups.flat());
+  const used = new Set<number>();
+  const rows: string[][] = [];
+
+  images.forEach((img, i) => {
+    if (used.has(i)) return;
+    const fileNum = i; // cover=0, 001=1, 002=2 ...
+    const group = pairGroups.find(g => g.includes(fileNum));
+    if (group) {
+      rows.push(group.map(n => images[n]).filter(Boolean));
+      group.forEach(n => used.add(n));
+    } else {
+      if (!pairedNums.has(fileNum)) {
+        rows.push([img]);
+        used.add(i);
+      }
+    }
+  });
+  return rows;
+}
+
 const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$%&*";
 const randomChar = () => SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
 
@@ -287,15 +313,29 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
         padding: isMobile ? "0 16px 120px" : "0 48px 140px",
         display: "flex", flexDirection: "column", gap: "20px",
       }}>
-        {images.map((src, i) => (
-          <ProjectImage
-            key={i}
-            src={src}
-            alt={`${project.title} — ${i + 1}`}
-            index={i}
-            onClick={() => setLightboxIdx(i)}
-          />
-        ))}
+        {buildRows(images, project.pairs).map((row, ri) =>
+          row.length === 1 ? (
+            <ProjectImage
+              key={ri}
+              src={row[0]}
+              alt={`${project.title} — ${ri + 1}`}
+              index={ri}
+              onClick={() => setLightboxIdx(images.indexOf(row[0]))}
+            />
+          ) : (
+            <div key={ri} style={{ display: "grid", gridTemplateColumns: `repeat(${row.length}, 1fr)`, gap: "12px" }}>
+              {row.map((src, ci) => (
+                <ProjectImage
+                  key={ci}
+                  src={src}
+                  alt={`${project.title} — ${ri + 1}-${ci + 1}`}
+                  index={ri}
+                  onClick={() => setLightboxIdx(images.indexOf(src))}
+                />
+              ))}
+            </div>
+          )
+        )}
         {onNext && (
           <div style={{
             textAlign: "center", paddingTop: "48px",
