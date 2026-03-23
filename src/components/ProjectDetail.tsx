@@ -8,8 +8,12 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 const fmtDate = (month: string, year: string) => `${MONTHS[parseInt(month,10)-1]}, ${year}`;
 
 function getImages(project: Project): string[] {
-  const base = [project.img, ...(project.images ?? [])];
-  return Array.from({ length: 10 }, (_, i) => base[i % base.length]);
+  return [project.img, ...(project.images ?? [])];
+}
+
+function getYouTubeId(url: string): string | null {
+  const m = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
 }
 
 // pairs = "2+3|6+7" → [[2,3],[6,7]] (1-based, cover=0 제외)
@@ -38,7 +42,7 @@ function buildRows(images: string[], pairs?: string): string[][] {
   return rows;
 }
 
-const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$%&*";
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#@$%&*";
 const randomChar = () => SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
 
 function ScrambleText({ text, onComplete }: { text: string; onComplete?: () => void }) {
@@ -91,29 +95,105 @@ function ScrambleText({ text, onComplete }: { text: string; onComplete?: () => v
   );
 }
 
-/* 스크롤에 따라 blur ↔ clear 전환 / 진입 시 rotateY 15→0 (한 번만) */
-function ProjectImage({ src, alt, index, onClick }: {
+/* 진입 시: blur+rotateY 5→0 / 퇴장 시: 이미지 bottom이 타이틀 bottom 만나는 순간 blur+opacity 0.7 동시 */
+function ProjectImage({ src, alt, index, onClick, containerRef, titleRef, onDimensionLoad }: {
   src: string; alt: string; index: number; onClick: () => void;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  titleRef: React.RefObject<HTMLHeadingElement | null>;
+  onDimensionLoad?: (w: number, h: number) => void;
 }) {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { margin: "-12% 0px -12% 0px" });
+  const [dir, setDir] = useState<"below" | "above">("below");
+  const [overTitle, setOverTitle] = useState(false);
+  const isBelowRef = useRef(true);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const el = ref.current;
+    if (!container || !el) return;
+    const handler = () => {
+      // 방향 추적
+      const below = el.getBoundingClientRect().top > container.getBoundingClientRect().top + container.getBoundingClientRect().height * 0.5;
+      if (below !== isBelowRef.current) {
+        isBelowRef.current = below;
+        setDir(below ? "below" : "above");
+      }
+      // 이미지 bottom이 타이틀 second line bottom을 지나는 순간
+      const title = titleRef.current;
+      if (title) {
+        setOverTitle(el.getBoundingClientRect().bottom <= title.getBoundingClientRect().bottom);
+      }
+    };
+    container.addEventListener("scroll", handler, { passive: true });
+    handler();
+    return () => container.removeEventListener("scroll", handler);
+  }, [containerRef, titleRef]);
+
+  const enterBlur = !isInView && dir === "below";
+  const exitBlur  = dir === "above" && overTitle;
+
+  const rotating = !(dir === "above" || isInView);
 
   return (
-    <div style={{ perspective: "1400px" }}>
+    <div style={{ perspective: "1400px", borderRadius: "4px", overflow: "hidden" }}>
       <motion.div
         ref={ref}
         animate={{
-          filter: isInView ? "blur(0px)" : "blur(7px)",
-          opacity: isInView ? 1 : 0.55,
-          rotateY: 0,
+          filter:  enterBlur || exitBlur ? "blur(7px)" : "blur(0px)",
+          opacity: exitBlur ? 0.7 : enterBlur ? 0.55 : 1,
+          rotateY: rotating ? 5 : 0,
+          scaleX:  rotating ? 1.05 : 1,
         }}
-        initial={{ filter: "blur(14px)", opacity: 0, rotateY: 15 }}
-        transition={{ delay: index * 0.06, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ filter: "blur(14px)", opacity: 0, rotateY: 5, scaleX: 1.05 }}
+        transition={{
+          filter:  { delay: enterBlur ? index * 0.06 : 0, duration: exitBlur ? 1.1 : 0.65, ease: [0.16, 1, 0.3, 1] },
+          opacity: { duration: exitBlur ? 0.9 : 0.65, ease: [0.16, 1, 0.3, 1] },
+          rotateY: { delay: enterBlur ? index * 0.06 : 0, duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+          scaleX:  { delay: enterBlur ? index * 0.06 : 0, duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+        }}
         onClick={onClick}
-        style={{ borderRadius: "4px", overflow: "hidden", cursor: "zoom-in" }}
+        style={{ cursor: "zoom-in" }}
       >
-        <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+        <img
+          src={src} alt={alt}
+          style={{ width: "100%", height: "auto", display: "block" }}
+          onLoad={e => {
+            const img = e.currentTarget;
+            onDimensionLoad?.(img.naturalWidth, img.naturalHeight);
+          }}
+        />
       </motion.div>
+    </div>
+  );
+}
+
+function ParallelRow({ row, ri, images, projectTitle, setLightboxIdx, containerRef, titleRef }: {
+  row: string[]; ri: number; images: string[]; projectTitle: string;
+  setLightboxIdx: (i: number) => void;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  titleRef: React.RefObject<HTMLHeadingElement | null>;
+}) {
+  const [ratios, setRatios] = useState<number[]>(() => row.map(() => 1));
+  return (
+    <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+      {row.map((src, ci) => (
+        <div key={ci} style={{ flex: ratios[ci], minWidth: 0 }}>
+          <ProjectImage
+            src={src}
+            alt={`${projectTitle} — ${ri + 1}-${ci + 1}`}
+            index={ri}
+            onClick={() => setLightboxIdx(images.indexOf(src))}
+            containerRef={containerRef}
+            titleRef={titleRef}
+            onDimensionLoad={(w, h) => setRatios(prev => {
+              const next = [...prev];
+              next[ci] = w / h;
+              return next;
+            })}
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -123,6 +203,7 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
   const [isMobile, setIsMobile] = useState(false);
   const [winW, setWinW] = useState(1280);
   const containerRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const atBottom = useRef(false);
   const cooldown = useRef(false);
   const touchStartYRef = useRef(0);
@@ -131,6 +212,9 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
   const onPrevRef = useRef(onPrev);
   useEffect(() => { onPrevRef.current = onPrev; }, [onPrev]);
   const atTop = useRef(true);
+  const overscrollBottom = useRef(0);
+  const overscrollTop = useRef(0);
+  const OVERSCROLL_THRESHOLD = 1920;
 
   useEffect(() => {
     const update = () => {
@@ -151,6 +235,8 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
     setTitleDone(false);
     cooldown.current = true;
     atBottom.current = false;
+    overscrollBottom.current = 0;
+    overscrollTop.current = 0;
     if (containerRef.current) containerRef.current.scrollTop = 0;
   }, [project.id]);
 
@@ -161,19 +247,32 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
     atTop.current = el.scrollTop < 20;
   };
 
-  // 휠 이벤트: 맨 아래에서 추가로 내리면 다음 프로젝트
+  // 휠 이벤트: 바닥/상단에서 1920px 누적 후 프로젝트 전환
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const handler = (e: WheelEvent) => {
-      if (atBottom.current && e.deltaY > 0 && !cooldown.current && onNextRef.current) {
-        cooldown.current = true;
+      if (cooldown.current) { e.preventDefault(); return; }
+
+      if (atBottom.current && e.deltaY > 0 && onNextRef.current) {
         e.preventDefault();
-        onNextRef.current();
-      } else if (atTop.current && e.deltaY < 0 && !cooldown.current && onPrevRef.current) {
-        cooldown.current = true;
+        overscrollBottom.current += Math.abs(e.deltaY);
+        if (overscrollBottom.current >= OVERSCROLL_THRESHOLD) {
+          overscrollBottom.current = 0;
+          cooldown.current = true;
+          onNextRef.current();
+        }
+      } else if (atTop.current && e.deltaY < 0 && onPrevRef.current) {
         e.preventDefault();
-        onPrevRef.current();
+        overscrollTop.current += Math.abs(e.deltaY);
+        if (overscrollTop.current >= OVERSCROLL_THRESHOLD) {
+          overscrollTop.current = 0;
+          cooldown.current = true;
+          onPrevRef.current();
+        }
+      } else {
+        overscrollBottom.current = 0;
+        overscrollTop.current = 0;
       }
     };
     el.addEventListener("wheel", handler, { passive: false });
@@ -245,6 +344,7 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
         {/* 제목 + 날짜 — 좌측 3칸 */}
         <div style={{ gridColumn: isMobile ? "1" : "1 / 4", pointerEvents: "auto" }}>
           <motion.h1
+            ref={titleRef}
             initial={{ opacity: 0, filter: "blur(18px)" }}
             animate={{ opacity: 1, filter: "blur(0px)" }}
             transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
@@ -313,6 +413,19 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
         padding: isMobile ? "0 16px 120px" : "0 48px 140px",
         display: "flex", flexDirection: "column", gap: "20px",
       }}>
+        {project.videoUrl && (() => {
+          const vid = getYouTubeId(project.videoUrl);
+          return vid ? (
+            <div style={{ borderRadius: "4px", overflow: "hidden", aspectRatio: "16/9" }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+              />
+            </div>
+          ) : null;
+        })()}
         {buildRows(images, project.pairs).map((row, ri) =>
           row.length === 1 ? (
             <ProjectImage
@@ -321,28 +434,55 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
               alt={`${project.title} — ${ri + 1}`}
               index={ri}
               onClick={() => setLightboxIdx(images.indexOf(row[0]))}
+              containerRef={containerRef}
+              titleRef={titleRef}
             />
           ) : (
-            <div key={ri} style={{ display: "grid", gridTemplateColumns: `repeat(${row.length}, 1fr)`, gap: "12px" }}>
-              {row.map((src, ci) => (
-                <ProjectImage
-                  key={ci}
-                  src={src}
-                  alt={`${project.title} — ${ri + 1}-${ci + 1}`}
-                  index={ri}
-                  onClick={() => setLightboxIdx(images.indexOf(src))}
-                />
-              ))}
-            </div>
+            <ParallelRow
+              key={ri}
+              row={row} ri={ri} images={images}
+              projectTitle={project.title}
+              setLightboxIdx={setLightboxIdx}
+              containerRef={containerRef}
+              titleRef={titleRef}
+            />
           )
         )}
-        {onNext && (
-          <div style={{
-            textAlign: "center", paddingTop: "48px",
-            fontFamily: FONT, fontSize: "10px", letterSpacing: "0.1em",
-            textTransform: "uppercase", color: "rgba(255,255,255,0.18)",
-          }}>↓</div>
-        )}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          paddingTop: "64px", paddingBottom: "8px",
+        }}>
+          <button
+            onClick={() => { if (!cooldown.current && onPrev) { cooldown.current = true; onPrev(); } }}
+            disabled={!onPrev}
+            style={{
+              fontFamily: FONT, fontSize: "13px", fontWeight: 400,
+              letterSpacing: "0.08em", color: onPrev ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.08)",
+              background: "none", border: "none", cursor: onPrev ? "pointer" : "default",
+              padding: "8px 0",
+            }}
+          >← Previous Project</button>
+          <button
+            onClick={() => { if (containerRef.current) containerRef.current.scrollTo({ top: 0, behavior: "smooth" }); }}
+            style={{
+              fontFamily: FONT, fontSize: "13px", fontWeight: 400,
+              letterSpacing: "0.08em", color: "rgba(255,255,255,0.28)",
+              background: "none", border: "none", cursor: "pointer",
+              padding: "8px 16px",
+            }}
+          >↑ Go to Top</button>
+          <button
+            onClick={() => { if (!cooldown.current && onNext) { cooldown.current = true; onNext(); } }}
+            disabled={!onNext}
+            style={{
+              fontFamily: FONT, fontSize: "13px", fontWeight: 400,
+              letterSpacing: "0.08em", color: onNext ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.08)",
+              background: "none", border: "none", cursor: onNext ? "pointer" : "default",
+              padding: "8px 0",
+            }}
+          >Next Project →</button>
+        </div>
+
       </div>
 
       {/* ── LIGHTBOX ── */}
@@ -381,26 +521,32 @@ export default function ProjectDetail({ project, onClose, onNext, onPrev }: { pr
             {/* ← */}
             <button onClick={e => { e.stopPropagation(); go(-1); }} style={{
               position: "absolute", left: "32px", top: "50%", transform: "translateY(-50%)",
-              fontSize: "28px", fontWeight: 200, lineHeight: 1,
               background: "none", border: "none", cursor: "pointer",
               color: "rgba(255,255,255,0.45)", zIndex: 810, padding: "8px",
-              transition: "color 0.18s", fontFamily: FONT,
+              transition: "color 0.18s", display: "flex", alignItems: "center",
             }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
-            >‹</button>
+            >
+              <svg width="28" height="42" viewBox="0 0 28 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polyline points="22,4 6,21 22,38" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
 
-            {/* › */}
+            {/* → */}
             <button onClick={e => { e.stopPropagation(); go(1); }} style={{
               position: "absolute", right: "32px", top: "50%", transform: "translateY(-50%)",
-              fontSize: "28px", fontWeight: 200, lineHeight: 1,
               background: "none", border: "none", cursor: "pointer",
               color: "rgba(255,255,255,0.45)", zIndex: 810, padding: "8px",
-              transition: "color 0.18s", fontFamily: FONT,
+              transition: "color 0.18s", display: "flex", alignItems: "center",
             }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
-            >›</button>
+            >
+              <svg width="28" height="42" viewBox="0 0 28 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polyline points="6,4 22,21 6,38" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
 
             {/* counter */}
             <div style={{

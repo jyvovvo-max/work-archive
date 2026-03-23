@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   motion, useMotionValue, useSpring, useTransform,
   AnimatePresence, animate, useMotionValueEvent,
@@ -29,9 +29,12 @@ const CATEGORY_PALETTES: Record<string, string[]> = {
 const DEFAULT_PALETTE = ["255,255,255","210,228,255","190,215,255","220,240,255","200,220,255"];
 
 /* ── Starfield — 4단계: 부유/느림/보통/고속 ── */
-function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile }: {
-  velocity: any; originX: any; originY: any; scrollYMV: any; isMobile: boolean;
+function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile, projects }: {
+  velocity: any; originX: any; originY: any; scrollYMV: any; isMobile: boolean; projects: Project[];
 }) {
+  const projectsRef = useRef(projects);
+  useEffect(() => { projectsRef.current = projects; }, [projects]);
+
   useEffect(() => {
     const canvas = document.getElementById("warpCanvas") as HTMLCanvasElement;
     if (!canvas) return;
@@ -50,7 +53,7 @@ function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile }: {
 
     const getPalette = () => {
       const idx = Math.round(Math.max(0, scrollYMV.get()) / CARD_TRAVEL);
-      const proj = PROJECTS[Math.min(idx, PROJECTS.length - 1)];
+      const proj = projectsRef.current[Math.min(idx, projectsRef.current.length - 1)];
       return CATEGORY_PALETTES[proj?.category] ?? DEFAULT_PALETTE;
     };
 
@@ -163,6 +166,55 @@ export interface Project {
   coworkers: string[]; description: string; img: string;
   images?: string[];
   pairs?: string; // "2+3|6+7" → 002+003, 006+007 병렬 배치
+  videoUrl?: string; // YouTube URL, 있으면 이미지 위에 표시
+}
+
+// ── Google Sheets CSV 파서 ──
+const SHEETS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOFxt3PRlK8ifjXZ1qXOM9HI4zL4J0z2eHu7mTquwXzBoS7RPhSNC0EjUVC_wWt5iyXK14rB_48W_3/pub?gid=0&single=true&output=csv";
+
+function parseCSVRow(line: string): string[] {
+  const result: string[] = [];
+  let cur = ""; let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+      else { inQuote = !inQuote; }
+    } else if (c === "," && !inQuote) { result.push(cur); cur = ""; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function parseCSV(text: string): Record<string, string>[] {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = parseCSVRow(lines[0]).map(h => h.trim());
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const values = parseCSVRow(line);
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => { obj[h] = (values[i] ?? "").trim(); });
+    return obj;
+  });
+}
+
+function rowToProject(row: Record<string, string>): Project | null {
+  const id = parseInt(row.id);
+  if (!id || !row.title || !row.folder) return null;
+  const imageCount = parseInt(row.imageCount) || 0;
+  return {
+    id,
+    title: row.title,
+    year: row.year ?? "",
+    month: row.month ?? "1",
+    category: row.category ?? "",
+    description: row.description ?? "",
+    coworkers: row.coworkers ? row.coworkers.split(",").map(s => s.trim()).filter(Boolean) : [],
+    img: `${CLD}${row.folder}/cover`,
+    images: imageCount > 0 ? cldImgs(row.folder, imageCount) : undefined,
+    pairs: row.pairs || undefined,
+    videoUrl: row.videoUrl || undefined,
+  };
 }
 
 // ── Cloudinary base ──
@@ -170,10 +222,10 @@ const CLD = "https://res.cloudinary.com/doyfzvsly/image/upload/portfolio-images/
 const cldImgs = (folder: string, count: number) =>
   Array.from({length: count}, (_, i) => `${CLD}${folder}/${String(i+1).padStart(3,"0")}`);
 
-// ── Projects ──
-const PROJECTS: Project[] = [
-  { id:21, title:"Shinsegae Market",               year:"2025", month:"02", category:"Branding", coworkers:["MUCCA","RMS"], description:"신세계의 브랜드 아이덴티티와 헤리티지를 바탕으로 럭셔리 및 프리미엄 브랜드 이미지를 식품관 영역으로 확장했습니다. 이 과정에서 신세계 마켓의 브랜드 비주얼과 패키지를 통합적으로 개발하여 프리미엄 식품관으로서의 브랜드 포지셔닝을 강화했습니다.", img:`${CLD}shinsegae-market/cover`, images:cldImgs("shinsegae-market",10), pairs:"2+3|6+7" },
-  { id:22, title:"Shinsegae Market Open Campaign",  year:"2025", month:"02", category:"Branding", coworkers:["MUCCA","RMS"], description:"신세계의 브랜드 아이덴티티와 헤리티지를 바탕으로 럭셔리 및 프리미엄 브랜드 이미지를 식품관 영역으로 확장했습니다. 이 과정에서 신세계 마켓의 브랜드 비주얼과 패키지를 통합적으로 개발하여 프리미엄 식품관으로서의 브랜드 포지셔닝을 강화했습니다.", img:`${CLD}shinsegae-market-open-campaign/cover`, images:cldImgs("shinsegae-market-open-campaign",6) },
+// ── Fallback Projects (하드코딩, Sheets fetch 실패 시 사용) ──
+const FALLBACK_PROJECTS: Project[] = [
+  { id:21, title:"Shinsegae Market",               year:"2025", month:"02", category:"Branding", coworkers:["SHINSEGAE BRAND DESIGN TEAM","MUCCA","RMS"], description:"신세계의 브랜드 아이덴티티와 헤리티지를 바탕으로 럭셔리 및 프리미엄 브랜드 이미지를 식품관 영역으로 확장했습니다. 이 과정에서 신세계 마켓의 브랜드 비주얼과 패키지를 통합적으로 개발하여 프리미엄 식품관으로서의 브랜드 포지셔닝을 강화했습니다. 고객에게 차별화된 경험을 제공하고 브랜드 가치를 높일 수 있도록 기여했습니다.", img:`${CLD}shinsegae-market/cover`, images:cldImgs("shinsegae-market",10), pairs:"3+4|9+10" },
+  { id:22, title:"Shinsegae Market Open Campaign",  year:"2025", month:"03", category:"Branding", coworkers:["SHINSEGAE BRAND DESIGN TEAM","MUCCA","RMS"], description:"신세계의 브랜드 아이덴티티와 헤리티지를 바탕으로 럭셔리 및 프리미엄 브랜드 이미지를 식품관 영역으로 확장했습니다. 이 과정에서 신세계 마켓의 브랜드 비주얼과 패키지를 통합적으로 개발하여 프리미엄 식품관으로서의 브랜드 포지셔닝을 강화했습니다. 고객에게 차별화된 경험을 제공하고 브랜드 가치를 높일 수 있도록 기여했습니다.", img:`${CLD}shinsegae-market-open-campaign/cover`, images:cldImgs("shinsegae-market-open-campaign",6), pairs:"3+4" },
   { id:1,  title:"Nexus Archive",    year:"2024", month:"11", category:"System Design", coworkers:["Studio Arc","Kim S."],        description:"A modular archive system for distributed knowledge management. Explores relational data structures across spatial contexts.", img:"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&w=900",
     images:["https://images.unsplash.com/photo-1558591710-4b4a1ae0f7b4?auto=format&w=1200","https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&w=800","https://images.unsplash.com/photo-1617791160588-241658ad7617?auto=format&w=1400","https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&w=600"] },
   { id:2,  title:"Hyper Flow",       year:"2024", month:"08", category:"Interaction",   coworkers:["Lee H."],                     description:"Real-time interaction design exploring haptic feedback loops and ambient interface patterns for wearable contexts.",         img:"https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&w=900",
@@ -203,18 +255,9 @@ const PROJECTS: Project[] = [
 ];
 
 const CARD_TRAVEL  = 260;
-const YEARS = [...new Set(PROJECTS.map(p => p.year))].sort((a,b) => +b - +a);
-
 // Editorial grid: varied aspect ratios per card (id-seeded, stable)
 const GRID_RATIOS = ["4/3", "3/4", "16/9", "1/1", "2/3", "5/4", "3/2", "4/5"];
 const gridRatio = (id: number) => GRID_RATIOS[id % GRID_RATIOS.length];
-
-// Grid scatter: genuinely varied — different rotate, x, y per card
-const GRID_SCATTER = PROJECTS.map((_, i) => ({
-  rotate: ((i * 137 + 41) % 71) - 35,   // -35..+35
-  x:      ((i * 83  + 17) % 160) - 80,  // -80..+80px
-  y:      ((i * 61  + 29) % 100) - 50,  // -50..+50px
-}));
 
 // Random fade delay per card (seeded, 0–0.7s)
 
@@ -272,6 +315,33 @@ export default function ArchiveGallery() {
   const [anyCardHovered, setAnyCardHovered] = useState(false);
   const [popup, setPopup] = useState<"info"|"contact"|"ig"|null>(null);
 
+  // ── Projects: Google Sheets fetch, 실패 시에만 hardcoded fallback ──
+  const [projects, setProjects] = useState<Project[]>([]);
+  const projectsRef = useRef(projects);
+  useEffect(() => { projectsRef.current = projects; }, [projects]);
+  useEffect(() => {
+    fetch(SHEETS_CSV)
+      .then(r => r.text())
+      .then(text => {
+        const rows = parseCSV(text);
+        const parsed = rows.map(rowToProject).filter((p): p is Project => p !== null);
+        setProjects(parsed.length > 0 ? parsed : FALLBACK_PROJECTS);
+      })
+      .catch(() => setProjects(FALLBACK_PROJECTS));
+  }, []);
+
+  const years = useMemo(() =>
+    [...new Set(projects.map(p => p.year))].sort((a, b) => +b - +a),
+  [projects]);
+
+  const gridScatter = useMemo(() =>
+    projects.map((_, i) => ({
+      rotate: ((i * 137 + 41) % 71) - 35,
+      x:      ((i * 83  + 17) % 160) - 80,
+      y:      ((i * 61  + 29) % 100) - 50,
+    })),
+  [projects]);
+
   const [windowWidth, setWindowWidth] = useState(1200);
   useEffect(() => {
     const update = () => setWindowWidth(window.innerWidth);
@@ -282,8 +352,8 @@ export default function ArchiveGallery() {
   const isMobile = windowWidth < 768;
   const isLarge  = windowWidth >= 1440;
   const gridCols = windowWidth >= 1600 ? 5 : windowWidth >= 1200 ? 4 : windowWidth >= 900 ? 3 : windowWidth >= 600 ? 2 : 1;
-  const selectedIdx = selected ? PROJECTS.findIndex(p => p.id === selected.id) : -1;
-  const shuffledIds = PROJECTS.map(p => p.id);
+  const selectedIdx = selected ? projects.findIndex(p => p.id === selected.id) : -1;
+  const shuffledIds = projects.map(p => p.id);
 
   const isMobileRef    = useRef(isMobile);
   useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
@@ -302,7 +372,7 @@ export default function ArchiveGallery() {
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const idx = Math.round(latest / CARD_TRAVEL);
-    setActiveCardIdx(Math.max(0, Math.min(PROJECTS.length - 1, idx)));
+    setActiveCardIdx(Math.max(0, Math.min(projectsRef.current.length - 1, idx)));
   });
 
   useEffect(() => {
@@ -315,7 +385,7 @@ export default function ArchiveGallery() {
       const now = Date.now();
       if (now - lastScrollTime.current < 160) return;
       lastScrollTime.current = now;
-      targetIdxRef.current = Math.max(0, Math.min(PROJECTS.length - 1, targetIdxRef.current + dir));
+      targetIdxRef.current = Math.max(0, Math.min(projectsRef.current.length - 1, targetIdxRef.current + dir));
       animate(rawScroll, targetIdxRef.current * CARD_TRAVEL, { type: "spring", stiffness: 220, damping: 26 });
     };
 
@@ -370,7 +440,7 @@ export default function ArchiveGallery() {
     setActiveYear(y);
     if (view === "grid") return;
     setView("coverflow");
-    const idx = y === null ? 0 : PROJECTS.findIndex(p => p.year === y);
+    const idx = y === null ? 0 : projects.findIndex(p => p.year === y);
     if (idx >= 0) {
       targetIdxRef.current = idx;
       animate(rawScroll, idx * CARD_TRAVEL, { type: "spring", stiffness: 55, damping: 20 });
@@ -394,7 +464,7 @@ export default function ArchiveGallery() {
 
 
   const gridProjects = shuffledIds
-    .map(id => PROJECTS.find(p => p.id === id)!)
+    .map(id => projects.find(p => p.id === id)!)
     .filter(p => !activeYear || p.year === activeYear);
 
   return (
@@ -403,7 +473,7 @@ export default function ArchiveGallery() {
       background: "#000",
       userSelect: "none",
     }}>
-      <WarpTunnel velocity={scrollVel} originX={originX} originY={originY} scrollYMV={scrollY} isMobile={isMobile} />
+      <WarpTunnel velocity={scrollVel} originX={originX} originY={originY} scrollYMV={scrollY} isMobile={isMobile} projects={projects} />
       <div style={{ position:"absolute", inset:0, background: "radial-gradient(ellipse 80% 60% at 50% 38%, rgba(12,12,26,0.5) 0%, rgba(4,4,8,0.7) 48%, #000 100%)", pointerEvents: "none" }} />
 
       {/* ── Header ──────────────────────────────────────── */}
@@ -481,7 +551,7 @@ export default function ArchiveGallery() {
             }}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              {[null, ...YEARS].map((y) => {
+              {[null, ...years].map((y) => {
                 const active = activeYear === y;
                 return (
                   <button key={y ?? "recent"} onClick={() => jumpToYear(y)} style={{
@@ -511,7 +581,7 @@ export default function ArchiveGallery() {
               justifyContent: "center", gap: "2px", padding: "6px 16px",
             }}
           >
-            {[null, ...YEARS].map((y) => {
+            {[null, ...years].map((y) => {
               const active = activeYear === y;
               return (
                 <button key={y ?? "recent"} onClick={() => jumpToYear(y)} style={{
@@ -553,10 +623,10 @@ export default function ArchiveGallery() {
               style={{ fontFamily: F, fontSize: "clamp(10px,1.1vw,13px)", fontWeight: 400, letterSpacing: "0.02em", color: "#fff", display: "inline-flex", alignItems: "baseline", gap: "10px" }}
             >
               <span>
-                <ScrambleText text={PROJECTS[activeCardIdx]?.title ?? ""} />
+                <ScrambleText text={projects[activeCardIdx]?.title ?? ""} />
               </span>
               <span style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.85em", letterSpacing: "0.04em" }}>
-                {fmtDate(PROJECTS[activeCardIdx]?.month ?? "1", PROJECTS[activeCardIdx]?.year ?? "")}
+                {fmtDate(projects[activeCardIdx]?.month ?? "1", projects[activeCardIdx]?.year ?? "")}
               </span>
             </motion.span>
           </AnimatePresence>
@@ -578,11 +648,11 @@ export default function ArchiveGallery() {
             zIndex: 1,
             pointerEvents: view === "coverflow" ? "auto" : "none",
           }}>
-          {PROJECTS.map((project, index) => (
+          {projects.map((project, index) => (
             <QueueCard
               key={project.id} project={project} index={index}
               scrollY={scrollY} isTilting={tilting}
-              scatter={GRID_SCATTER[index]}
+              scatter={gridScatter[index]}
               onOpen={() => setSelected(project)}
               onHoverChange={setAnyCardHovered}
               swipingRef={swipingRef}
@@ -596,7 +666,7 @@ export default function ArchiveGallery() {
       {/* ── Mobile Feed ─────────────────────────────────── */}
       {isMobile && (
         <MobileFeed
-          projects={PROJECTS.filter(p => !activeYear || p.year === activeYear)}
+          projects={projects.filter(p => !activeYear || p.year === activeYear)}
           onOpen={setSelected}
         />
       )}
@@ -636,8 +706,8 @@ export default function ArchiveGallery() {
             key="detail"
             project={selected}
             onClose={() => setSelected(null)}
-            onNext={selectedIdx < PROJECTS.length - 1 ? () => setSelected(PROJECTS[selectedIdx + 1]) : undefined}
-            onPrev={selectedIdx > 0 ? () => setSelected(PROJECTS[selectedIdx - 1]) : undefined}
+            onNext={selectedIdx < projects.length - 1 ? () => setSelected(projects[selectedIdx + 1]) : undefined}
+            onPrev={selectedIdx > 0 ? () => setSelected(projects[selectedIdx - 1]) : undefined}
           />
         )}
       </AnimatePresence>
@@ -740,7 +810,7 @@ export default function ArchiveGallery() {
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtDate = (month: string, year: string) => `${MONTHS[parseInt(month, 10) - 1]}, ${year}`;
 
-const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$%&*";
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#@$%&*";
 function ScrambleText({ text }: { text: string }) {
   const [display, setDisplay] = useState(text);
   useEffect(() => {
@@ -895,6 +965,19 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
 
 /* ── Grid Card ─────────────────────────────────────────────── */
 /* ── Grid Item ────────────────────────────────────────────────── */
+// id-seeded 가중치 썸네일: 낮은 인덱스일수록 확률 높음 (1/(i+1)² 감쇠)
+function seededGridThumb(images: string[], id: number): string {
+  const weights = images.map((_, i) => 1 / ((i + 1) * (i + 1)));
+  const total = weights.reduce((a, b) => a + b, 0);
+  const seed = ((id * 2654435761) >>> 0) / 4294967296; // Knuth hash → 0~1
+  let r = seed * total;
+  for (let i = 0; i < images.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return images[i];
+  }
+  return images[0];
+}
+
 function GridItem({ p, onOpen }: { p: Project; onOpen: () => void }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -908,12 +991,12 @@ function GridItem({ p, onOpen }: { p: Project; onOpen: () => void }) {
       onClick={onOpen}
       style={{ cursor: "pointer", breakInside: "avoid", marginBottom: "12px", display: "block" }}
     >
-      <div style={{ position: "relative", aspectRatio: gridRatio(p.id), borderRadius: "4px", overflow: "hidden" }}>
+      <div style={{ borderRadius: "4px", overflow: "hidden" }}>
         <motion.img
-          src={p.images && p.images.length > 0 ? p.images[p.id % p.images.length] : p.img} alt={p.title}
+          src={p.images && p.images.length > 0 ? seededGridThumb(p.images, p.id) : p.img} alt={p.title}
           animate={{ scale: hovered ? 1.06 : 1 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          style={{ width: "100%", height: "auto", display: "block" }}
         />
       </div>
       <div style={{ paddingTop: "8px", textAlign: "center", display: "flex", justifyContent: "center", alignItems: "baseline", gap: "8px", flexWrap: "nowrap" }}>
