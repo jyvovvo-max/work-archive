@@ -188,9 +188,19 @@ function parseCSVRow(line: string): string[] {
 }
 
 function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.trim().split(/\r?\n/);
-  const headers = parseCSVRow(lines[0]).map(h => h.trim());
-  return lines.slice(1).filter(l => l.trim()).map(line => {
+  // Split rows while respecting quoted fields that contain newlines
+  const rows: string[] = [];
+  let cur = ""; let inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') { inQ = !inQ; cur += c; }
+    else if (!inQ && c === '\r' && text[i+1] === '\n') { i++; if (cur.trim()) rows.push(cur); cur = ""; }
+    else if (!inQ && c === '\n') { if (cur.trim()) rows.push(cur); cur = ""; }
+    else { cur += c; }
+  }
+  if (cur.trim()) rows.push(cur);
+  const headers = parseCSVRow(rows[0]).map(h => h.trim());
+  return rows.slice(1).map(line => {
     const values = parseCSVRow(line);
     const obj: Record<string, string> = {};
     headers.forEach((h, i) => { obj[h] = (values[i] ?? "").trim(); });
@@ -218,7 +228,7 @@ function rowToProject(row: Record<string, string>): Project | null {
 }
 
 // ── Cloudinary base ──
-const CLD = "https://res.cloudinary.com/doyfzvsly/image/upload/portfolio-images/";
+const CLD = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
 const cldImgs = (folder: string, count: number) =>
   Array.from({length: count}, (_, i) => `${CLD}${folder}/${String(i+1).padStart(3,"0")}`);
 
@@ -320,7 +330,7 @@ export default function ArchiveGallery() {
   const projectsRef = useRef(projects);
   useEffect(() => { projectsRef.current = projects; }, [projects]);
   useEffect(() => {
-    fetch(SHEETS_CSV)
+    fetch(`${SHEETS_CSV}&_=${Date.now()}`, { cache: "no-store" })
       .then(r => r.text())
       .then(text => {
         const rows = parseCSV(text);
@@ -934,6 +944,7 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
                 transition={{ duration: 0.18 }}
                 style={{ position:"absolute", inset:0, background:"linear-gradient(175deg, rgba(0,0,0,0.7) 0%, transparent 50%, rgba(0,0,0,0.35) 100%)", pointerEvents:"none", zIndex:4 }}
               />
+
 
               {/* Hover labels */}
               <AnimatePresence>
