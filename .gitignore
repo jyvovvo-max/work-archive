@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# upload tool local state
+tools/.upload-state.json
+
 # vercel
 .vercel
 
