@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Project } from "./types";
 
@@ -25,7 +25,7 @@ function WorkCard({ project, onOpen, colIdx }: {
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {/* Image — blur-to-clean on scroll enter */}
+      {/* Image — blur-to-clean on scroll */}
       <motion.div
         animate={inView
           ? { filter: "blur(0px)", opacity: 1, y: 0 }
@@ -41,21 +41,21 @@ function WorkCard({ project, onOpen, colIdx }: {
         />
       </motion.div>
 
-      {/* Acrylic title bar — slides DOWN from top on hover */}
+      {/* White acrylic bar — slides down from top on hover (80% height padding) */}
       <motion.div
         animate={{ y: hovered ? "0%" : "-100%" }}
         initial={{ y: "-100%" }}
-        transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
-          padding: "16px 20px",
-          background: "rgba(10,10,10,0.72)",
+          padding: "9px 16px",
+          background: "rgba(255,255,255,0.88)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          borderBottom: "1px solid rgba(240,237,232,0.07)",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -66,9 +66,9 @@ function WorkCard({ project, onOpen, colIdx }: {
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(18px, 1.8vw, 28px)",
+          fontSize: "clamp(16px, 1.6vw, 24px)",
           letterSpacing: "-0.01em",
-          color: "#F0EDE8",
+          color: "#0A0A0A",
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
@@ -78,9 +78,9 @@ function WorkCard({ project, onOpen, colIdx }: {
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(12px, 1vw, 15px)",
-          letterSpacing: "0.05em",
-          color: "rgba(240,237,232,0.5)",
+          fontSize: "clamp(11px, 0.9vw, 13px)",
+          letterSpacing: "0.04em",
+          color: "rgba(10,10,10,0.5)",
           flexShrink: 0,
         }}>
           {fmtDate(project.month, project.year)}
@@ -96,16 +96,22 @@ interface WorksGridProps {
 }
 
 export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
+  const [cols, setCols] = useState(2);
+
+  useEffect(() => {
+    const update = () => setCols(window.innerWidth < 640 ? 1 : 2);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   if (projects.length === 0) return null;
 
   return (
-    <section style={{
-      padding: "0",
-      background: "#0A0A0A",
-    }}>
+    <section style={{ padding: 0, background: "#0A0A0A" }}>
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)",
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
         gap: "clamp(3px, 0.4vw, 6px)",
       }}>
         {projects.map((p, i) => (
@@ -113,7 +119,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
             key={p.id}
             project={p}
             onOpen={onOpen}
-            colIdx={i % 2}
+            colIdx={i % cols}
           />
         ))}
       </div>

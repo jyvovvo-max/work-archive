@@ -81,15 +81,15 @@ export default function Page() {
   };
 
   return (
-    <div style={{ background: "#0A0A0A", color: "#F0EDE8" }}>
+    <div style={{ color: "#F0EDE8" }}>
       <Header
         onViewAll={() => setGridOpen(true)}
         onAbout={scrollToAbout}
         onContact={scrollToContact}
       />
 
-      {/* Hero — sticky: stays fixed while grid scrolls over it */}
-      <div style={{ position: "sticky", top: 0, height: "100vh", zIndex: 1 }}>
+      {/* Hero — fixed in background, always at z:0 */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 0 }}>
         <HeroSection
           projects={sortedSelectedWorks}
           siteData={siteData}
@@ -100,7 +100,10 @@ export default function Page() {
         />
       </div>
 
-      {/* Scrolling content — higher z-index, slides up over the hero */}
+      {/* Spacer — reserves 100vh so scroll starts below hero */}
+      <div style={{ height: "100vh" }} />
+
+      {/* Scrolling content — z:2, background covers the fixed hero as it slides up */}
       <div style={{ position: "relative", zIndex: 2, background: "#0A0A0A" }}>
         <WorksGrid
           projects={gridProjects}

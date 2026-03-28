@@ -4,16 +4,21 @@ import { motion } from "framer-motion";
 import { Project, SiteData } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
-const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
 const ACCENT = "#0524FF";
 
-// 5 cards centered around screen middle — 80% of previous sizes
+// 9 cards spread evenly across the full screen
+// Between title (top ~7-20vh) and description (bottom ~72-90vh)
+// Cards can overlap text up to 30%
 const SCATTER = [
-  { left: "20vw", top: "20vh", w: "22vw", rotate: -7 },
-  { left: "38vw", top: "10vh", w: "26vw", rotate:  4 },
-  { left: "52vw", top: "28vh", w: "20vw", rotate: -3 },
-  { left: "24vw", top: "44vh", w: "18vw", rotate:  8 },
-  { left: "42vw", top: "36vh", w: "22vw", rotate: -6 },
+  { left: "2vw",  top: "22vh", w: "19vw", rotate: -5 },
+  { left: "22vw", top: "15vh", w: "22vw", rotate:  4 },
+  { left: "46vw", top: "20vh", w: "18vw", rotate: -2 },
+  { left: "68vw", top: "13vh", w: "21vw", rotate:  6 },
+  { left: "5vw",  top: "52vh", w: "20vw", rotate: -7 },
+  { left: "28vw", top: "44vh", w: "18vw", rotate:  3 },
+  { left: "50vw", top: "48vh", w: "22vw", rotate: -5 },
+  { left: "72vw", top: "42vh", w: "19vw", rotate:  8 },
+  { left: "16vw", top: "68vh", w: "20vw", rotate: -3 },
 ];
 
 interface HeroProps {
@@ -26,12 +31,7 @@ interface HeroProps {
 }
 
 function DraggableCard({
-  project,
-  pos,
-  zIndex,
-  delay,
-  onDragStart,
-  onOpen,
+  project, pos, zIndex, delay, onDragStart, onOpen,
 }: {
   project: Project;
   pos: typeof SCATTER[number];
@@ -47,10 +47,9 @@ function DraggableCard({
       drag
       dragMomentum={false}
       onDragStart={onDragStart}
-      // Each card blurs-to-clean individually, staggered
       initial={{ filter: "blur(24px)", opacity: 0, rotate: pos.rotate }}
       animate={{ filter: "blur(0px)", opacity: 1, rotate: pos.rotate }}
-      transition={{ delay, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ delay, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       style={{
@@ -58,20 +57,20 @@ function DraggableCard({
         left: pos.left,
         top: pos.top,
         width: pos.w,
-        minWidth: "120px",
-        maxWidth: "380px",
+        minWidth: "100px",
+        maxWidth: "360px",
         zIndex,
         cursor: "grab",
         userSelect: "none",
       }}
     >
       <motion.div
-        whileDrag={{ boxShadow: `0 0 0 1.5px ${ACCENT}, 0 20px 56px rgba(0,0,0,0.75)` }}
+        whileDrag={{ boxShadow: `0 0 0 1.5px ${ACCENT}, 0 20px 56px rgba(0,0,0,0.35)` }}
         style={{
           position: "relative",
           borderRadius: "2px",
           overflow: "hidden",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          boxShadow: "0 6px 24px rgba(0,0,0,0.22)",
         }}
       >
         <img
@@ -80,25 +79,23 @@ function DraggableCard({
           draggable={false}
           style={{ width: "100%", height: "auto", display: "block" }}
         />
-
-        {/* + button — top right, appears on hover */}
+        {/* + button top-right on hover */}
         <motion.button
           animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.75 }}
-          transition={{ duration: 0.16 }}
+          transition={{ duration: 0.15 }}
           onClick={(e) => { e.stopPropagation(); onOpen(project); }}
           style={{
             position: "absolute",
             top: "8px",
             right: "8px",
-            width: "30px",
-            height: "30px",
+            width: "28px",
+            height: "28px",
             borderRadius: "50%",
-            background: "rgba(10,10,10,0.88)",
-            border: "1px solid rgba(240,237,232,0.35)",
-            color: "#F0EDE8",
+            background: "rgba(10,10,10,0.8)",
+            border: "1px solid rgba(255,255,255,0.3)",
+            color: "#fff",
             fontFamily: FONT,
-            fontSize: "18px",
-            lineHeight: 1,
+            fontSize: "16px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -113,9 +110,7 @@ function DraggableCard({
   );
 }
 
-export default function HeroSection({
-  projects, siteData, onOpenProject,
-}: HeroProps) {
+export default function HeroSection({ projects, siteData, onOpenProject }: HeroProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [zMap, setZMap] = useState<Record<number, number>>({});
   const zCounter = useRef(20);
@@ -132,11 +127,9 @@ export default function HeroSection({
     setZMap(prev => ({ ...prev, [id]: zCounter.current }));
   };
 
-  const title = siteData?.landingTitle || "Work\u00A0Archive";
+  const title = siteData?.landingTitle || "Work Archive";
   const desc = siteData?.landingDescription || "";
-
-  // Only first 5 for hero cards
-  const heroProjects = projects.slice(0, 5);
+  const heroProjects = projects.slice(0, 9);
 
   return (
     <section style={{
@@ -144,10 +137,10 @@ export default function HeroSection({
       width: "100%",
       height: "100vh",
       overflow: "hidden",
-      background: "#0A0A0A",
+      background: "#F0F0F0",
     }}>
 
-      {/* ── LAYER 1: Typography ── */}
+      {/* ── Typography layer ── */}
       <div style={{
         position: "absolute",
         inset: 0,
@@ -155,12 +148,12 @@ export default function HeroSection({
         flexDirection: "column",
         justifyContent: "space-between",
         padding: isMobile
-          ? "clamp(56px, 11vh, 90px) clamp(16px, 4vw, 32px) clamp(40px, 7vh, 72px)"
-          : "clamp(64px, 11vh, 110px) clamp(24px, 4vw, 56px) clamp(48px, 8vh, 88px)",
+          ? "clamp(56px, 10vh, 80px) clamp(16px, 4vw, 32px) clamp(36px, 6vh, 60px)"
+          : "clamp(54px, 7vh, 66px) clamp(24px, 4vw, 56px) clamp(44px, 7vh, 72px)",
         zIndex: 1,
         pointerEvents: "none",
       }}>
-        {/* Title — sized to fit in one line within viewport */}
+        {/* Title — sized to fit one line */}
         <motion.h1
           initial={{ filter: "blur(28px)", opacity: 0 }}
           animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -168,11 +161,14 @@ export default function HeroSection({
           style={{
             fontFamily: FONT,
             fontWeight: 300,
-            // 13vw ensures "Work Archive" (≈6.7em wide) fits within padded viewport
-            fontSize: isMobile ? "clamp(52px, 17vw, 96px)" : "13vw",
+            // calc fits "Work Archive" (~6.7em) within padded viewport
+            fontSize: isMobile
+              ? "clamp(44px, 14vw, 80px)"
+              : "calc((100vw - clamp(48px, 8vw, 112px)) / 6.9)",
             letterSpacing: "-0.045em",
+            wordSpacing: "-0.3em",
             lineHeight: 0.88,
-            color: "#F0EDE8",
+            color: "#0A0A0A",
             margin: 0,
             whiteSpace: "nowrap",
           }}
@@ -180,19 +176,20 @@ export default function HeroSection({
           {title}
         </motion.h1>
 
-        {/* Large description at bottom */}
+        {/* Description — same font as title */}
         <motion.p
           initial={{ filter: "blur(18px)", opacity: 0 }}
           animate={{ filter: "blur(0px)", opacity: 1 }}
           transition={{ delay: 0.25, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            fontFamily: FONT_KR,
+            fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "clamp(15px, 4.5vw, 24px)" : "clamp(20px, 2.8vw, 44px)",
-            lineHeight: 1.35,
-            color: "rgba(240,237,232,0.32)",
+            fontSize: isMobile ? "clamp(12px, 3.5vw, 20px)" : "clamp(16px, 2vw, 32px)",
+            lineHeight: 1.4,
+            letterSpacing: "-0.01em",
+            color: "rgba(10,10,10,0.38)",
             margin: 0,
-            maxWidth: isMobile ? "100%" : "78vw",
+            maxWidth: isMobile ? "100%" : "76vw",
             wordBreak: "keep-all",
           }}
         >
@@ -200,48 +197,18 @@ export default function HeroSection({
         </motion.p>
       </div>
 
-      {/* ── LAYER 2: 5 draggable cards, one-by-one blur-to-clean ── */}
+      {/* ── 9 draggable cards (desktop only) ── */}
       {!isMobile && heroProjects.map((project, i) => (
         <DraggableCard
           key={project.id}
           project={project}
-          pos={SCATTER[i]}
+          pos={SCATTER[i % SCATTER.length]}
           zIndex={zMap[project.id] ?? (10 + i)}
-          delay={0.1 + i * 0.28}
+          delay={0.1 + i * 0.18}
           onDragStart={() => bringToFront(project.id)}
           onOpen={onOpenProject}
         />
       ))}
-
-      {/* Mobile: horizontal scroll strip */}
-      {isMobile && projects.length > 0 && (
-        <div style={{
-          position: "absolute",
-          top: "50%",
-          left: 0,
-          right: 0,
-          transform: "translateY(-50%)",
-          zIndex: 5,
-          display: "flex",
-          gap: "10px",
-          padding: "0 16px",
-          overflowX: "auto",
-          scrollbarWidth: "none",
-        }}>
-          {projects.slice(0, 5).map((project, i) => (
-            <motion.div
-              key={project.id}
-              initial={{ filter: "blur(16px)", opacity: 0 }}
-              animate={{ filter: "blur(0px)", opacity: 1 }}
-              transition={{ delay: 0.1 + i * 0.2, duration: 1.1 }}
-              onClick={() => onOpenProject(project)}
-              style={{ flexShrink: 0, width: "140px", borderRadius: "2px", overflow: "hidden", cursor: "pointer" }}
-            >
-              <img src={project.img} alt={project.title} style={{ width: "100%", height: "auto", display: "block" }} />
-            </motion.div>
-          ))}
-        </div>
-      )}
     </section>
   );
 }

@@ -36,7 +36,7 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
 
   const handleLeave = () => {
     if (isMobile) return;
-    hideTimer.current = setTimeout(() => setVisible(false), 1400);
+    hideTimer.current = setTimeout(() => setVisible(false), 250);
   };
   const handleEnter = () => clearTimeout(hideTimer.current);
 
