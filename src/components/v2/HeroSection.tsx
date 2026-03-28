@@ -8,31 +8,21 @@ const ACCENT = "#0524FF";
 
 type ScatterPos = { left: string; top: string; w: string; rotate: number };
 
-// ── Layout: 3 rows (3 + 4 + 3 = 10 cards), random variation per refresh ──
-// Base positions keep adjacent-card overlap ≤ 30%.
-// Random offset is bounded so the constraint isn't violated.
-function generateRow(
-  baseXs: number[],
-  baseY: number,
-  wBase: number,
-): ScatterPos[] {
-  return baseXs.map(bx => ({
-    left: `${Math.max(1, bx + (Math.random() - 0.5) * 5)}vw`,
-    top:  `${Math.max(8, baseY + (Math.random() - 0.5) * 7)}vh`,
-    w:    `${Math.max(14, wBase + (Math.random() - 0.5) * 4)}vw`,
-    rotate: (Math.random() - 0.5) * 14,
-  }));
+// ── Gaussian cluster: images pile naturally in the center ──
+// Uses Central Limit Theorem (avg of 4 randoms ≈ normal distribution).
+// Result: dense overlap in center, a few cards extending to edges — like
+// photos casually thrown on a table.
+function gauss(): number {
+  return (Math.random() + Math.random() + Math.random() + Math.random()) / 4;
 }
 
 function makeScatter(): ScatterPos[] {
-  return [
-    // Row 1 (top, 3 cards) — Y ≈ 12vh, covers title-overlap zone
-    ...generateRow([5, 30, 57], 12, 22),
-    // Row 2 (middle, 4 cards) — Y ≈ 34vh
-    ...generateRow([3, 25, 46, 67], 34, 19),
-    // Row 3 (bottom, 3 cards) — Y ≈ 54vh
-    ...generateRow([8, 36, 61], 54, 21),
-  ];
+  return Array.from({ length: 10 }, () => ({
+    left:   `${Math.max(8,  Math.min(65, 40 + (gauss() - 0.5) * 62))}vw`,
+    top:    `${Math.max(20, Math.min(72, 46 + (gauss() - 0.5) * 54))}vh`,
+    w:      `${Math.max(15, Math.min(27, 20 + (gauss() - 0.5) * 10))}vw`,
+    rotate: (Math.random() - 0.5) * 40,
+  }));
 }
 
 interface HeroProps {
@@ -194,7 +184,7 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
       position: "relative",
       width: "100%",
       height: "100vh",
-      overflow: "hidden",
+      overflow: "clip",   // clip ≠ hidden: clips visually but doesn't create a scroll container
       background: "#F0F0F0",
     }}>
 
