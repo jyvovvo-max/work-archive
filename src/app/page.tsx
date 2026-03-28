@@ -81,30 +81,36 @@ export default function Page() {
   };
 
   return (
-    <div style={{ background: "#0A0A0A", color: "#F0EDE8", minHeight: "100vh" }}>
+    <div style={{ background: "#0A0A0A", color: "#F0EDE8" }}>
       <Header
         onViewAll={() => setGridOpen(true)}
         onAbout={scrollToAbout}
         onContact={scrollToContact}
       />
 
-      <HeroSection
-        projects={sortedSelectedWorks}
-        siteData={siteData}
-        categories={categories}
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        onOpenProject={setSelected}
-      />
+      {/* Hero — sticky: stays fixed while grid scrolls over it */}
+      <div style={{ position: "sticky", top: 0, height: "100vh", zIndex: 1 }}>
+        <HeroSection
+          projects={sortedSelectedWorks}
+          siteData={siteData}
+          categories={categories}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          onOpenProject={setSelected}
+        />
+      </div>
 
-      <WorksGrid
-        projects={gridProjects}
-        onOpen={setSelected}
-      />
+      {/* Scrolling content — higher z-index, slides up over the hero */}
+      <div style={{ position: "relative", zIndex: 2, background: "#0A0A0A" }}>
+        <WorksGrid
+          projects={gridProjects}
+          onOpen={setSelected}
+        />
 
-      <AboutSection ref={aboutRef} siteData={siteData} />
+        <AboutSection ref={aboutRef} siteData={siteData} />
 
-      <Footer />
+        <Footer />
+      </div>
 
       <AnimatePresence>
         {selected && (
