@@ -75,7 +75,7 @@ function rowToProject(row: Record<string, string>): Project | null {
     images: imageCount > 0 ? cldImgs(row.folder, imageCount) : undefined,
     pairs: row.pairs || undefined,
     videoUrl: row.videoUrl || undefined,
-    selected: row.selected?.toUpperCase() === "TRUE",
+    selected: row.selected ? row.selected.toUpperCase() === "TRUE" : true,
   };
 }
 

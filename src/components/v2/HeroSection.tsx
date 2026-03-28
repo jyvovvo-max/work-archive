@@ -7,18 +7,18 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
 const ACCENT = "#0524FF";
 
-// Cards scattered across the hero — intentionally overlap with the title area
+// Cards scattered across the entire hero — overlap both title and description
 const SCATTER = [
-  { left: "3vw",  top: "18vh", w: "18vw", rotate: -6  },
-  { left: "60vw", top: "4vh",  w: "22vw", rotate: 4   },
-  { left: "74vw", top: "38vh", w: "16vw", rotate: -3  },
-  { left: "2vw",  top: "56vh", w: "14vw", rotate: 8   },
-  { left: "46vw", top: "52vh", w: "19vw", rotate: -5  },
-  { left: "28vw", top: "6vh",  w: "17vw", rotate: 3   },
-  { left: "80vw", top: "60vh", w: "13vw", rotate: -9  },
-  { left: "12vw", top: "62vh", w: "20vw", rotate: 7   },
-  { left: "38vw", top: "22vh", w: "15vw", rotate: -4  },
-  { left: "58vw", top: "30vh", w: "16vw", rotate: 6   },
+  { left: "2vw",  top: "8vh",  w: "17vw", rotate: -5  },
+  { left: "63vw", top: "3vh",  w: "23vw", rotate: 4   },
+  { left: "76vw", top: "42vh", w: "16vw", rotate: -3  },
+  { left: "1vw",  top: "52vh", w: "15vw", rotate: 7   },
+  { left: "44vw", top: "50vh", w: "20vw", rotate: -5  },
+  { left: "27vw", top: "5vh",  w: "18vw", rotate: 3   },
+  { left: "81vw", top: "64vh", w: "14vw", rotate: -9  },
+  { left: "13vw", top: "60vh", w: "21vw", rotate: 6   },
+  { left: "37vw", top: "20vh", w: "16vw", rotate: -4  },
+  { left: "55vw", top: "28vh", w: "17vw", rotate: 5   },
 ];
 
 interface HeroProps {
@@ -31,7 +31,7 @@ interface HeroProps {
 }
 
 export default function HeroSection({
-  projects, siteData, categories, activeCategory, onCategoryChange, onOpenProject,
+  projects, siteData, onOpenProject,
 }: HeroProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [zMap, setZMap] = useState<Record<number, number>>({});
@@ -50,9 +50,7 @@ export default function HeroSection({
   };
 
   const title = siteData?.landingTitle || "Work Archive";
-  const subtitle = siteData?.landingSubtitle || "2015–Present";
   const desc = siteData?.landingDescription || "";
-  const allCats = ["All", ...categories];
 
   return (
     <section style={{
@@ -63,19 +61,20 @@ export default function HeroSection({
       background: "#0A0A0A",
     }}>
 
-      {/* ── LAYER 1: Massive title (background) ── */}
+      {/* ── LAYER 1: Typography (title top + description bottom) ── */}
       <div style={{
         position: "absolute",
         inset: 0,
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-start",
+        justifyContent: "space-between",
         padding: isMobile
-          ? "clamp(64px, 12vh, 100px) clamp(16px, 4vw, 40px) 0"
-          : "clamp(72px, 14vh, 120px) clamp(24px, 4vw, 56px) 0",
+          ? "clamp(56px, 11vh, 90px) clamp(16px, 4vw, 32px) clamp(40px, 7vh, 72px)"
+          : "clamp(64px, 11vh, 110px) clamp(24px, 4vw, 56px) clamp(48px, 8vh, 88px)",
         zIndex: 1,
         pointerEvents: "none",
       }}>
+        {/* Big title */}
         <motion.h1
           initial={{ filter: "blur(28px)", opacity: 0 }}
           animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -84,19 +83,41 @@ export default function HeroSection({
             fontFamily: FONT,
             fontWeight: 300,
             fontSize: isMobile
-              ? "clamp(52px, 16vw, 96px)"
-              : "clamp(80px, 14.5vw, 220px)",
+              ? "clamp(52px, 17vw, 100px)"
+              : "clamp(96px, 17.5vw, 300px)",
             letterSpacing: "-0.045em",
             lineHeight: 0.88,
             color: "#F0EDE8",
             margin: 0,
+            whiteSpace: "nowrap",
           }}
         >
           {title}
         </motion.h1>
+
+        {/* Large description text at bottom */}
+        <motion.p
+          initial={{ filter: "blur(18px)", opacity: 0 }}
+          animate={{ filter: "blur(0px)", opacity: 1 }}
+          transition={{ delay: 0.25, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            fontFamily: FONT_KR,
+            fontWeight: 300,
+            fontSize: isMobile
+              ? "clamp(15px, 4.5vw, 26px)"
+              : "clamp(22px, 3.2vw, 48px)",
+            lineHeight: 1.35,
+            color: "rgba(240,237,232,0.32)",
+            margin: 0,
+            maxWidth: isMobile ? "100%" : "80vw",
+            wordBreak: "keep-all",
+          }}
+        >
+          {desc}
+        </motion.p>
       </div>
 
-      {/* ── LAYER 2: Floating draggable cards (on top of title) ── */}
+      {/* ── LAYER 2: Floating draggable cards (on top of everything) ── */}
       {!isMobile && projects.slice(0, SCATTER.length).map((project, i) => {
         const pos = SCATTER[i % SCATTER.length];
         return (
@@ -107,14 +128,14 @@ export default function HeroSection({
             onDragStart={() => bringToFront(project.id)}
             initial={{ filter: "blur(20px)", opacity: 0, rotate: pos.rotate }}
             animate={{ filter: "blur(0px)", opacity: 1, rotate: pos.rotate }}
-            transition={{ delay: 0.2 + i * 0.08, duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ delay: 0.2 + i * 0.07, duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: "absolute",
               left: pos.left,
               top: pos.top,
               width: pos.w,
               minWidth: "100px",
-              maxWidth: "280px",
+              maxWidth: "300px",
               zIndex: zMap[project.id] ?? (10 + i),
               cursor: "grab",
               userSelect: "none",
@@ -162,102 +183,7 @@ export default function HeroSection({
         );
       })}
 
-      {/* ── LAYER 3: Bottom info (subtitle + description) ── */}
-      <div style={{
-        position: "absolute",
-        bottom: isMobile ? "72px" : "clamp(48px, 8vh, 80px)",
-        left: isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(24px, 4vw, 56px)",
-        right: isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(24px, 4vw, 56px)",
-        zIndex: 2,
-        display: "flex",
-        flexDirection: isMobile ? "column" : "row",
-        alignItems: isMobile ? "flex-start" : "flex-end",
-        justifyContent: "space-between",
-        gap: isMobile ? "12px" : "0",
-        pointerEvents: "none",
-      }}>
-        <motion.span
-          initial={{ filter: "blur(12px)", opacity: 0 }}
-          animate={{ filter: "blur(0px)", opacity: 1 }}
-          transition={{ delay: 0.2, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: "clamp(11px, 1.1vw, 14px)",
-            letterSpacing: "0.16em",
-            color: "rgba(240,237,232,0.3)",
-          }}
-        >
-          {subtitle}
-        </motion.span>
-
-        <motion.p
-          initial={{ filter: "blur(12px)", opacity: 0, y: 10 }}
-          animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            fontFamily: FONT_KR,
-            fontWeight: 300,
-            fontSize: "clamp(11px, 0.82vw, 13px)",
-            lineHeight: 1.85,
-            color: "rgba(240,237,232,0.38)",
-            maxWidth: isMobile ? "100%" : "380px",
-            margin: 0,
-            pointerEvents: "auto",
-            wordBreak: "keep-all",
-          }}
-        >
-          {desc}
-        </motion.p>
-      </div>
-
-      {/* ── LAYER 4: Category filter (bottom) ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.55, duration: 1.0 }}
-        style={{
-          position: "absolute",
-          bottom: isMobile ? "16px" : "clamp(16px, 2.5vh, 28px)",
-          left: isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(24px, 4vw, 56px)",
-          right: isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(24px, 4vw, 56px)",
-          zIndex: 3,
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "clamp(10px, 1.6vw, 20px)",
-          alignItems: "center",
-        }}
-      >
-        {allCats.map(cat => {
-          const isAll = cat === "All";
-          const isActive = isAll ? activeCategory === null : activeCategory === cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => onCategoryChange(isAll ? null : cat)}
-              style={{
-                fontFamily: FONT,
-                fontWeight: 300,
-                fontSize: "10px",
-                letterSpacing: "0.07em",
-                color: isActive ? "#F0EDE8" : "rgba(240,237,232,0.22)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "2px 0",
-                transition: "color 0.2s",
-                whiteSpace: "nowrap",
-              }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = "rgba(240,237,232,0.5)"; }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = "rgba(240,237,232,0.22)"; }}
-            >
-              _{cat}
-            </button>
-          );
-        })}
-      </motion.div>
-
-      {/* Mobile: show project thumbnails in a horizontal scroll strip */}
+      {/* Mobile: horizontal scroll strip */}
       {isMobile && projects.length > 0 && (
         <div style={{
           position: "absolute",

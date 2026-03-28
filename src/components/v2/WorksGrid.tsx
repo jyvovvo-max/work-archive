@@ -4,18 +4,17 @@ import { motion, useInView } from "framer-motion";
 import { Project } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
-const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtDate = (month: string, year: string) =>
   `${MONTHS[Math.max(0, parseInt(month, 10) - 1)]}, ${year}`;
 
-function WorkCard({ project, onOpen, col }: {
+function WorkCard({ project, onOpen, colIdx }: {
   project: Project;
   onOpen: (p: Project) => void;
-  col: number;
+  colIdx: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-6% 0px" });
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -31,20 +30,20 @@ function WorkCard({ project, onOpen, col }: {
         <motion.div
           animate={inView
             ? { filter: "blur(0px)", opacity: 1, y: 0 }
-            : { filter: "blur(14px)", opacity: 0, y: 24 }
+            : { filter: "blur(14px)", opacity: 0, y: 32 }
           }
-          initial={{ filter: "blur(14px)", opacity: 0, y: 24 }}
+          initial={{ filter: "blur(14px)", opacity: 0, y: 32 }}
           transition={{
-            duration: 1.0,
-            delay: (col % 3) * 0.08,
+            duration: 1.1,
+            delay: colIdx * 0.1,
             ease: [0.16, 1, 0.3, 1],
           }}
         >
           <motion.img
             src={project.img}
             alt={project.title}
-            animate={{ scale: hovered ? 1.035 : 1 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            animate={{ scale: hovered ? 1.03 : 1 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             style={{ width: "100%", height: "auto", display: "block" }}
           />
         </motion.div>
@@ -52,18 +51,15 @@ function WorkCard({ project, onOpen, col }: {
 
       {/* Meta row */}
       <motion.div
-        animate={inView
-          ? { opacity: 1, y: 0 }
-          : { opacity: 0, y: 10 }
-        }
+        animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{
           duration: 0.65,
-          delay: 0.18 + (col % 3) * 0.08,
+          delay: 0.15 + colIdx * 0.1,
           ease: [0.16, 1, 0.3, 1],
         }}
         style={{
-          padding: "10px 0 6px",
+          padding: "12px 0 8px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
@@ -79,7 +75,7 @@ function WorkCard({ project, onOpen, col }: {
               display: "block",
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "12px",
+              fontSize: "13px",
               letterSpacing: "0.01em",
               color: "#F0EDE8",
               whiteSpace: "nowrap",
@@ -96,7 +92,7 @@ function WorkCard({ project, onOpen, col }: {
               display: "block",
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "12px",
+              fontSize: "13px",
               letterSpacing: "0.01em",
               color: "rgba(240,237,232,0.55)",
               whiteSpace: "nowrap",
@@ -112,7 +108,7 @@ function WorkCard({ project, onOpen, col }: {
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "10px",
+          fontSize: "11px",
           letterSpacing: "0.05em",
           color: "rgba(240,237,232,0.26)",
           flexShrink: 0,
@@ -146,40 +142,21 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
 
   return (
     <section style={{
-      padding: "clamp(64px, 9vh, 128px) clamp(20px, 4vw, 56px) clamp(80px, 10vh, 140px)",
+      padding: "clamp(72px, 10vh, 140px) clamp(20px, 4vw, 56px) clamp(80px, 10vh, 140px)",
       background: "#0A0A0A",
     }}>
-      {/* Section label */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
-        viewport={{ once: true }}
-        style={{
-          fontFamily: FONT,
-          fontWeight: 300,
-          fontSize: "10px",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "rgba(240,237,232,0.2)",
-          marginBottom: "clamp(32px, 4vw, 52px)",
-        }}
-      >
-        _Selected Works
-      </motion.div>
-
       {/* Grid */}
       <div style={{
         display: "grid",
         gridTemplateColumns: `repeat(${cols}, 1fr)`,
-        gap: `clamp(40px, 5vh, 72px) clamp(12px, 2vw, 24px)`,
+        gap: `clamp(48px, 6vh, 88px) clamp(16px, 2.5vw, 32px)`,
       }}>
         {projects.map((p, i) => (
           <WorkCard
             key={p.id}
             project={p}
             onOpen={onOpen}
-            col={i % cols}
+            colIdx={i % cols}
           />
         ))}
       </div>
