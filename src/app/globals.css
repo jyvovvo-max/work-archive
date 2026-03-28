@@ -11,12 +11,10 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  background: #000;
-  color: #fff;
-  font-family: var(--font-display);
+  overflow-x: hidden;
+  background: #0A0A0A;
+  color: #F0EDE8;
+  font-family: 'JetBrains Mono', 'Noto Sans KR', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
