@@ -14,6 +14,8 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
   const [visible, setVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Prevent mousemove from re-showing right after user leaves the header
+  const suppressRef = useRef(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -25,7 +27,7 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
   useEffect(() => {
     if (isMobile) return;
     const onMove = (e: MouseEvent) => {
-      if (e.clientY < 56) {
+      if (e.clientY < 52 && !suppressRef.current) {
         clearTimeout(hideTimer.current);
         setVisible(true);
       }
@@ -34,12 +36,18 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
     return () => window.removeEventListener("mousemove", onMove);
   }, [isMobile]);
 
-  // Disappear immediately when mouse leaves header area
   const handleLeave = () => {
     if (isMobile) return;
+    // Suppress re-show for 500ms so mousemove doesn't immediately flip back
+    suppressRef.current = true;
     setVisible(false);
+    hideTimer.current = setTimeout(() => { suppressRef.current = false; }, 500);
   };
-  const handleEnter = () => clearTimeout(hideTimer.current);
+
+  const handleEnter = () => {
+    clearTimeout(hideTimer.current);
+    suppressRef.current = false;
+  };
 
   const show = isMobile || visible;
 
@@ -65,7 +73,6 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "0 clamp(20px, 4vw, 56px)",
-            // Light acrylic with black outline
             background: "rgba(240,240,240,0.82)",
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",

@@ -52,7 +52,7 @@ function WorkCard({ project, onOpen, colIdx }: {
           left: 0,
           right: 0,
           padding: "9px 16px",
-          background: "rgba(255,255,255,0.88)",
+          background: "rgba(255,255,255,0.70)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
           borderBottom: "1px solid rgba(0,0,0,0.06)",

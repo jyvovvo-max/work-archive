@@ -103,15 +103,17 @@ export default function Page() {
       {/* Spacer — reserves 100vh so scroll starts below hero */}
       <div style={{ height: "100vh" }} />
 
-      {/* Scrolling content — z:2, background covers the fixed hero as it slides up */}
-      <div style={{ position: "relative", zIndex: 2, background: "#0A0A0A" }}>
+      {/* WorksGrid — sticky at top, About will slide over it */}
+      <div style={{ position: "sticky", top: 0, zIndex: 2, background: "#F0F0F0" }}>
         <WorksGrid
-          projects={gridProjects}
+          projects={gridProjects.slice(0, 10)}
           onOpen={setSelected}
         />
+      </div>
 
+      {/* About + Footer — z:3, higher layer slides up over WorksGrid */}
+      <div style={{ position: "relative", zIndex: 3, background: "#F0F0F0" }}>
         <AboutSection ref={aboutRef} siteData={siteData} />
-
         <Footer />
       </div>
 
