@@ -108,37 +108,36 @@ export default function GridViewOverlay({ projects, categories, onClose, onOpen 
         scrollbarWidth: "none", color: "#0A0A0A",
       }}
     >
-      {/* Sticky header: [←] + category filters */}
+      {/* Sticky header: [←] flush-left + category filters */}
       <div style={{
         position: "sticky", top: 0, zIndex: 10,
         background: "rgba(240,240,240,0.82)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
         borderBottom: "1px solid rgba(0,0,0,0.15)",
-        padding: "0 clamp(20px, 4vw, 56px)",
         height: "52px",
         display: "flex",
         alignItems: "center",
         gap: "clamp(12px, 2vw, 24px)",
       }}>
-        {/* Square back button — SVG chevron, no < text */}
+        {/* Back button — flush to left edge, full header height */}
         <button
           onClick={onClose}
           style={{
-            width: "32px",
-            height: "32px",
-            border: "1px solid rgba(0,0,0,0.18)",
-            borderRadius: "3px",
+            width: "52px",
+            height: "52px",
+            flexShrink: 0,
+            border: "none",
+            borderRight: "1px solid rgba(0,0,0,0.15)",
             background: "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            flexShrink: 0,
-            transition: "border-color 0.15s",
+            transition: "background 0.15s",
           }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.5)")}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.18)")}
+          onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.04)")}
+          onMouseLeave={e => (e.currentTarget.style.background = "none")}
         >
           <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
             <line x1="8" y1="2" x2="2" y2="8" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round"/>
@@ -153,6 +152,7 @@ export default function GridViewOverlay({ projects, categories, onClose, onOpen 
           flexWrap: "wrap",
           overflow: "hidden",
           flex: 1,
+          paddingRight: "clamp(20px, 4vw, 56px)",
         }}>
           {["All", ...categories].map(cat => {
             const isAll = cat === "All";
