@@ -6,19 +6,17 @@ import { Project, SiteData } from "./types";
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const ACCENT = "#0524FF";
 
-// 10 cards — dense horizontal-rectangle cluster, 1.15x of previous sizes
-const SCATTER = [
-  { left: "18vw", top: "22vh", w: "23vw", rotate: -5 },
-  { left: "33vw", top: "14vh", w: "25vw", rotate:  4 },
-  { left: "52vw", top: "18vh", w: "21vw", rotate: -3 },
-  { left: "66vw", top: "22vh", w: "24vw", rotate:  6 },
-  { left: "22vw", top: "42vh", w: "22vw", rotate:  7 },
-  { left: "40vw", top: "38vh", w: "25vw", rotate: -6 },
-  { left: "60vw", top: "36vh", w: "23vw", rotate:  3 },
-  { left: "28vw", top: "56vh", w: "24vw", rotate: -4 },
-  { left: "50vw", top: "54vh", w: "21vw", rotate:  5 },
-  { left: "67vw", top: "50vh", w: "22vw", rotate: -2 },
-];
+type ScatterPos = { left: string; top: string; w: string; rotate: number };
+
+// Random scatter: X 12-67vw, Y 14-58vh, width 19-26vw, rotation ±8deg
+function makeScatter(count: number): ScatterPos[] {
+  return Array.from({ length: count }, () => ({
+    left: `${12 + Math.random() * 55}vw`,
+    top:  `${14 + Math.random() * 44}vh`,
+    w:    `${19 + Math.random() * 7}vw`,
+    rotate: (Math.random() - 0.5) * 16,
+  }));
+}
 
 interface HeroProps {
   projects: Project[];
@@ -33,7 +31,7 @@ function DraggableCard({
   project, pos, zIndex, delay, onDragStart, onOpen,
 }: {
   project: Project;
-  pos: typeof SCATTER[number];
+  pos: ScatterPos;
   zIndex: number;
   delay: number;
   onDragStart: () => void;
@@ -82,7 +80,6 @@ function DraggableCard({
           transition={{ delay, duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
           style={{ width: "100%", height: "auto", display: "block" }}
         />
-
         <motion.button
           animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.75 }}
           transition={{ duration: 0.15 }}
@@ -117,6 +114,8 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
   const [isMobile, setIsMobile] = useState(false);
   const [zMap, setZMap] = useState<Record<number, number>>({});
   const zCounter = useRef(20);
+  // Randomize positions on each mount (each refresh = new layout)
+  const [scatter] = useState<ScatterPos[]>(() => makeScatter(10));
 
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth < 768);
@@ -131,9 +130,8 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
   };
 
   const title = siteData?.landingTitle || "Work Archive";
-  const desc = siteData?.landingDescription || "";
+  const desc  = siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 10);
-
   const hPad = isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(24px, 4vw, 56px)";
 
   return (
@@ -144,71 +142,121 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
       overflow: "hidden",
       background: "#F0F0F0",
     }}>
-      {/* Title */}
-      <div style={{
-        position: "absolute",
-        top: isMobile ? "clamp(56px, 10vh, 80px)" : "clamp(54px, 7vh, 66px)",
-        left: hPad,
-        right: hPad,
-        zIndex: 1,
-        pointerEvents: "none",
-      }}>
-        <motion.h1
-          initial={{ filter: "blur(28px)", opacity: 0 }}
-          animate={{ filter: "blur(0px)", opacity: 1 }}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: isMobile
-              ? "clamp(44px, 14vw, 80px)"
-              : "calc((100vw - clamp(48px, 8vw, 112px)) / 6.9)",
-            letterSpacing: "-0.045em",
-            wordSpacing: "-0.3em",
-            lineHeight: 0.88,
-            color: "#0A0A0A",
-            margin: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {title}
-        </motion.h1>
-      </div>
 
-      {/* Description */}
-      <div style={{
-        position: "absolute",
-        bottom: isMobile ? "clamp(36px, 6vh, 60px)" : "clamp(44px, 7vh, 72px)",
-        left: hPad,
-        right: hPad,
-        zIndex: 1,
-        pointerEvents: "none",
-      }}>
-        <motion.p
-          initial={{ filter: "blur(18px)", opacity: 0 }}
-          animate={{ filter: "blur(0px)", opacity: 1 }}
-          transition={{ delay: 0.25, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: isMobile ? "clamp(12px, 3.5vw, 20px)" : "clamp(14px, 1.8vw, 28px)",
-            lineHeight: 1.45,
-            letterSpacing: "-0.01em",
-            color: "rgba(10,10,10,0.38)",
-            margin: 0,
-            wordBreak: "keep-all",
-          }}
-        >
-          {desc}
-        </motion.p>
-      </div>
+      {/* Desktop: title top, description bottom — separate positions */}
+      {!isMobile && (
+        <>
+          <div style={{
+            position: "absolute",
+            top: "clamp(54px, 7vh, 66px)",
+            left: hPad,
+            right: hPad,
+            zIndex: 1,
+            pointerEvents: "none",
+          }}>
+            <motion.h1
+              initial={{ filter: "blur(28px)", opacity: 0 }}
+              animate={{ filter: "blur(0px)", opacity: 1 }}
+              transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 6.9)",
+                letterSpacing: "-0.045em",
+                wordSpacing: "-0.3em",
+                lineHeight: 0.88,
+                color: "#0A0A0A",
+                margin: 0,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {title}
+            </motion.h1>
+          </div>
 
-      {/* 10 draggable cards (desktop) */}
+          <div style={{
+            position: "absolute",
+            bottom: "clamp(44px, 7vh, 72px)",
+            left: hPad,
+            right: hPad,
+            zIndex: 1,
+            pointerEvents: "none",
+          }}>
+            <motion.p
+              initial={{ filter: "blur(18px)", opacity: 0 }}
+              animate={{ filter: "blur(0px)", opacity: 1 }}
+              transition={{ delay: 0.25, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: "clamp(14px, 1.8vw, 28px)",
+                lineHeight: 1.45,
+                letterSpacing: "-0.01em",
+                color: "rgba(10,10,10,0.38)",
+                margin: 0,
+                wordBreak: "keep-all",
+              }}
+            >
+              {desc}
+            </motion.p>
+          </div>
+        </>
+      )}
+
+      {/* Mobile: title + description together at top, no gap */}
+      {isMobile && (
+        <div style={{
+          position: "absolute",
+          top: "clamp(56px, 10vh, 80px)",
+          left: hPad,
+          right: hPad,
+          zIndex: 1,
+          pointerEvents: "none",
+        }}>
+          <motion.h1
+            initial={{ filter: "blur(28px)", opacity: 0 }}
+            animate={{ filter: "blur(0px)", opacity: 1 }}
+            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: "clamp(44px, 14vw, 80px)",
+              letterSpacing: "-0.045em",
+              wordSpacing: "-0.3em",
+              lineHeight: 0.88,
+              color: "#0A0A0A",
+              margin: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {title}
+          </motion.h1>
+          <motion.p
+            initial={{ filter: "blur(18px)", opacity: 0 }}
+            animate={{ filter: "blur(0px)", opacity: 1 }}
+            transition={{ delay: 0.25, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: "clamp(12px, 3.5vw, 18px)",
+              lineHeight: 1.45,
+              letterSpacing: "-0.01em",
+              color: "rgba(10,10,10,0.38)",
+              margin: "8px 0 0",
+              wordBreak: "keep-all",
+            }}
+          >
+            {desc}
+          </motion.p>
+        </div>
+      )}
+
+      {/* 10 draggable cards — random position each refresh (desktop only) */}
       {!isMobile && heroProjects.map((project, i) => (
         <DraggableCard
           key={project.id}
           project={project}
-          pos={SCATTER[i % SCATTER.length]}
+          pos={scatter[i % scatter.length]}
           zIndex={zMap[project.id] ?? (10 + i)}
           delay={0.05 + i * 0.14}
           onDragStart={() => bringToFront(project.id)}

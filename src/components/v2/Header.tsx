@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
 interface HeaderProps {
+  onHome: () => void;
   onViewAll: () => void;
   onAbout: () => void;
   onContact: () => void;
 }
 
-export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
+export default function Header({ onHome, onViewAll, onAbout, onContact }: HeaderProps) {
   const [visible, setVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -81,14 +82,18 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
             borderRadius: "0 0 4px 4px",
           }}
         >
-          <span style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: "12px",
-            letterSpacing: "0.06em",
-            color: "#0A0A0A",
-            userSelect: "none",
-          }}>
+          <span
+            onClick={onHome}
+            style={{
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: "12px",
+              letterSpacing: "0.06em",
+              color: "#0A0A0A",
+              userSelect: "none",
+              cursor: "pointer",
+            }}
+          >
             Jinyoung Hwang
           </span>
 

@@ -35,16 +35,14 @@ function GridCard({ project, onClose, onOpen, idx }: {
         alt={project.title}
         style={{ width: "100%", height: "auto", display: "block" }}
       />
-      {/* White acrylic hover bar */}
+      {/* White acrylic hover bar slides from top */}
       <motion.div
         animate={{ y: hovered ? "0%" : "-100%" }}
         initial={{ y: "-100%" }}
         transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
+          top: 0, left: 0, right: 0,
           padding: "8px 12px",
           background: "rgba(255,255,255,0.70)",
           backdropFilter: "blur(24px)",
@@ -58,23 +56,15 @@ function GridCard({ project, onClose, onOpen, idx }: {
         }}
       >
         <span style={{
-          fontFamily: FONT,
-          fontWeight: 300,
-          fontSize: "12px",
-          letterSpacing: "-0.01em",
-          color: "#0A0A0A",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          fontFamily: FONT, fontWeight: 300, fontSize: "12px",
+          letterSpacing: "-0.01em", color: "#0A0A0A",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
         }}>
           {project.title}
         </span>
         <span style={{
-          fontFamily: FONT,
-          fontWeight: 300,
-          fontSize: "10px",
-          color: "rgba(0,0,0,0.45)",
-          flexShrink: 0,
+          fontFamily: FONT, fontWeight: 300, fontSize: "10px",
+          color: "rgba(0,0,0,0.45)", flexShrink: 0,
         }}>
           {project.year}
         </span>
@@ -97,8 +87,11 @@ export default function GridViewOverlay({ projects, categories, onClose, onOpen 
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // Filter: match comma-separated categories
   const filtered = activeCategory
-    ? projects.filter(p => p.category === activeCategory)
+    ? projects.filter(p =>
+        p.category?.split(",").map(c => c.trim()).includes(activeCategory)
+      )
     : projects;
 
   return (
@@ -109,21 +102,15 @@ export default function GridViewOverlay({ projects, categories, onClose, onOpen 
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
       style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 550,
+        position: "fixed", inset: 0, zIndex: 550,
         background: "#F0F0F0",
-        overflowY: "auto",
-        overflowX: "hidden",
-        scrollbarWidth: "none",
-        color: "#0A0A0A",
+        overflowY: "auto", overflowX: "hidden",
+        scrollbarWidth: "none", color: "#0A0A0A",
       }}
     >
-      {/* Sticky header — acrylic + black border */}
+      {/* Sticky header: [←] + category filters */}
       <div style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
+        position: "sticky", top: 0, zIndex: 10,
         background: "rgba(240,240,240,0.82)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
@@ -132,11 +119,41 @@ export default function GridViewOverlay({ projects, categories, onClose, onOpen 
         height: "52px",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
         gap: "clamp(12px, 2vw, 24px)",
       }}>
-        {/* Category filter */}
-        <div style={{ display: "flex", gap: "clamp(10px, 1.8vw, 22px)", flexWrap: "wrap", overflow: "hidden" }}>
+        {/* Square back button — SVG chevron, no < text */}
+        <button
+          onClick={onClose}
+          style={{
+            width: "32px",
+            height: "32px",
+            border: "1px solid rgba(0,0,0,0.18)",
+            borderRadius: "3px",
+            background: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            transition: "border-color 0.15s",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.5)")}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.18)")}
+        >
+          <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+            <line x1="8" y1="2" x2="2" y2="8" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="2" y1="8" x2="8" y2="14" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+
+        {/* Category filters */}
+        <div style={{
+          display: "flex",
+          gap: "clamp(10px, 1.8vw, 22px)",
+          flexWrap: "wrap",
+          overflow: "hidden",
+          flex: 1,
+        }}>
           {["All", ...categories].map(cat => {
             const isAll = cat === "All";
             const isActive = isAll ? activeCategory === null : activeCategory === cat;
@@ -165,28 +182,6 @@ export default function GridViewOverlay({ projects, categories, onClose, onOpen 
             );
           })}
         </div>
-
-        {/* Close */}
-        <button
-          onClick={onClose}
-          style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: "18px",
-            lineHeight: 1,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "rgba(0,0,0,0.3)",
-            padding: "4px",
-            flexShrink: 0,
-            transition: "color 0.18s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#0A0A0A")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(0,0,0,0.3)")}
-        >
-          ✕
-        </button>
       </div>
 
       {/* Grid — 3/2/1 columns, natural image ratios */}

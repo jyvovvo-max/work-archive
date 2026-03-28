@@ -111,7 +111,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
     <section style={{ background: "#F0F0F0" }}>
       {/* "Recent Work" label bar — acrylic with black border */}
       <div style={{
-        padding: "12px clamp(20px, 4vw, 56px)",
+        padding: "20px clamp(20px, 4vw, 56px) 18px",
         background: "rgba(240,240,240,0.82)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
@@ -121,12 +121,11 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "11px",
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "rgba(0,0,0,0.45)",
+          fontSize: "clamp(24px, 2.8vw, 38px)",
+          letterSpacing: "-0.02em",
+          color: "#0A0A0A",
         }}>
-          Recent Work
+          Selected Work
         </span>
       </div>
 

@@ -22,22 +22,27 @@ export default function Page() {
   const aboutRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    // Always start at top on load/refresh
+    window.scrollTo(0, 0);
     fetchProjects().then(setProjects);
     fetchSiteData().then(setSiteData);
   }, []);
 
+  // Split comma-separated categories, deduplicate, sort
   const categories = useMemo(
-    () => [...new Set(projects.map(p => p.category).filter(Boolean))].sort(),
+    () => [...new Set(
+      projects.flatMap(p =>
+        p.category ? p.category.split(",").map(c => c.trim()).filter(Boolean) : []
+      )
+    )].sort(),
     [projects]
   );
 
-  // Selected works for hero + main grid
   const selectedWorks = useMemo(
     () => projects.filter(p => p.selected),
     [projects]
   );
 
-  // Sort selected works by year+month descending (최신순)
   const sortedSelectedWorks = useMemo(
     () => [...selectedWorks].sort((a, b) => {
       const da = parseInt(a.year) * 100 + parseInt(a.month);
@@ -47,15 +52,15 @@ export default function Page() {
     [selectedWorks]
   );
 
-  // Grid filtered by category
   const gridProjects = useMemo(
     () => activeCategory
-      ? sortedSelectedWorks.filter(p => p.category === activeCategory)
+      ? sortedSelectedWorks.filter(p =>
+          p.category?.split(",").map(c => c.trim()).includes(activeCategory)
+        )
       : sortedSelectedWorks,
     [sortedSelectedWorks, activeCategory]
   );
 
-  // Project detail navigation — loops within the current view
   const detailList = gridProjects.length > 0 ? gridProjects : sortedSelectedWorks;
   const detailIdx = selected ? detailList.findIndex(p => p.id === selected.id) : -1;
 
@@ -71,24 +76,20 @@ export default function Page() {
   const nextProject = detailIdx >= 0 ? detailList[(detailIdx + 1) % detailList.length] : undefined;
   const prevProject = detailIdx >= 0 ? detailList[(detailIdx - 1 + detailList.length) % detailList.length] : undefined;
 
-  const scrollToAbout = () => {
-    aboutRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const scrollToContact = () => {
-    // Footer is at the bottom — just scroll to bottom
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  };
+  const scrollToTop  = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToAbout   = () => aboutRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToContact = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 
   return (
-    <div style={{ color: "#F0EDE8" }}>
+    <div style={{ color: "#0A0A0A" }}>
       <Header
+        onHome={scrollToTop}
         onViewAll={() => setGridOpen(true)}
         onAbout={scrollToAbout}
         onContact={scrollToContact}
       />
 
-      {/* Hero — fixed in background, always at z:0 */}
+      {/* Hero — fixed background */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 0 }}>
         <HeroSection
           projects={sortedSelectedWorks}
@@ -100,19 +101,24 @@ export default function Page() {
         />
       </div>
 
-      {/* Spacer — reserves 100vh so scroll starts below hero */}
+      {/* Spacer */}
       <div style={{ height: "100vh" }} />
 
-      {/* WorksGrid — sticky at top, About will slide over it */}
-      <div style={{ position: "sticky", top: 0, zIndex: 2, background: "#F0F0F0" }}>
+      {/* WorksGrid — z:2, slides over hero */}
+      <div style={{ position: "relative", zIndex: 2, background: "#F0F0F0" }}>
         <WorksGrid
           projects={gridProjects.slice(0, 10)}
           onOpen={setSelected}
         />
       </div>
 
-      {/* About + Footer — z:3, higher layer slides up over WorksGrid */}
-      <div style={{ position: "relative", zIndex: 3, background: "#F0F0F0" }}>
+      {/* About + Footer — z:3, slides over WorksGrid */}
+      <div style={{
+        position: "relative",
+        zIndex: 3,
+        background: "#F0F0F0",
+        boxShadow: "0 -12px 40px rgba(0,0,0,0.10)",
+      }}>
         <AboutSection ref={aboutRef} siteData={siteData} />
         <Footer />
       </div>
