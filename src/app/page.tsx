@@ -40,8 +40,17 @@ export default function Page() {
 
   const selectedWorks = useMemo(() => {
     const sel = projects.filter(p => p.selected);
-    // If no project is explicitly marked selected, show all
     return sel.length > 0 ? sel : projects;
+  }, [projects]);
+
+  // Shuffle once on first load — stable until refresh
+  const [randomWorks, setRandomWorks] = useState<typeof projects>([]);
+  const didShuffle = useRef(false);
+  useEffect(() => {
+    if (!didShuffle.current && projects.length > 0) {
+      didShuffle.current = true;
+      setRandomWorks([...projects].sort(() => Math.random() - 0.5).slice(0, 10));
+    }
   }, [projects]);
 
   const sortedSelectedWorks = useMemo(
@@ -108,7 +117,7 @@ export default function Page() {
       {/* WorksGrid — z:2, slides over hero */}
       <div style={{ position: "relative", zIndex: 2, background: "#F0F0F0" }}>
         <WorksGrid
-          projects={gridProjects.slice(0, 10)}
+          projects={randomWorks}
           onOpen={setSelected}
         />
       </div>
