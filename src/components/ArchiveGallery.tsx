@@ -46,8 +46,8 @@ function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile, projects 
 
     const cores = navigator.hardwareConcurrency ?? 4;
     const isLowPerf = isMobile || cores <= 4;
-    const BASE_COUNT = isLowPerf ? 80 : 200;
-    const MAX_STARS  = isLowPerf ? 80 : 2000;
+    const BASE_COUNT = 70;
+    const MAX_STARS  = isLowPerf ? 70 : 400;
     const FRAME_MS   = isLowPerf ? 1000 / 30 : 1000 / 60;
     let lastFrameTime = 0;
 
@@ -57,21 +57,27 @@ function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile, projects 
       return CATEGORY_PALETTES[proj?.category] ?? DEFAULT_PALETTE;
     };
 
+    const ASCII_CHARS = ['.', '·', '·', '*', '+', 'o', 'O', '@'];
+    const STABLE_POOL = ['S','I','Y','U','N','A','H','J','O','G'];
+    const THRESHOLDS  = [3, 15, 40];
+    const Z_SPEEDS    = [0.05, 2.0, 5.0, 11.0];
+    const TRAIL_LENGTHS = [0, 5, 10, 18]; // idle / medium / fast / warp
+
     const newStar = (palette: string[]) => ({
       x: Math.random() * w - w / 2,
       y: Math.random() * h - h / 2,
       z: Math.random() * w,
       o: Math.random() * 0.45 + 0.3,
       c: palette[Math.floor(Math.random() * palette.length)],
+      trail: [] as { px: number; py: number; depth: number }[],
+      settled: STABLE_POOL[Math.floor(Math.random() * STABLE_POOL.length)],
     });
 
     const initPalette = getPalette();
     const stars: any[] = Array.from({ length: BASE_COUNT }, () => newStar(initPalette));
 
-    // idle + 3단계 워프 (느림 제거: idle / 보통 / 빠름 / 아주빠름)
-    const THRESHOLDS  = [3, 15, 40];
-    const Z_SPEEDS    = [0.05, 2.0, 5.0, 11.0];
-    const TRAIL_ALPHA = [0.05, 0.12, 0.18, 0.26];
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
     let smoothedVel = 0;
     let prevRaw = 0;
@@ -117,35 +123,40 @@ function WarpTunnel({ velocity, originX, originY, scrollYMV, isMobile, projects 
         }
       }
 
-      ctx.fillStyle = `rgba(0,0,0,${TRAIL_ALPHA[stage]})`;
+      ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, w, h);
       ctx.translate(originX.get() * w, originY.get() * h);
 
+      const maxTrail = TRAIL_LENGTHS[stage];
+
       for (let s of stars) {
         s.z -= vel;
-        if (s.z <= 0) { Object.assign(s, newStar(palette)); s.z = w; }
-        if (s.z > w)  { Object.assign(s, newStar(palette)); s.z = 1; }
+        if (s.z <= 0) { Object.assign(s, newStar(palette)); s.z = w; continue; }
+        if (s.z > w)  { Object.assign(s, newStar(palette)); s.z = 1; continue; }
 
         const px = s.x / (s.z / w);
         const py = s.y / (s.z / w);
         const depth = 1 - s.z / w;
-        const size = Math.max(0.3, depth * 1.1);
 
-        if (stage >= 3) {
-          const trailMult = vel * 4.5;
-          const prevX = s.x / ((s.z + trailMult) / w);
-          const prevY = s.y / ((s.z + trailMult) / w);
-          ctx.beginPath();
-          ctx.moveTo(px, py);
-          ctx.lineTo(prevX, prevY);
-          ctx.strokeStyle = `rgba(${s.c},${s.o * Math.min(0.9, absSmooth / 80)})`;
-          ctx.lineWidth = Math.max(0.3, size * 0.6);
-          ctx.stroke();
-        } else {
-          ctx.beginPath();
-          ctx.arc(px, py, size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${s.c},${s.o * (0.3 + depth * 0.7)})`;
-          ctx.fill();
+        // trail 기록: maxTrail+1 개 유지 (head 포함)
+        s.trail.push({ px, py, depth });
+        if (s.trail.length > maxTrail + 1) s.trail.shift();
+
+        // tail → head 순서로 그리기
+        // depth 0.75 이상 → settled char(이름 글자)로 수렴, 그 이전은 스크램블
+        const tLen = s.trail.length;
+        for (let t = 0; t < tLen; t++) {
+          const tp = s.trail[t];
+          const tRatio = (t + 1) / tLen;           // 0→1 (tail→head)
+          const tAlpha = s.o * (0.15 + tp.depth * 0.8) * tRatio * tRatio;
+          const tSize  = Math.max(6, tp.depth * 24 * (0.4 + tRatio * 0.6));
+          const scrambleP = Math.max(0, 1 - tp.depth / 0.75);
+          const tChar = Math.random() < scrambleP
+            ? ASCII_CHARS[Math.floor(Math.random() * ASCII_CHARS.length)]
+            : s.settled;
+          ctx.font = `${tSize}px monospace`;
+          ctx.fillStyle = `rgba(${s.c},${tAlpha})`;
+          ctx.fillText(tChar, tp.px, tp.py);
         }
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -265,43 +276,7 @@ const FALLBACK_PROJECTS: Project[] = [
 ];
 
 const CARD_TRAVEL  = 260;
-// Editorial grid: varied aspect ratios per card (id-seeded, stable)
-const GRID_RATIOS = ["4/3", "3/4", "16/9", "1/1", "2/3", "5/4", "3/2", "4/5"];
-const gridRatio = (id: number) => GRID_RATIOS[id % GRID_RATIOS.length];
 
-// Random fade delay per card (seeded, 0–0.7s)
-
-/* ── Mobile Feed ───────────────────────────────────────────── */
-function MobileFeed({ projects, onOpen }: { projects: Project[]; onOpen: (p: Project) => void }) {
-  return (
-    <div style={{
-      position: "absolute", inset: 0, overflowY: "auto",
-      paddingTop: "104px", paddingBottom: "60px",
-      paddingLeft: "16px", paddingRight: "16px",
-      boxSizing: "border-box", scrollbarWidth: "none",
-      zIndex: 1,
-    }}>
-      {projects.map((p, i) => (
-        <motion.div
-          key={p.id}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.04, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          onClick={() => onOpen(p)}
-          style={{ marginBottom: "28px", cursor: "pointer" }}
-        >
-          <div style={{ borderRadius: "4px", overflow: "hidden", aspectRatio: "16/9" }}>
-            <img src={p.img} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-          </div>
-          <div style={{ paddingTop: "8px", display: "flex", justifyContent: "center", alignItems: "baseline", gap: "8px" }}>
-            <span style={{ fontFamily: F, fontSize: "13px", fontWeight: 600, color: "#fff", letterSpacing: "-0.01em" }}>{p.title}</span>
-            <span style={{ fontFamily: F, fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.4)", letterSpacing: "0.03em" }}>{fmtDate(p.month, p.year)}</span>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  );
-}
 
 function Grain({ op = 0.04, z = 10 }: { op?: number; z?: number }) {
   return (
@@ -353,8 +328,9 @@ export default function ArchiveGallery() {
   [projects]);
 
   const [windowWidth, setWindowWidth] = useState(1200);
+  const [windowHeight, setWindowHeight] = useState(812);
   useEffect(() => {
-    const update = () => setWindowWidth(window.innerWidth);
+    const update = () => { setWindowWidth(window.innerWidth); setWindowHeight(window.innerHeight); };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -396,7 +372,7 @@ export default function ArchiveGallery() {
       if (now - lastScrollTime.current < 160) return;
       lastScrollTime.current = now;
       targetIdxRef.current = Math.max(0, Math.min(projectsRef.current.length - 1, targetIdxRef.current + dir));
-      animate(rawScroll, targetIdxRef.current * CARD_TRAVEL, { type: "spring", stiffness: 220, damping: 26 });
+      animate(rawScroll, targetIdxRef.current * CARD_TRAVEL, { type: "spring", stiffness: 155, damping: 17, mass: 1.1 });
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -410,14 +386,14 @@ export default function ArchiveGallery() {
       swipingRef.current = false;
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (selectedRef.current || isMobileRef.current) return;
+      if (selectedRef.current) return;
       if (Math.abs(e.touches[0].clientY - touchStartY.current) > 12) {
         swipingRef.current = true;
         if (view === "coverflow") e.preventDefault();
       }
     };
     const onTouchEnd = (e: TouchEvent) => {
-      if (view !== "coverflow" || selectedRef.current || isMobileRef.current) return;
+      if (view !== "coverflow" || selectedRef.current) return;
       const dy = touchStartY.current - e.changedTouches[0].clientY;
       if (Math.abs(dy) >= 30) {
         stepCard(dy > 0 ? 1 : -1);
@@ -643,43 +619,35 @@ export default function ArchiveGallery() {
         </motion.div>
       )}
 
-      {/* ── Coverflow Stage (desktop only) ─────────────── */}
-      {!isMobile && (
-        <motion.div
-          onPointerLeave={() => setAnyCardHovered(false)}
-          style={{
-            position: "absolute",
-            top: "60px", left: 0, right: 0, bottom: 0,
-            display: (view === "coverflow" || tilting) ? "flex" : "none",
-            alignItems: "center", justifyContent: "center",
-            perspective: "2000px",
-            perspectiveOrigin: "50% 34%",
-            overflow: "visible",
-            zIndex: 1,
-            pointerEvents: view === "coverflow" ? "auto" : "none",
-          }}>
-          {projects.map((project, index) => (
-            <QueueCard
-              key={project.id} project={project} index={index}
-              scrollY={scrollY} isTilting={tilting}
-              scatter={gridScatter[index]}
-              onOpen={() => setSelected(project)}
-              onHoverChange={setAnyCardHovered}
-              swipingRef={swipingRef}
-              isMobile={false}
-              isLarge={isLarge}
-            />
-          ))}
-        </motion.div>
-      )}
-
-      {/* ── Mobile Feed ─────────────────────────────────── */}
-      {isMobile && (
-        <MobileFeed
-          projects={projects.filter(p => !activeYear || p.year === activeYear)}
-          onOpen={setSelected}
-        />
-      )}
+      {/* ── Coverflow Stage ──────────────────────────────── */}
+      <motion.div
+        onPointerLeave={() => !isMobile && setAnyCardHovered(false)}
+        style={{
+          position: "absolute",
+          top: isMobile ? "84px" : "60px", left: 0, right: 0, bottom: 0,
+          display: (view === "coverflow" || tilting) ? "flex" : "none",
+          alignItems: isMobile ? "flex-start" : "center",
+          justifyContent: "center",
+          perspective: isMobile ? "none" : "2000px",
+          perspectiveOrigin: "50% 34%",
+          overflow: isMobile ? "hidden" : "visible",
+          zIndex: 1,
+          pointerEvents: view === "coverflow" ? "auto" : "none",
+        }}>
+        {projects.map((project, index) => (
+          <QueueCard
+            key={project.id} project={project} index={index}
+            scrollY={scrollY} isTilting={tilting}
+            scatter={gridScatter[index]}
+            onOpen={() => setSelected(project)}
+            onHoverChange={isMobile ? () => {} : setAnyCardHovered}
+            swipingRef={swipingRef}
+            isMobile={isMobile}
+            isLarge={isLarge}
+            windowHeight={windowHeight}
+          />
+        ))}
+      </motion.div>
 
       {/* ── Grid View — z-index 2, always above coverflow ── */}
       <AnimatePresence>
@@ -843,11 +811,12 @@ function ScrambleText({ text }: { text: string }) {
   return <>{display}</>;
 }
 
-function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHoverChange, swipingRef, isMobile, isLarge }: {
+function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHoverChange, swipingRef, isMobile, isLarge, windowHeight }: {
   project: Project; index: number; scrollY: any;
   isTilting: boolean; scatter: { rotate: number; x: number; y: number };
   onOpen: () => void; onHoverChange: (h: boolean) => void;
   swipingRef: React.RefObject<boolean>; isMobile: boolean; isLarge: boolean;
+  windowHeight: number;
 }) {
   const [hovered,  setHovered]  = useState(false);
   const [clicking, setClicking] = useState(false);
@@ -855,15 +824,17 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
 
   const queueStep = useTransform(scrollY, (s: number) => (index * CARD_TRAVEL - s) / CARD_TRAVEL);
 
-  // Y: 데스크탑 - 선형, 위쪽으로 스택 / 모바일 - top-aligned, 아래로 스택
+  // Y: 데스크탑 - 선형, 위쪽으로 스택 / 모바일 - 풀스크린 세로 스택
+  const mobileCardH = (windowHeight - 84) * 0.76;
+  const MOBILE_PEEK = 64;
   const yPos = useTransform(queueStep, (q: number) => {
     if (!isMobile) {
       if (q <= 0) return -q * 260;
       return -(30 * q);
     }
-    // 모바일: align-items flex-start 기준, q=0이 stage 상단 고정
-    if (q <= 0) return q * 260; // 위로 빠르게 사라짐
-    return q * 44;              // 아래로 44px 간격 스택
+    if (q < 0) return q * mobileCardH;
+    if (q === 0) return 0;
+    return mobileCardH - MOBILE_PEEK + (q - 1) * MOBILE_PEEK;
   });
 
   const MOBILE_CARDS = 12;
@@ -887,6 +858,9 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
   });
 
   const zIdx = useTransform(queueStep, (q: number) => Math.max(0, Math.round(100 - q*7)));
+  const cardDim = useTransform(queueStep, (q: number) =>
+    q <= 0 ? "brightness(1)" : `brightness(${Math.max(0.55, 1 - q * 0.1).toFixed(2)})`
+  );
 
   const handleClick = () => {
     if (swipingRef.current) return;
@@ -910,8 +884,8 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
     <motion.div style={{
       position: "absolute",
       y: yPos, scale: cardScale, opacity: cardOp, zIndex: zIdx,
-      rotateX: exitRotateX,
-      width: isLarge ? "clamp(240px, 54.6vw, 903px)" : "clamp(240px, 52vw, 860px)",
+      rotateX: exitRotateX, filter: cardDim,
+      width: isMobile ? "calc(100vw - 32px)" : isLarge ? "clamp(240px, 54.6vw, 903px)" : "clamp(240px, 52vw, 860px)",
     }}>
       {/* 랜딩 reveal wrapper */}
       <motion.div
@@ -928,43 +902,52 @@ function QueueCard({ project, index, scrollY, isTilting, scatter, onOpen, onHove
           style={{ position: "relative", cursor: "pointer" }}
         >
           {/* 카드 이미지 영역 */}
-          <div style={{ width: "100%", aspectRatio: "16/9" }}>
+          <div style={{ width: "100%", aspectRatio: isMobile ? "3/4" : "16/9" }}>
             <div style={{
               position: "relative", width: "100%", height: "100%",
-              borderRadius: "4px", overflow: "hidden",
+              borderRadius: isMobile ? "12px" : "4px", overflow: "hidden",
               background: "#06060a",
             }}>
               <img src={project.img} alt={project.title}
                 style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
                 draggable={false} />
 
-              {/* Hover overlay */}
+              {/* 그라데이션: 모바일 항상 표시 / 데스크탑 hover시 */}
               <motion.div
-                animate={{ opacity: hovered ? 1 : 0 }}
+                animate={{ opacity: (hovered || isMobile) ? 1 : 0 }}
                 transition={{ duration: 0.18 }}
-                style={{ position:"absolute", inset:0, background:"linear-gradient(175deg, rgba(0,0,0,0.7) 0%, transparent 50%, rgba(0,0,0,0.35) 100%)", pointerEvents:"none", zIndex:4 }}
+                style={{ position:"absolute", inset:0, background:"linear-gradient(175deg, rgba(0,0,0,0.68) 0%, transparent 48%, rgba(0,0,0,0.3) 100%)", pointerEvents:"none", zIndex:4 }}
               />
 
+              {/* 모바일: 항상 표시되는 타이틀 좌상단 */}
+              {isMobile && (
+                <div style={{ position:"absolute", top:"18px", left:"18px", right:"18px", pointerEvents:"none", zIndex:10 }}>
+                  <h3 style={{ fontFamily:F, fontSize:"clamp(18px,5.5vw,28px)", fontWeight:700, letterSpacing:"-0.03em", color:"#fff", lineHeight:0.95, margin:0, textShadow:"0 2px 14px rgba(0,0,0,0.55)" }}>{project.title}</h3>
+                  <span style={{ fontFamily:F, fontSize:"11px", fontWeight:300, color:"rgba(255,255,255,0.5)", letterSpacing:"0.03em", display:"block", marginTop:"5px" }}>{fmtDate(project.month, project.year)}</span>
+                </div>
+              )}
 
-              {/* Hover labels */}
-              <AnimatePresence>
-                {hovered && (
-                  <>
-                    <motion.div key="t"
-                      initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }}
-                      transition={{ duration:0.18, ease:[0.22,1,0.36,1] }}
-                      style={{ position:"absolute", top:"20px", left:"22px", right:"90px", pointerEvents:"none", zIndex:10 }}>
-                      <h3 style={{ fontFamily:F, fontSize:"clamp(16px,2.8vw,36px)", fontWeight:600, letterSpacing:"-0.02em", color:"#fff", lineHeight:0.92, margin:0, textShadow:"0 1px 6px rgba(0,0,0,0.35)" }}>{project.title}</h3>
-                    </motion.div>
-                    <motion.div key="y"
-                      initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }}
-                      transition={{ duration:0.18, ease:[0.22,1,0.36,1], delay:0.04 }}
-                      style={{ position:"absolute", top:"22px", right:"22px", pointerEvents:"none", zIndex:10 }}>
-                      <span style={{ fontFamily:F, fontSize:"clamp(9px,1.4vw,16px)", fontWeight:300, letterSpacing:"0.06em", color:"rgba(255,255,255,0.65)", textShadow:"0 2px 12px rgba(0,0,0,0.8)" }}>{fmtDate(project.month, project.year)}</span>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+              {/* 데스크탑: hover 라벨 */}
+              {!isMobile && (
+                <AnimatePresence>
+                  {hovered && (
+                    <>
+                      <motion.div key="t"
+                        initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }}
+                        transition={{ duration:0.18, ease:[0.22,1,0.36,1] }}
+                        style={{ position:"absolute", top:"20px", left:"22px", right:"90px", pointerEvents:"none", zIndex:10 }}>
+                        <h3 style={{ fontFamily:F, fontSize:"clamp(12.8px,2.24vw,28.8px)", fontWeight:400, letterSpacing:"-0.02em", color:"#fff", lineHeight:0.92, margin:0, textShadow:"0 1px 6px rgba(0,0,0,0.35)" }}>{project.title}</h3>
+                      </motion.div>
+                      <motion.div key="y"
+                        initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }}
+                        transition={{ duration:0.18, ease:[0.22,1,0.36,1], delay:0.04 }}
+                        style={{ position:"absolute", top:"22px", right:"22px", pointerEvents:"none", zIndex:10 }}>
+                        <span style={{ fontFamily:F, fontSize:"clamp(9px,1.4vw,16px)", fontWeight:300, letterSpacing:"0.06em", color:"rgba(255,255,255,0.65)", textShadow:"0 2px 12px rgba(0,0,0,0.8)" }}>{fmtDate(project.month, project.year)}</span>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              )}
             </div>
           </div>
 
