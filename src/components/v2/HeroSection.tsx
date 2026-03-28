@@ -7,18 +7,18 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
 const ACCENT = "#0524FF";
 
-// Cards scattered across the entire hero — overlap both title and description
+// Centered stack — cards cluster around the screen center, 1.5x bigger
 const SCATTER = [
-  { left: "2vw",  top: "8vh",  w: "17vw", rotate: -5  },
-  { left: "63vw", top: "3vh",  w: "23vw", rotate: 4   },
-  { left: "76vw", top: "42vh", w: "16vw", rotate: -3  },
-  { left: "1vw",  top: "52vh", w: "15vw", rotate: 7   },
-  { left: "44vw", top: "50vh", w: "20vw", rotate: -5  },
-  { left: "27vw", top: "5vh",  w: "18vw", rotate: 3   },
-  { left: "81vw", top: "64vh", w: "14vw", rotate: -9  },
-  { left: "13vw", top: "60vh", w: "21vw", rotate: 6   },
-  { left: "37vw", top: "20vh", w: "16vw", rotate: -4  },
-  { left: "55vw", top: "28vh", w: "17vw", rotate: 5   },
+  { left: "22vw", top: "16vh", w: "27vw", rotate: -6  },
+  { left: "40vw", top: "8vh",  w: "32vw", rotate:  4  },
+  { left: "50vw", top: "26vh", w: "25vw", rotate: -3  },
+  { left: "18vw", top: "42vh", w: "22vw", rotate:  8  },
+  { left: "44vw", top: "44vh", w: "28vw", rotate: -5  },
+  { left: "30vw", top: "6vh",  w: "26vw", rotate:  3  },
+  { left: "56vw", top: "32vh", w: "21vw", rotate: -9  },
+  { left: "10vw", top: "50vh", w: "28vw", rotate:  7  },
+  { left: "36vw", top: "24vh", w: "23vw", rotate: -4  },
+  { left: "52vw", top: "12vh", w: "24vw", rotate:  5  },
 ];
 
 interface HeroProps {
@@ -28,6 +28,91 @@ interface HeroProps {
   activeCategory: string | null;
   onCategoryChange: (c: string | null) => void;
   onOpenProject: (p: Project) => void;
+}
+
+function DraggableCard({
+  project,
+  pos,
+  zIndex,
+  onDragStart,
+  onOpen,
+}: {
+  project: Project;
+  pos: typeof SCATTER[number];
+  zIndex: number;
+  onDragStart: () => void;
+  onOpen: (p: Project) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div
+      drag
+      dragMomentum={false}
+      onDragStart={onDragStart}
+      initial={{ filter: "blur(20px)", opacity: 0, rotate: pos.rotate }}
+      animate={{ filter: "blur(0px)", opacity: 1, rotate: pos.rotate }}
+      transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      style={{
+        position: "absolute",
+        left: pos.left,
+        top: pos.top,
+        width: pos.w,
+        minWidth: "140px",
+        maxWidth: "480px",
+        zIndex,
+        cursor: "grab",
+        userSelect: "none",
+      }}
+    >
+      <motion.div
+        whileDrag={{ boxShadow: `0 0 0 1.5px ${ACCENT}, 0 20px 56px rgba(0,0,0,0.75)` }}
+        style={{
+          position: "relative",
+          borderRadius: "2px",
+          overflow: "hidden",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+        }}
+      >
+        <img
+          src={project.img}
+          alt={project.title}
+          draggable={false}
+          style={{ width: "100%", height: "auto", display: "block" }}
+        />
+
+        {/* + button — top right on hover */}
+        <motion.button
+          animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.7 }}
+          transition={{ duration: 0.18 }}
+          onClick={(e) => { e.stopPropagation(); onOpen(project); }}
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            width: "30px",
+            height: "30px",
+            borderRadius: "50%",
+            background: "rgba(10,10,10,0.88)",
+            border: "1px solid rgba(240,237,232,0.35)",
+            color: "#F0EDE8",
+            fontFamily: FONT,
+            fontSize: "18px",
+            lineHeight: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            pointerEvents: hovered ? "auto" : "none",
+          }}
+        >
+          +
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  );
 }
 
 export default function HeroSection({
@@ -61,7 +146,7 @@ export default function HeroSection({
       background: "#0A0A0A",
     }}>
 
-      {/* ── LAYER 1: Typography (title top + description bottom) ── */}
+      {/* ── LAYER 1: Typography ── */}
       <div style={{
         position: "absolute",
         inset: 0,
@@ -74,7 +159,6 @@ export default function HeroSection({
         zIndex: 1,
         pointerEvents: "none",
       }}>
-        {/* Big title */}
         <motion.h1
           initial={{ filter: "blur(28px)", opacity: 0 }}
           animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -95,7 +179,6 @@ export default function HeroSection({
           {title}
         </motion.h1>
 
-        {/* Large description text at bottom */}
         <motion.p
           initial={{ filter: "blur(18px)", opacity: 0 }}
           animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -117,69 +200,18 @@ export default function HeroSection({
         </motion.p>
       </div>
 
-      {/* ── LAYER 2: Floating draggable cards (on top of everything) ── */}
+      {/* ── LAYER 2: Draggable cards (centered stack) ── */}
       {!isMobile && projects.slice(0, SCATTER.length).map((project, i) => {
         const pos = SCATTER[i % SCATTER.length];
         return (
-          <motion.div
+          <DraggableCard
             key={project.id}
-            drag
-            dragMomentum={false}
+            project={project}
+            pos={pos}
+            zIndex={zMap[project.id] ?? (10 + i)}
             onDragStart={() => bringToFront(project.id)}
-            initial={{ filter: "blur(20px)", opacity: 0, rotate: pos.rotate }}
-            animate={{ filter: "blur(0px)", opacity: 1, rotate: pos.rotate }}
-            transition={{ delay: 0.2 + i * 0.07, duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              position: "absolute",
-              left: pos.left,
-              top: pos.top,
-              width: pos.w,
-              minWidth: "100px",
-              maxWidth: "300px",
-              zIndex: zMap[project.id] ?? (10 + i),
-              cursor: "grab",
-              userSelect: "none",
-            }}
-          >
-            <motion.div
-              whileDrag={{ boxShadow: `0 0 0 1.5px ${ACCENT}, 0 16px 48px rgba(0,0,0,0.7)` }}
-              style={{
-                borderRadius: "2px",
-                overflow: "hidden",
-                boxShadow: "0 6px 28px rgba(0,0,0,0.55)",
-              }}
-            >
-              <img
-                src={project.img}
-                alt={project.title}
-                draggable={false}
-                onClick={() => onOpenProject(project)}
-                style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
-              />
-            </motion.div>
-
-            {/* Hover label */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: "5px 7px",
-                background: "rgba(10,10,10,0.86)",
-                fontFamily: FONT,
-                fontWeight: 300,
-                fontSize: "9px",
-                letterSpacing: "0.04em",
-                color: "rgba(240,237,232,0.65)",
-                pointerEvents: "none",
-              }}
-            >
-              {project.title}
-            </motion.div>
-          </motion.div>
+            onOpen={onOpenProject}
+          />
         );
       })}
 
