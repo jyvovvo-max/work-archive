@@ -96,7 +96,7 @@ export default function Footer() {
               letterSpacing: "0.01em",
               color: "#F0EDE8",
             }}>
-              We would love to hear from you!
+              I would love to hear from you!
             </span>
           </span>
         </div>
@@ -132,7 +132,7 @@ export default function Footer() {
 
         {/* Follow */}
         <BlurIn delay={0.18}>
-          <span style={labelStyle}>Follow us;</span>
+          <span style={labelStyle}>Follow me;</span>
           <div>
             <a
               href="https://instagram.com/jyvovvo"

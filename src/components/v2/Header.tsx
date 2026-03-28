@@ -25,7 +25,7 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
   useEffect(() => {
     if (isMobile) return;
     const onMove = (e: MouseEvent) => {
-      if (e.clientY < 72) {
+      if (e.clientY < 56) {
         clearTimeout(hideTimer.current);
         setVisible(true);
       }
@@ -34,9 +34,10 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
     return () => window.removeEventListener("mousemove", onMove);
   }, [isMobile]);
 
+  // Disappear immediately when mouse leaves header area
   const handleLeave = () => {
     if (isMobile) return;
-    hideTimer.current = setTimeout(() => setVisible(false), 250);
+    setVisible(false);
   };
   const handleEnter = () => clearTimeout(hideTimer.current);
 
@@ -50,7 +51,7 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
           initial={isMobile ? false : { y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -60, opacity: 0 }}
-          transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           style={{
@@ -64,25 +65,26 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "0 clamp(20px, 4vw, 56px)",
-            background: "rgba(10,10,10,0.72)",
+            // Light acrylic with black outline
+            background: "rgba(240,240,240,0.82)",
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
-            borderBottom: "1px solid rgba(240,237,232,0.07)",
+            border: "1px solid rgba(0,0,0,0.15)",
+            borderTop: "none",
+            borderRadius: "0 0 4px 4px",
           }}
         >
-          {/* Name */}
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
             fontSize: "12px",
             letterSpacing: "0.06em",
-            color: "#F0EDE8",
+            color: "#0A0A0A",
             userSelect: "none",
           }}>
             Jinyoung Hwang
           </span>
 
-          {/* Nav */}
           <nav style={{ display: "flex", gap: "clamp(16px, 2.8vw, 40px)", alignItems: "center" }}>
             {[
               { label: "View all", action: onViewAll },
@@ -98,15 +100,15 @@ export default function Header({ onViewAll, onAbout, onContact }: HeaderProps) {
                   fontSize: "11px",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  color: "rgba(240,237,232,0.45)",
+                  color: "rgba(0,0,0,0.4)",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
                   padding: "4px 0",
-                  transition: "color 0.18s",
+                  transition: "color 0.15s",
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.45)")}
+                onMouseEnter={e => (e.currentTarget.style.color = "#0A0A0A")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(0,0,0,0.4)")}
               >
                 {label}
               </button>

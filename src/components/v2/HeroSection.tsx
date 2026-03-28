@@ -6,19 +6,17 @@ import { Project, SiteData } from "./types";
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const ACCENT = "#0524FF";
 
-// 9 cards spread evenly across the full screen
-// Between title (top ~7-20vh) and description (bottom ~72-90vh)
-// Cards can overlap text up to 30%
+// 9 cards clustered toward the center
 const SCATTER = [
-  { left: "2vw",  top: "22vh", w: "19vw", rotate: -5 },
-  { left: "22vw", top: "15vh", w: "22vw", rotate:  4 },
-  { left: "46vw", top: "20vh", w: "18vw", rotate: -2 },
-  { left: "68vw", top: "13vh", w: "21vw", rotate:  6 },
-  { left: "5vw",  top: "52vh", w: "20vw", rotate: -7 },
-  { left: "28vw", top: "44vh", w: "18vw", rotate:  3 },
-  { left: "50vw", top: "48vh", w: "22vw", rotate: -5 },
-  { left: "72vw", top: "42vh", w: "19vw", rotate:  8 },
-  { left: "16vw", top: "68vh", w: "20vw", rotate: -3 },
+  { left: "28vw", top: "20vh", w: "20vw", rotate: -5 },
+  { left: "42vw", top: "12vh", w: "22vw", rotate:  4 },
+  { left: "57vw", top: "24vh", w: "18vw", rotate: -3 },
+  { left: "22vw", top: "38vh", w: "21vw", rotate:  7 },
+  { left: "46vw", top: "40vh", w: "19vw", rotate: -6 },
+  { left: "62vw", top: "32vh", w: "20vw", rotate:  3 },
+  { left: "32vw", top: "54vh", w: "22vw", rotate: -4 },
+  { left: "54vw", top: "56vh", w: "18vw", rotate:  5 },
+  { left: "18vw", top: "28vh", w: "19vw", rotate: -2 },
 ];
 
 interface HeroProps {
@@ -47,11 +45,12 @@ function DraggableCard({
       drag
       dragMomentum={false}
       onDragStart={onDragStart}
-      initial={{ filter: "blur(24px)", opacity: 0, rotate: pos.rotate }}
-      animate={{ filter: "blur(0px)", opacity: 1, rotate: pos.rotate }}
-      transition={{ delay, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
+      // Only position/rotation on outer — no blur here to avoid shadow artifacts
+      initial={{ opacity: 0, rotate: pos.rotate }}
+      animate={{ opacity: 1, rotate: pos.rotate }}
+      transition={{ delay, duration: 0.4, ease: "easeOut" }}
       style={{
         position: "absolute",
         left: pos.left,
@@ -64,21 +63,28 @@ function DraggableCard({
         userSelect: "none",
       }}
     >
+      {/* Shadow container with overflow:hidden to clip any blur bleeding */}
       <motion.div
-        whileDrag={{ boxShadow: `0 0 0 1.5px ${ACCENT}, 0 20px 56px rgba(0,0,0,0.35)` }}
+        whileDrag={{ boxShadow: `0 0 0 1.5px ${ACCENT}, 0 16px 40px rgba(0,0,0,0.25)` }}
         style={{
           position: "relative",
           borderRadius: "2px",
           overflow: "hidden",
-          boxShadow: "0 6px 24px rgba(0,0,0,0.22)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.18)",
+          isolation: "isolate",
         }}
       >
-        <img
+        {/* Blur-to-clean applied only to the image, clipped by parent overflow:hidden */}
+        <motion.img
           src={project.img}
           alt={project.title}
           draggable={false}
+          initial={{ filter: "blur(20px)", opacity: 0 }}
+          animate={{ filter: "blur(0px)", opacity: 1 }}
+          transition={{ delay, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
           style={{ width: "100%", height: "auto", display: "block" }}
         />
+
         {/* + button top-right on hover */}
         <motion.button
           animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.75 }}
@@ -91,9 +97,9 @@ function DraggableCard({
             width: "28px",
             height: "28px",
             borderRadius: "50%",
-            background: "rgba(10,10,10,0.8)",
-            border: "1px solid rgba(255,255,255,0.3)",
-            color: "#fff",
+            background: "rgba(240,240,240,0.88)",
+            border: "1px solid rgba(0,0,0,0.2)",
+            color: "#0A0A0A",
             fontFamily: FONT,
             fontSize: "16px",
             display: "flex",
@@ -131,6 +137,11 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
   const desc = siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 9);
 
+  // Shared horizontal padding — both title and description align to same edges
+  const hPad = isMobile
+    ? "clamp(16px, 4vw, 32px)"
+    : "clamp(24px, 4vw, 56px)";
+
   return (
     <section style={{
       position: "relative",
@@ -140,20 +151,15 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
       background: "#F0F0F0",
     }}>
 
-      {/* ── Typography layer ── */}
+      {/* Title — top */}
       <div style={{
         position: "absolute",
-        inset: 0,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        padding: isMobile
-          ? "clamp(56px, 10vh, 80px) clamp(16px, 4vw, 32px) clamp(36px, 6vh, 60px)"
-          : "clamp(54px, 7vh, 66px) clamp(24px, 4vw, 56px) clamp(44px, 7vh, 72px)",
+        top: isMobile ? "clamp(56px, 10vh, 80px)" : "clamp(54px, 7vh, 66px)",
+        left: hPad,
+        right: hPad,
         zIndex: 1,
         pointerEvents: "none",
       }}>
-        {/* Title — sized to fit one line */}
         <motion.h1
           initial={{ filter: "blur(28px)", opacity: 0 }}
           animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -161,7 +167,6 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
           style={{
             fontFamily: FONT,
             fontWeight: 300,
-            // calc fits "Work Archive" (~6.7em) within padded viewport
             fontSize: isMobile
               ? "clamp(44px, 14vw, 80px)"
               : "calc((100vw - clamp(48px, 8vw, 112px)) / 6.9)",
@@ -175,8 +180,17 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
         >
           {title}
         </motion.h1>
+      </div>
 
-        {/* Description — same font as title */}
+      {/* Description — bottom, same left/right as title */}
+      <div style={{
+        position: "absolute",
+        bottom: isMobile ? "clamp(36px, 6vh, 60px)" : "clamp(44px, 7vh, 72px)",
+        left: hPad,
+        right: hPad,
+        zIndex: 1,
+        pointerEvents: "none",
+      }}>
         <motion.p
           initial={{ filter: "blur(18px)", opacity: 0 }}
           animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -184,12 +198,11 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
           style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "clamp(12px, 3.5vw, 20px)" : "clamp(16px, 2vw, 32px)",
-            lineHeight: 1.4,
+            fontSize: isMobile ? "clamp(12px, 3.5vw, 20px)" : "clamp(14px, 1.8vw, 28px)",
+            lineHeight: 1.45,
             letterSpacing: "-0.01em",
             color: "rgba(10,10,10,0.38)",
             margin: 0,
-            maxWidth: isMobile ? "100%" : "76vw",
             wordBreak: "keep-all",
           }}
         >
@@ -197,7 +210,7 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
         </motion.p>
       </div>
 
-      {/* ── 9 draggable cards (desktop only) ── */}
+      {/* 9 draggable cards (desktop only) */}
       {!isMobile && heroProjects.map((project, i) => (
         <DraggableCard
           key={project.id}

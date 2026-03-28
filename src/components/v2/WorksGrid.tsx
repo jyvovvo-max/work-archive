@@ -108,7 +108,28 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
   if (projects.length === 0) return null;
 
   return (
-    <section style={{ padding: 0, background: "#0A0A0A" }}>
+    <section style={{ background: "#F0F0F0" }}>
+      {/* "Recent Work" label bar — acrylic with black border */}
+      <div style={{
+        padding: "12px clamp(20px, 4vw, 56px)",
+        background: "rgba(240,240,240,0.82)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderTop: "1px solid rgba(0,0,0,0.15)",
+        borderBottom: "1px solid rgba(0,0,0,0.15)",
+      }}>
+        <span style={{
+          fontFamily: FONT,
+          fontWeight: 300,
+          fontSize: "11px",
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "rgba(0,0,0,0.45)",
+        }}>
+          Recent Work
+        </span>
+      </div>
+
       <div style={{
         display: "grid",
         gridTemplateColumns: `repeat(${cols}, 1fr)`,

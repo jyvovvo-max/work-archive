@@ -54,7 +54,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
     fontSize: "10px",
     letterSpacing: "0.14em",
     textTransform: "uppercase",
-    color: "rgba(240,237,232,0.25)",
+    color: "rgba(0,0,0,0.35)",
     marginBottom: "24px",
   };
 
@@ -63,7 +63,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
     fontWeight: 300,
     fontSize: "12px",
     letterSpacing: "0.02em",
-    color: "rgba(240,237,232,0.55)",
+    color: "rgba(0,0,0,0.55)",
     lineHeight: 2.0,
   };
 
@@ -72,8 +72,8 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
       ref={ref}
       style={{
         padding: "clamp(80px, 10vh, 140px) clamp(20px, 4vw, 56px) clamp(80px, 10vh, 140px)",
-        background: "#0A0A0A",
-        borderTop: "1px solid rgba(240,237,232,0.06)",
+        background: "#F0F0F0",
+        borderTop: "1px solid rgba(0,0,0,0.1)",
       }}
     >
       {/* Top row: label + headline */}
@@ -94,7 +94,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
             fontSize: "clamp(22px, 3.2vw, 44px)",
             letterSpacing: "-0.02em",
             lineHeight: 1.2,
-            color: "#F0EDE8",
+            color: "#0A0A0A",
             margin: 0,
             wordBreak: "keep-all",
           }}>
@@ -122,7 +122,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
                 fontWeight: 300,
                 fontSize: "clamp(13px, 1.1vw, 16px)",
                 lineHeight: 1.8,
-                color: "rgba(240,237,232,0.6)",
+                color: "rgba(0,0,0,0.6)",
                 margin: 0,
                 wordBreak: "keep-all",
               }}>
