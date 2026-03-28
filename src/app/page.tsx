@@ -38,10 +38,11 @@ export default function Page() {
     [projects]
   );
 
-  const selectedWorks = useMemo(
-    () => projects.filter(p => p.selected),
-    [projects]
-  );
+  const selectedWorks = useMemo(() => {
+    const sel = projects.filter(p => p.selected);
+    // If no project is explicitly marked selected, show all
+    return sel.length > 0 ? sel : projects;
+  }, [projects]);
 
   const sortedSelectedWorks = useMemo(
     () => [...selectedWorks].sort((a, b) => {
