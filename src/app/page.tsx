@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { AnimatePresence, useScroll } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { Project, SiteData } from "@/components/v2/types";
 import { fetchProjects, fetchSiteData } from "@/components/v2/dataFetch";
@@ -21,13 +21,7 @@ export default function Page() {
   const [gridAboutOpen, setGridAboutOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
 
-  const heroWrapperRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLElement>(null);
-
-  const { scrollYProgress: heroScrollProgress } = useScroll({
-    target: heroWrapperRef,
-    offset: ["start start", "end start"],
-  });
 
   useEffect(() => {
     if (typeof history !== "undefined") history.scrollRestoration = "manual";
@@ -147,16 +141,16 @@ export default function Page() {
         alwaysVisible={gridOpen}
       />
 
-      {/* Layer 1: Hero — sticky with 280vh scroll space */}
-      <div ref={heroWrapperRef} style={{ position: "relative", height: "280vh" }}>
-        <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
-          <HeroSection
-            scrollProgress={heroScrollProgress}
-            projects={randomWorks}
-            siteData={siteData}
-          />
-        </div>
+      {/* Layer 1: Hero — fixed behind, images fade on scroll 0–400px */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 1 }}>
+        <HeroSection
+          projects={randomWorks}
+          siteData={siteData}
+        />
       </div>
+
+      {/* Spacer so page has hero-height before Selected Works */}
+      <div style={{ height: "100vh" }} />
 
       {/* Layer 2: Selected Works — slides over Hero */}
       <div style={{

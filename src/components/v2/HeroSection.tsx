@@ -1,81 +1,107 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { Instrument_Serif } from "next/font/google";
 import {
   motion,
-  useTransform,
   useMotionValue,
   useSpring,
   useAnimationControls,
+  useScroll,
+  useTransform,
   MotionValue,
 } from "framer-motion";
 import { Project, SiteData } from "./types";
 
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
-type ScatterPos = { left: string; top: string; w: string; rotate: number };
+type ScatterPos = { left: string; top: string; w: string };
 
-// 5 columns × 2 rows: each image gets its own zone → even fill, no clustering
+// 16-column grid layout — no overlap, compositional gaps intentional
 function makeScatter(): ScatterPos[] {
-  const positions: ScatterPos[] = [];
-  const COLS = 5, ROWS = 2;
-  const zoneW = 74 / COLS; // ~14.8vw per column; total span 3–77vw left edge
+  const TOTAL_COLS = 16;
+  const COL_W = 100 / TOTAL_COLS; // 6.25vw per column
+  const ROW_RANGES: [number, number][] = [[25, 41], [50, 66]];
 
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const baseLeft = 3 + col * zoneW;
-      const baseTop = row === 0 ? 25 : 50; // row 0: 25–41vh, row 1: 50–66vh
-      positions.push({
-        left: `${baseLeft + Math.random() * (zoneW * 0.82)}vw`,
-        top: `${baseTop + Math.random() * 16}vh`,
-        w: `${14 + Math.random() * 8}vw`, // 14–22vw
-        rotate: (Math.random() - 0.5) * 30, // ±15°
-      });
+  // Track occupied columns per row
+  const usedCols = [
+    new Array(TOTAL_COLS).fill(false),
+    new Array(TOTAL_COLS).fill(false),
+  ];
+  const positions: ScatterPos[] = [];
+
+  type Placement = { row: number; startCol: number; span: number };
+  const allPlacements: Placement[] = [];
+  for (let row = 0; row < 2; row++) {
+    for (let startCol = 0; startCol < TOTAL_COLS; startCol++) {
+      for (let span = 2; span <= 4; span++) {
+        if (startCol + span <= TOTAL_COLS) {
+          allPlacements.push({ row, startCol, span });
+        }
+      }
     }
   }
-  // Shuffle so z-order isn't always left-to-right
-  return positions.sort(() => Math.random() - 0.5);
+  allPlacements.sort(() => Math.random() - 0.5);
+
+  for (const p of allPlacements) {
+    if (positions.length >= 10) break;
+
+    let free = true;
+    for (let c = p.startCol; c < p.startCol + p.span; c++) {
+      if (usedCols[p.row][c]) { free = false; break; }
+    }
+    if (!free) continue;
+
+    for (let c = p.startCol; c < p.startCol + p.span; c++) {
+      usedCols[p.row][c] = true;
+    }
+
+    const [yMin, yMax] = ROW_RANGES[p.row];
+    const top = yMin + Math.random() * (yMax - yMin);
+
+    positions.push({
+      left: `${p.startCol * COL_W}vw`,
+      top: `${top}vh`,
+      w: `${p.span * COL_W}vw`,
+    });
+  }
+
+  return positions;
 }
 
-// Individual collage image — separate component so hooks are called per image
 function CollageImage({
   src,
   pos,
   idx,
-  total,
-  scrollProgress,
   mousePxX,
   mousePxY,
   introduced,
+  scrollOpacity,
 }: {
   src: string;
   pos: ScatterPos;
   idx: number;
-  total: number;
-  scrollProgress: MotionValue<number>;
   mousePxX: MotionValue<number>;
   mousePxY: MotionValue<number>;
   introduced: boolean;
+  scrollOpacity: MotionValue<number>;
 }) {
   const [hovered, setHovered] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  // Each image's scroll-out range: starts at 0.08 + (i/total)*0.55, ends start+0.20
-  const start = 0.08 + (idx / total) * 0.55;
-  const end = start + 0.20;
-  const opacityEnd = start + 0.20 * 0.6; // at 60% of range opacity hits 0
-
-  const y = useTransform(scrollProgress, [start, end], ["0vh", "-85vh"]);
-  const opacity = useTransform(scrollProgress, [start, opacityEnd], [1, 0]);
-
-  // Proximity-based tilt — only images near the cursor tilt (no re-renders)
+  // Proximity tilt — 650px radius, quadratic weighting (closer = more tilt)
   const localRotateX = useMotionValue(0);
   const localRotateY = useMotionValue(0);
   const springRotateX = useSpring(localRotateX, { stiffness: 50, damping: 20 });
   const springRotateY = useSpring(localRotateY, { stiffness: 50, damping: 20 });
 
   useEffect(() => {
-    const maxDist = 320; // px radius — images outside this don't tilt
-    const maxTilt = 8;   // degrees
+    const maxDist = 650;
+    const maxTilt = 8;
 
     const update = () => {
       const rect = imgRef.current?.getBoundingClientRect();
@@ -85,7 +111,8 @@ function CollageImage({
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       const dist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
-      const factor = Math.max(0, 1 - dist / maxDist);
+      const t = Math.max(0, 1 - dist / maxDist);
+      const factor = t * t; // quadratic: steeper near cursor
       localRotateX.set((cy - my) / Math.max(rect.height / 2, 1) * maxTilt * factor);
       localRotateY.set((mx - cx) / Math.max(rect.width / 2, 1) * maxTilt * factor);
     };
@@ -94,8 +121,6 @@ function CollageImage({
     const unsubY = mousePxY.onChange(update);
     return () => { unsubX(); unsubY(); };
   }, [mousePxX, mousePxY, localRotateX, localRotateY]);
-
-  const blurValue = introduced && !hovered ? "blur(10px)" : "blur(0px)";
 
   return (
     <motion.div
@@ -108,7 +133,7 @@ function CollageImage({
         top: pos.top,
         width: pos.w,
         minWidth: "80px",
-        maxWidth: "380px",
+        maxWidth: "440px",
         zIndex: 10,
         perspective: "600px",
       }}
@@ -117,12 +142,16 @@ function CollageImage({
         ref={imgRef}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        animate={{ filter: blurValue }}
-        transition={{ filter: { duration: 0.5, ease: "easeOut" } }}
+        animate={{
+          filter: introduced && !hovered ? "blur(5px)" : "blur(0px)",
+          scale: introduced && !hovered ? 0.95 : 1,
+        }}
+        transition={{
+          filter: { duration: 0.6, ease: "easeOut" },
+          scale: { duration: 0.6, ease: "easeOut" },
+        }}
         style={{
-          y,
-          opacity,
-          rotate: pos.rotate,
+          opacity: scrollOpacity,
           rotateX: springRotateX,
           rotateY: springRotateY,
           transformStyle: "preserve-3d",
@@ -142,13 +171,12 @@ function CollageImage({
   );
 }
 
-// Description text with blur-in entrance
 function DescriptionText({
   text,
-  scrollProgress,
+  scrollOpacity,
 }: {
   text: string;
-  scrollProgress: MotionValue<number>;
+  scrollOpacity: MotionValue<number>;
 }) {
   const controls = useAnimationControls();
 
@@ -161,8 +189,6 @@ function DescriptionText({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const y = useTransform(scrollProgress, [0.62, 0.92], ["0px", "-57vh"]);
-
   return (
     <motion.div
       style={{
@@ -172,7 +198,7 @@ function DescriptionText({
         right: "clamp(20px, 4vw, 56px)",
         zIndex: 5,
         pointerEvents: "none",
-        y,
+        opacity: scrollOpacity,
       }}
     >
       <motion.p
@@ -183,7 +209,7 @@ function DescriptionText({
           fontWeight: 300,
           fontSize: "clamp(30px, 2.5vw, 37.5px)",
           color: "rgba(10,10,10,0.42)",
-          lineHeight: 1.6,
+          lineHeight: 1.36,
           margin: 0,
         }}
       >
@@ -194,22 +220,25 @@ function DescriptionText({
 }
 
 interface HeroProps {
-  scrollProgress: MotionValue<number>;
   projects: Project[];
   siteData: SiteData | null;
 }
 
-export default function HeroSection({ scrollProgress, projects, siteData }: HeroProps) {
+export default function HeroSection({ projects, siteData }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
   const [introduced, setIntroduced] = useState(false);
 
-  // After text animation completes (~2.5s), images become blurry until hovered
+  // Global scroll → images + desc fade out 0–400px
+  const { scrollY } = useScroll();
+  const scrollOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+
+  // After text animation completes (~2.5s), images blur + shrink
   useEffect(() => {
     const t = setTimeout(() => setIntroduced(true), 2500);
     return () => clearTimeout(t);
   }, []);
 
-  // Mouse tracking in pixels for proximity-based tilt
+  // Pixel-based mouse tracking for proximity tilt
   const rawMousePxX = useMotionValue(0);
   const rawMousePxY = useMotionValue(0);
   const mousePxX = useSpring(rawMousePxX, { stiffness: 50, damping: 20 });
@@ -228,7 +257,6 @@ export default function HeroSection({ scrollProgress, projects, siteData }: Hero
       rawMousePxX.set(e.clientX);
       rawMousePxY.set(e.clientY);
     };
-
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -238,17 +266,6 @@ export default function HeroSection({ scrollProgress, projects, siteData }: Hero
   const subtitle = siteData?.landingSubtitle || "2015–Present";
   const desc = siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 10);
-  const total = heroProjects.length;
-
-  const infoTextStyle: React.CSSProperties = {
-    fontFamily: FONT,
-    fontStyle: "italic",
-    fontWeight: 300,
-    fontSize: "clamp(11px, 0.85vw, 13px)",
-    color: "rgba(10,10,10,0.35)",
-    letterSpacing: "0em",
-    margin: 0,
-  };
 
   return (
     <section
@@ -269,36 +286,46 @@ export default function HeroSection({ scrollProgress, projects, siteData }: Hero
           pointerEvents: "none",
         }}
       >
-        <motion.h1
-          initial={{ filter: "blur(28px)", opacity: 0 }}
-          animate={titleControls}
-          style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
-            letterSpacing: "-0.045em",
-            lineHeight: 0.88,
-            color: "#0A0A0A",
-            margin: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {title}
-        </motion.h1>
+        {/* Wrapper so subtitle can position relative to title right-edge */}
+        <div style={{ position: "relative", display: "inline-block" }}>
+          <motion.h1
+            initial={{ filter: "blur(28px)", opacity: 0 }}
+            animate={titleControls}
+            style={{
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
+              letterSpacing: "-0.045em",
+              lineHeight: 0.88,
+              color: "#0A0A0A",
+              margin: 0,
+              whiteSpace: "nowrap",
+              display: "block",
+            }}
+          >
+            {title}
+          </motion.h1>
 
-        {/* 4-column info grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 0.3fr 1fr 1fr",
-            marginTop: "clamp(10px, 1.2vh, 18px)",
-            maxWidth: "clamp(320px, 55vw, 720px)",
-          }}
-        >
-          <p style={infoTextStyle}>{subtitle}</p>
-          <div />
-          <p style={infoTextStyle}>Brand design</p>
-          <p style={infoTextStyle}>Visual design</p>
+          {/* 2015–Present — Instrument Serif Italic, top-right of title */}
+          <motion.p
+            initial={{ filter: "blur(20px)", opacity: 0 }}
+            animate={titleControls}
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              margin: 0,
+              fontFamily: instrumentSerif.style.fontFamily,
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(22px, 1.7vw, 26px)",
+              lineHeight: 0.84,
+              color: "rgba(10,10,10,0.35)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {subtitle}
+          </motion.p>
         </div>
       </div>
 
@@ -309,17 +336,16 @@ export default function HeroSection({ scrollProgress, projects, siteData }: Hero
           src={project.img}
           pos={scatter[i % scatter.length]}
           idx={i}
-          total={total}
-          scrollProgress={scrollProgress}
           mousePxX={mousePxX}
           mousePxY={mousePxY}
           introduced={introduced}
+          scrollOpacity={scrollOpacity}
         />
       ))}
 
       {/* ── Description ── */}
       {desc && (
-        <DescriptionText text={desc} scrollProgress={scrollProgress} />
+        <DescriptionText text={desc} scrollOpacity={scrollOpacity} />
       )}
     </section>
   );
