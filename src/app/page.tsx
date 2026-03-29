@@ -136,7 +136,7 @@ export default function Page() {
   const headerOnBack = selected ? handleCloseDetail : gridOpen ? handleCloseGrid : undefined;
 
   return (
-    <div style={{ color: "#0A0A0A" }}>
+    <div style={{ color: "#0A0A0A", background: "#F0F0F0" }}>
       <Header
         onHome={scrollToTop}
         onViewAll={() => { handleCloseDetail(); setGridOpen(true); }}

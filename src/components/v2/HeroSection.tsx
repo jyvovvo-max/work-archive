@@ -43,17 +43,22 @@ function CollageImage({
   idx,
   total,
   scrollProgress,
-  mouseX,
-  mouseY,
+  mousePxX,
+  mousePxY,
+  introduced,
 }: {
   src: string;
   pos: ScatterPos;
   idx: number;
   total: number;
   scrollProgress: MotionValue<number>;
-  mouseX: MotionValue<number>;
-  mouseY: MotionValue<number>;
+  mousePxX: MotionValue<number>;
+  mousePxY: MotionValue<number>;
+  introduced: boolean;
 }) {
+  const [hovered, setHovered] = useState(false);
+  const imgRef = useRef<HTMLDivElement>(null);
+
   // Each image's scroll-out range: starts at 0.08 + (i/total)*0.55, ends start+0.20
   const start = 0.08 + (idx / total) * 0.55;
   const end = start + 0.20;
@@ -61,18 +66,42 @@ function CollageImage({
 
   const y = useTransform(scrollProgress, [start, end], ["0vh", "-85vh"]);
   const opacity = useTransform(scrollProgress, [start, opacityEnd], [1, 0]);
-  const blurRaw = useTransform(scrollProgress, [start, end], [0, 18]);
-  const filter = useTransform(blurRaw, (v: number) => `blur(${v}px)`);
 
-  // Mouse tilt: max ±8 deg
-  const rotateX = useTransform(mouseY, [-0.5, 0.5], [8, -8]);
-  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-8, 8]);
+  // Proximity-based tilt — only images near the cursor tilt (no re-renders)
+  const localRotateX = useMotionValue(0);
+  const localRotateY = useMotionValue(0);
+  const springRotateX = useSpring(localRotateX, { stiffness: 50, damping: 20 });
+  const springRotateY = useSpring(localRotateY, { stiffness: 50, damping: 20 });
+
+  useEffect(() => {
+    const maxDist = 320; // px radius — images outside this don't tilt
+    const maxTilt = 8;   // degrees
+
+    const update = () => {
+      const rect = imgRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const mx = mousePxX.get();
+      const my = mousePxY.get();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
+      const factor = Math.max(0, 1 - dist / maxDist);
+      localRotateX.set((cy - my) / Math.max(rect.height / 2, 1) * maxTilt * factor);
+      localRotateY.set((mx - cx) / Math.max(rect.width / 2, 1) * maxTilt * factor);
+    };
+
+    const unsubX = mousePxX.onChange(update);
+    const unsubY = mousePxY.onChange(update);
+    return () => { unsubX(); unsubY(); };
+  }, [mousePxX, mousePxY, localRotateX, localRotateY]);
+
+  const blurValue = introduced && !hovered ? "blur(10px)" : "blur(0px)";
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.2 + idx * 0.07, duration: 0.5, ease: "easeOut" }}
+      initial={{ opacity: 0, scale: 0.88 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.2 + idx * 0.07, duration: 0.55, ease: [0.34, 1.56, 0.64, 1] }}
       style={{
         position: "absolute",
         left: pos.left,
@@ -85,13 +114,17 @@ function CollageImage({
       }}
     >
       <motion.div
+        ref={imgRef}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        animate={{ filter: blurValue }}
+        transition={{ filter: { duration: 0.5, ease: "easeOut" } }}
         style={{
           y,
           opacity,
-          filter,
           rotate: pos.rotate,
-          rotateX,
-          rotateY,
+          rotateX: springRotateX,
+          rotateY: springRotateY,
           transformStyle: "preserve-3d",
           borderRadius: "2px",
           overflow: "hidden",
@@ -137,7 +170,6 @@ function DescriptionText({
         top: "74vh",
         left: "clamp(20px, 4vw, 56px)",
         right: "clamp(20px, 4vw, 56px)",
-        maxWidth: "clamp(280px, 42vw, 580px)",
         zIndex: 5,
         pointerEvents: "none",
         y,
@@ -149,7 +181,7 @@ function DescriptionText({
         style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(12px, 1vw, 15px)",
+          fontSize: "clamp(30px, 2.5vw, 37.5px)",
           color: "rgba(10,10,10,0.42)",
           lineHeight: 1.6,
           margin: 0,
@@ -169,12 +201,19 @@ interface HeroProps {
 
 export default function HeroSection({ scrollProgress, projects, siteData }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
+  const [introduced, setIntroduced] = useState(false);
 
-  // Mouse tracking for tilt
-  const rawMouseX = useMotionValue(0);
-  const rawMouseY = useMotionValue(0);
-  const mouseX = useSpring(rawMouseX, { stiffness: 50, damping: 20 });
-  const mouseY = useSpring(rawMouseY, { stiffness: 50, damping: 20 });
+  // After text animation completes (~2.5s), images become blurry until hovered
+  useEffect(() => {
+    const t = setTimeout(() => setIntroduced(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Mouse tracking in pixels for proximity-based tilt
+  const rawMousePxX = useMotionValue(0);
+  const rawMousePxY = useMotionValue(0);
+  const mousePxX = useSpring(rawMousePxX, { stiffness: 50, damping: 20 });
+  const mousePxY = useSpring(rawMousePxY, { stiffness: 50, damping: 20 });
 
   const titleControls = useAnimationControls();
 
@@ -186,9 +225,8 @@ export default function HeroSection({ scrollProgress, projects, siteData }: Hero
     });
 
     const handleMouseMove = (e: MouseEvent) => {
-      // Normalize to -0.5 .. 0.5
-      rawMouseX.set(e.clientX / window.innerWidth - 0.5);
-      rawMouseY.set(e.clientY / window.innerHeight - 0.5);
+      rawMousePxX.set(e.clientX);
+      rawMousePxY.set(e.clientY);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -273,8 +311,9 @@ export default function HeroSection({ scrollProgress, projects, siteData }: Hero
           idx={i}
           total={total}
           scrollProgress={scrollProgress}
-          mouseX={mouseX}
-          mouseY={mouseY}
+          mousePxX={mousePxX}
+          mousePxY={mousePxY}
+          introduced={introduced}
         />
       ))}
 
