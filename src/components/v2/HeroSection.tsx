@@ -15,56 +15,69 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
 type ScatterPos = { left: string; top: string; w: string };
 
-// 16-col × 8-row grid
-// Each image: left edge snaps to column, top edge snaps to row (2 sides aligned)
-// Rules: no cell overlap, adjacent images in same row must differ in span
-// Retries up to 30×; fallback relaxes adjacency rule
-type Placement = { row: number; startCol: number; span: number };
-
+// Y-quantized grid: 16 columns × 6 discrete Y levels
+// Bounding box collision detection with estimated image heights (4:3 ratio)
 const GRID_COLS = 16;
-const GRID_ROWS = 8;
-const COL_W = 100 / GRID_COLS;   // 6.25vw
-const ROW_H = 55 / GRID_ROWS;    // 6.875vh
-const ROW_START = 20;             // vh — images start at 20vh (below title)
+const COL_W = 100 / GRID_COLS; // 6.25vw
+const QUANTIZED_Y = [15, 23, 31, 39, 47, 54]; // vh top positions
+const VW_TO_VH = 1.6; // at 1440×900: 1vw = 1.6vh
+const IMG_RATIO = 0.75; // assumed 4:3 aspect ratio → height = width * 0.75
+const GAP_VH = 2; // minimum vertical gap between images
+
+type Box = { x1: number; x2: number; y1: number; y2: number };
+
+function estimatedHeightVh(span: number): number {
+  return span * COL_W * VW_TO_VH * IMG_RATIO;
+}
+
+function boxesOverlap(a: Box, b: Box): boolean {
+  return !(a.x2 <= b.x1 || b.x2 <= a.x1 || a.y2 <= b.y1 || b.y2 <= a.y1);
+}
 
 function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
-  // 2D cell map: [row][col]
-  const usedCells = Array.from({ length: GRID_ROWS }, () =>
-    new Array(GRID_COLS).fill(false)
-  );
-  const placedInRow: Array<Array<{ startCol: number; span: number }>> =
-    Array.from({ length: GRID_ROWS }, () => []);
+  type PlacedItem = { box: Box; col: number; span: number; yVh: number };
+  const placed: PlacedItem[] = [];
   const positions: ScatterPos[] = [];
 
-  const allPlacements: Placement[] = [];
-  for (let row = 0; row < GRID_ROWS; row++) {
+  type Candidate = { yVh: number; startCol: number; span: number };
+  const candidates: Candidate[] = [];
+  for (const yVh of QUANTIZED_Y) {
     for (let startCol = 0; startCol < GRID_COLS; startCol++) {
       for (let span = 2; span <= 5; span++) {
         if (startCol + span <= GRID_COLS) {
-          allPlacements.push({ row, startCol, span });
+          candidates.push({ yVh, startCol, span });
         }
       }
     }
   }
-  allPlacements.sort(() => Math.random() - 0.5);
+  candidates.sort(() => Math.random() - 0.5);
 
-  for (const p of allPlacements) {
+  for (const c of candidates) {
     if (positions.length >= 10) break;
 
-    // Rule 1: no cell overlap
-    let cellFree = true;
-    for (let c = p.startCol; c < p.startCol + p.span; c++) {
-      if (usedCells[p.row][c]) { cellFree = false; break; }
-    }
-    if (!cellFree) continue;
+    const h = estimatedHeightVh(c.span);
+    const newBox: Box = {
+      x1: c.startCol * COL_W,
+      x2: (c.startCol + c.span) * COL_W,
+      y1: c.yVh - GAP_VH,
+      y2: c.yVh + h + GAP_VH,
+    };
 
-    // Rule 2: horizontal neighbours in same row must differ in span
+    // Rule 1: no bounding box overlap
+    let hasOverlap = false;
+    for (const p of placed) {
+      if (boxesOverlap(newBox, p.box)) { hasOverlap = true; break; }
+    }
+    if (hasOverlap) continue;
+
+    // Rule 2: same-Y horizontal neighbours must differ in span
     if (enforceAdjacency) {
       let spanConflict = false;
-      for (const placed of placedInRow[p.row]) {
-        const rightOf = placed.startCol + placed.span === p.startCol;
-        const leftOf  = p.startCol + p.span === placed.startCol;
-        if ((rightOf || leftOf) && placed.span === p.span) {
+      for (const p of placed) {
+        if (p.yVh !== c.yVh) continue;
+        const rightOf = p.col + p.span === c.startCol;
+        const leftOf = c.startCol + c.span === p.col;
+        if ((rightOf || leftOf) && p.span === c.span) {
           spanConflict = true;
           break;
         }
@@ -72,15 +85,11 @@ function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
       if (spanConflict) continue;
     }
 
-    for (let c = p.startCol; c < p.startCol + p.span; c++) {
-      usedCells[p.row][c] = true;
-    }
-    placedInRow[p.row].push({ startCol: p.startCol, span: p.span });
-
+    placed.push({ box: newBox, col: c.startCol, span: c.span, yVh: c.yVh });
     positions.push({
-      left: `${p.startCol * COL_W}vw`,
-      top: `${ROW_START + p.row * ROW_H}vh`,  // top snaps to row grid line
-      w: `${p.span * COL_W}vw`,
+      left: `${c.startCol * COL_W}vw`,
+      top: `${c.yVh}vh`,
+      w: `${c.span * COL_W}vw`,
     });
   }
 
@@ -96,11 +105,11 @@ function makeScatter(): ScatterPos[] {
 }
 
 // Sequence:
-//  1. Images fade in clean (staggered)
-//  2. Once all images in → blur 5px + scale 0.95 simultaneously
-//  3. Title appears
-//  4. Desc appears
-// Hover always clears blur.
+//  1. Images fade in clean (staggered, 0.1s gap, 1.0s each)
+//  2. Once all images in (2.65s) → blur 3px + scale 0.95 simultaneously (1.0s)
+//  3. Title appears (4.0s delay, 1.5s)
+//  4. Desc appears (5.0s delay, 1.5s)
+// Images sit behind text (zIndex 2); text zIndex 5/20
 function CollageImage({
   src,
   pos,
@@ -153,14 +162,14 @@ function CollageImage({
   const blurred = allImagesIn && !hovered;
 
   return (
-    // Outer: staggered clean fade-in
+    // Outer: staggered clean fade-in — sits behind text (zIndex 2)
     <motion.div
       initial={{ opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
-        delay: 0.15 + idx * 0.1,   // 80% speed: 0.08→0.1s gap
-        duration: 0.78,             // 80% speed: 0.62→0.78s
-        ease: [0.55, 0, 1, 0.6],   // ease-in: slow start → fast finish
+        delay: 0.15 + idx * 0.1,
+        duration: 1.0,
+        ease: [0.55, 0, 1, 0.6],
       }}
       style={{
         position: "absolute",
@@ -169,7 +178,7 @@ function CollageImage({
         width: pos.w,
         minWidth: "80px",
         maxWidth: "440px",
-        zIndex: 10,
+        zIndex: 2,
         perspective: "600px",
       }}
     >
@@ -183,8 +192,8 @@ function CollageImage({
           scale: blurred ? 0.95 : 1,
         }}
         transition={{
-          filter: { duration: 0.6, ease: "easeInOut" },
-          scale: { duration: 0.6, ease: "easeInOut" },
+          filter: { duration: 1.0, ease: "easeInOut" },
+          scale: { duration: 1.0, ease: "easeInOut" },
         }}
         style={{
           opacity: scrollOpacity,
@@ -220,7 +229,7 @@ function DescriptionText({
     controls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.4, delay: 4.3, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.5, delay: 5.0, ease: [0.16, 1, 0.3, 1] },
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -244,7 +253,7 @@ function DescriptionText({
           fontFamily: FONT,
           fontWeight: 300,
           fontSize: "clamp(10px, 2.5vw, 40px)",
-          color: "rgba(10,10,10,0.42)",
+          color: "#0A0A0A",
           lineHeight: 1.36,
           margin: 0,
         }}
@@ -264,14 +273,11 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
 
   // Phase control:
-  // ~1.5s → all 10 images have entered → trigger simultaneous blur+shrink
-  // ~2.0s → title starts appearing (after blur settles)
-  // ~3.1s → description starts appearing
+  // Image 10 done at 1.05 + 1.0 = 2.05s → 0.5s pause → blur starts at 2.65s
   const [allImagesIn, setAllImagesIn] = useState(false);
 
   useEffect(() => {
-    // Last image done at ~1.83s + 0.5s pause = 2.33s
-    const t = setTimeout(() => setAllImagesIn(true), 2350);
+    const t = setTimeout(() => setAllImagesIn(true), 2650);
     return () => clearTimeout(t);
   }, []);
 
@@ -285,15 +291,14 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const mousePxX = useSpring(rawMousePxX, { stiffness: 50, damping: 20 });
   const mousePxY = useSpring(rawMousePxY, { stiffness: 50, damping: 20 });
 
-  // Title + subtitle: appear after images blur (delay 2.0s)
+  // Title + subtitle: appear at 4.0s (after blur settles at ~3.65s)
   const titleControls = useAnimationControls();
 
   useEffect(() => {
-    // blur starts at 2.35s, duration 0.6s → done at 2.95s → title at 3.1s
     titleControls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.4, delay: 3.1, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.5, delay: 4.0, ease: [0.16, 1, 0.3, 1] },
     });
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -320,7 +325,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
         overflow: "hidden",
       }}
     >
-      {/* ── Title area — appears after images blur ── */}
+      {/* ── Title area — zIndex 20, always above images ── */}
       <div
         style={{
           position: "absolute",
@@ -372,7 +377,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
         </div>
       </div>
 
-      {/* ── Collage images — appear first, clean ── */}
+      {/* ── Collage images — zIndex 2, behind text ── */}
       {heroProjects.map((project, i) => (
         <CollageImage
           key={project.id}
@@ -386,7 +391,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
         />
       ))}
 
-      {/* ── Description — appears last ── */}
+      {/* ── Description — zIndex 5, above images ── */}
       {desc && (
         <DescriptionText text={desc} scrollOpacity={scrollOpacity} />
       )}
