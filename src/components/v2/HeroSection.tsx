@@ -17,7 +17,10 @@ type ScatterPos = { left: string; top: string; w: string };
 
 // 16-column grid layout
 // Rules: no overlap, adjacent images (zero-gap neighbours) must have different spans
-function makeScatter(): ScatterPos[] {
+// Retries up to 30× to guarantee 10 images; falls back without adjacency rule if needed
+type Placement = { row: number; startCol: number; span: number };
+
+function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
   const TOTAL_COLS = 16;
   const COL_W = 100 / TOTAL_COLS;
   const ROW_RANGES: [number, number][] = [[25, 41], [50, 66]];
@@ -26,11 +29,9 @@ function makeScatter(): ScatterPos[] {
     new Array(TOTAL_COLS).fill(false),
     new Array(TOTAL_COLS).fill(false),
   ];
-  // Track placed images per row for adjacency checks
   const placedInRow: Array<Array<{ startCol: number; span: number }>> = [[], []];
   const positions: ScatterPos[] = [];
 
-  type Placement = { row: number; startCol: number; span: number };
   const allPlacements: Placement[] = [];
   for (let row = 0; row < 2; row++) {
     for (let startCol = 0; startCol < TOTAL_COLS; startCol++) {
@@ -53,19 +54,20 @@ function makeScatter(): ScatterPos[] {
     }
     if (!colFree) continue;
 
-    // Rule 2: adjacent images (directly touching, no gap) must differ in span
-    let spanConflict = false;
-    for (const placed of placedInRow[p.row]) {
-      const newIsRightOf = placed.startCol + placed.span === p.startCol;
-      const newIsLeftOf  = p.startCol + p.span === placed.startCol;
-      if ((newIsRightOf || newIsLeftOf) && placed.span === p.span) {
-        spanConflict = true;
-        break;
+    // Rule 2: adjacent images must differ in span
+    if (enforceAdjacency) {
+      let spanConflict = false;
+      for (const placed of placedInRow[p.row]) {
+        const rightOf = placed.startCol + placed.span === p.startCol;
+        const leftOf  = p.startCol + p.span === placed.startCol;
+        if ((rightOf || leftOf) && placed.span === p.span) {
+          spanConflict = true;
+          break;
+        }
       }
+      if (spanConflict) continue;
     }
-    if (spanConflict) continue;
 
-    // Place
     for (let c = p.startCol; c < p.startCol + p.span; c++) {
       usedCols[p.row][c] = true;
     }
@@ -80,6 +82,15 @@ function makeScatter(): ScatterPos[] {
   }
 
   return positions;
+}
+
+function makeScatter(): ScatterPos[] {
+  // Retry with full rules; fallback relaxes adjacency if all retries fail
+  for (let i = 0; i < 30; i++) {
+    const result = runScatterAttempt(true);
+    if (result.length >= 10) return result;
+  }
+  return runScatterAttempt(false); // guaranteed 10 — no adjacency constraint
 }
 
 // Sequence:
