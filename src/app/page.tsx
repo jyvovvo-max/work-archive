@@ -148,8 +148,8 @@ export default function Page() {
         />
       </div>
 
-      {/* Spacer — Selected Works slides over hero */}
-      <div style={{ height: "100vh" }} />
+      {/* Spacer — Selected Works slides over after desc finishes at ~500px */}
+      <div style={{ height: "calc(100vh + 550px)" }} />
 
       {/* Layer 2: Selected Works — slides over Hero */}
       <div style={{
