@@ -15,7 +15,7 @@ import { Project, SiteData } from "./types";
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
-  style: ["normal", "italic"],
+  style: ["normal"],
 });
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -27,7 +27,6 @@ function makeScatter(): ScatterPos[] {
   const COL_W = 100 / TOTAL_COLS; // 6.25vw per column
   const ROW_RANGES: [number, number][] = [[25, 41], [50, 66]];
 
-  // Track occupied columns per row
   const usedCols = [
     new Array(TOTAL_COLS).fill(false),
     new Array(TOTAL_COLS).fill(false),
@@ -61,11 +60,9 @@ function makeScatter(): ScatterPos[] {
     }
 
     const [yMin, yMax] = ROW_RANGES[p.row];
-    const top = yMin + Math.random() * (yMax - yMin);
-
     positions.push({
       left: `${p.startCol * COL_W}vw`,
-      top: `${top}vh`,
+      top: `${yMin + Math.random() * (yMax - yMin)}vh`,
       w: `${p.span * COL_W}vw`,
     });
   }
@@ -73,13 +70,13 @@ function makeScatter(): ScatterPos[] {
   return positions;
 }
 
+// Images appear blurry and stay blurry; hover clears blur
 function CollageImage({
   src,
   pos,
   idx,
   mousePxX,
   mousePxY,
-  introduced,
   scrollOpacity,
 }: {
   src: string;
@@ -87,13 +84,12 @@ function CollageImage({
   idx: number;
   mousePxX: MotionValue<number>;
   mousePxY: MotionValue<number>;
-  introduced: boolean;
   scrollOpacity: MotionValue<number>;
 }) {
   const [hovered, setHovered] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
-  // Proximity tilt — 650px radius, quadratic weighting (closer = more tilt)
+  // Proximity tilt — 650px radius, quadratic weighting
   const localRotateX = useMotionValue(0);
   const localRotateY = useMotionValue(0);
   const springRotateX = useSpring(localRotateX, { stiffness: 50, damping: 20 });
@@ -112,7 +108,7 @@ function CollageImage({
       const cy = rect.top + rect.height / 2;
       const dist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
       const t = Math.max(0, 1 - dist / maxDist);
-      const factor = t * t; // quadratic: steeper near cursor
+      const factor = t * t;
       localRotateX.set((cy - my) / Math.max(rect.height / 2, 1) * maxTilt * factor);
       localRotateY.set((mx - cx) / Math.max(rect.width / 2, 1) * maxTilt * factor);
     };
@@ -123,10 +119,11 @@ function CollageImage({
   }, [mousePxX, mousePxY, localRotateX, localRotateY]);
 
   return (
+    // Outer: staggered pop-in (images appear first, before title)
     <motion.div
-      initial={{ opacity: 0, scale: 0.88 }}
+      initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.2 + idx * 0.07, duration: 0.55, ease: [0.34, 1.56, 0.64, 1] }}
+      transition={{ delay: 0.1 + idx * 0.07, duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
       style={{
         position: "absolute",
         left: pos.left,
@@ -138,17 +135,19 @@ function CollageImage({
         perspective: "600px",
       }}
     >
+      {/* Inner: always blurry + slight scale-down; hover = sharp */}
       <motion.div
         ref={imgRef}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        initial={{ filter: "blur(5px)", scale: 0.95 }}
         animate={{
-          filter: introduced && !hovered ? "blur(5px)" : "blur(0px)",
-          scale: introduced && !hovered ? 0.95 : 1,
+          filter: hovered ? "blur(0px)" : "blur(5px)",
+          scale: hovered ? 1 : 0.95,
         }}
         transition={{
-          filter: { duration: 0.6, ease: "easeOut" },
-          scale: { duration: 0.6, ease: "easeOut" },
+          filter: { duration: 0.18, ease: "easeOut" },
+          scale: { duration: 0.18, ease: "easeOut" },
         }}
         style={{
           opacity: scrollOpacity,
@@ -171,6 +170,7 @@ function CollageImage({
   );
 }
 
+// Description: appears after images + title
 function DescriptionText({
   text,
   scrollOpacity,
@@ -184,7 +184,7 @@ function DescriptionText({
     controls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.8, delay: 0.7, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.6, delay: 1.7, ease: [0.16, 1, 0.3, 1] },
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -207,7 +207,8 @@ function DescriptionText({
         style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(30px, 2.5vw, 37.5px)",
+          // Scales proportionally with viewport like title — same vw ratio
+          fontSize: "clamp(10px, 2.5vw, 40px)",
           color: "rgba(10,10,10,0.42)",
           lineHeight: 1.36,
           margin: 0,
@@ -226,17 +227,10 @@ interface HeroProps {
 
 export default function HeroSection({ projects, siteData }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
-  const [introduced, setIntroduced] = useState(false);
 
-  // Global scroll → images + desc fade out 0–400px
+  // Global scroll → all hero content fades together 0–400px
   const { scrollY } = useScroll();
   const scrollOpacity = useTransform(scrollY, [0, 400], [1, 0]);
-
-  // After text animation completes (~2.5s), images blur + shrink
-  useEffect(() => {
-    const t = setTimeout(() => setIntroduced(true), 2500);
-    return () => clearTimeout(t);
-  }, []);
 
   // Pixel-based mouse tracking for proximity tilt
   const rawMousePxX = useMotionValue(0);
@@ -244,13 +238,14 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const mousePxX = useSpring(rawMousePxX, { stiffness: 50, damping: 20 });
   const mousePxY = useSpring(rawMousePxY, { stiffness: 50, damping: 20 });
 
+  // Title + subtitle appear AFTER images start (delay 0.85s)
   const titleControls = useAnimationControls();
 
   useEffect(() => {
     titleControls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.4, delay: 0.85, ease: [0.16, 1, 0.3, 1] },
     });
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -266,6 +261,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const subtitle = siteData?.landingSubtitle || "2015–Present";
   const desc = siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 10);
+  const scatterLen = Math.max(scatter.length, 1);
 
   return (
     <section
@@ -276,7 +272,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
         overflow: "hidden",
       }}
     >
-      {/* ── Title area ── */}
+      {/* ── Title area — appears after images ── */}
       <div
         style={{
           position: "absolute",
@@ -286,7 +282,6 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
           pointerEvents: "none",
         }}
       >
-        {/* Wrapper so subtitle can position relative to title right-edge */}
         <div style={{ position: "relative", display: "inline-block" }}>
           <motion.h1
             initial={{ filter: "blur(28px)", opacity: 0 }}
@@ -306,7 +301,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
             {title}
           </motion.h1>
 
-          {/* 2015–Present — Instrument Serif Italic, top-right of title */}
+          {/* 2015–Present — Instrument Serif Roman, top-right of title */}
           <motion.p
             initial={{ filter: "blur(20px)", opacity: 0 }}
             animate={titleControls}
@@ -316,10 +311,10 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
               right: 0,
               margin: 0,
               fontFamily: instrumentSerif.style.fontFamily,
-              fontStyle: "italic",
+              fontStyle: "normal",
               fontWeight: 400,
-              fontSize: "clamp(22px, 1.7vw, 26px)",
-              lineHeight: 0.84,
+              fontSize: "28px",
+              lineHeight: 0.67,
               color: "rgba(10,10,10,0.35)",
               whiteSpace: "nowrap",
             }}
@@ -329,21 +324,20 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
         </div>
       </div>
 
-      {/* ── Collage images ── */}
+      {/* ── Collage images — appear first ── */}
       {heroProjects.map((project, i) => (
         <CollageImage
           key={project.id}
           src={project.img}
-          pos={scatter[i % scatter.length]}
+          pos={scatter[i % scatterLen]}
           idx={i}
           mousePxX={mousePxX}
           mousePxY={mousePxY}
-          introduced={introduced}
           scrollOpacity={scrollOpacity}
         />
       ))}
 
-      {/* ── Description ── */}
+      {/* ── Description — appears last ── */}
       {desc && (
         <DescriptionText text={desc} scrollOpacity={scrollOpacity} />
       )}

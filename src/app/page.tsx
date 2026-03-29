@@ -24,15 +24,13 @@ export default function Page() {
   const aboutRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (typeof history !== "undefined") history.scrollRestoration = "manual";
+    if (typeof history !== "undefined") history.scrollRestoration = "auto";
     const hash = window.location.hash;
     if (hash.startsWith("#/detail/")) {
       const id = parseInt(hash.replace("#/detail/", ""));
       if (!isNaN(id)) setPendingDetailId(id);
     } else if (hash === "#/grid") {
       setGridOpen(true);
-    } else {
-      window.scrollTo(0, 0);
     }
     fetchProjects().then(setProjects);
     fetchSiteData().then(setSiteData);
@@ -157,7 +155,7 @@ export default function Page() {
         position: "relative",
         zIndex: 2,
         background: "#F0F0F0",
-        boxShadow: "0 -40px 100px rgba(0,0,0,0.35)",
+        borderTop: "1px solid rgba(0,0,0,0.12)",
       }}>
         <WorksGrid projects={randomWorks} onOpen={setSelected} />
       </div>
@@ -167,7 +165,7 @@ export default function Page() {
         position: "relative",
         zIndex: 3,
         background: "#F0F0F0",
-        boxShadow: "0 -40px 100px rgba(0,0,0,0.20)",
+        borderTop: "1px solid rgba(0,0,0,0.08)",
       }}>
         <AboutSection ref={aboutRef} siteData={siteData} />
         <Footer />
