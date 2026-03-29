@@ -196,8 +196,8 @@ function CollageImage({
           scale: blurred ? 0.95 : 1,
         }}
         transition={{
-          filter: { duration: 1.0, ease: "easeInOut" },
-          scale: { duration: 1.0, ease: "easeInOut" },
+          filter: { duration: blurred ? 1.0 : 0.2, ease: "easeInOut" },
+          scale: { duration: blurred ? 1.0 : 0.2, ease: "easeInOut" },
         }}
         style={{
           opacity: scrollOpacity,
