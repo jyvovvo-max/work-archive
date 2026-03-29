@@ -15,28 +15,32 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
 type ScatterPos = { left: string; top: string; w: string };
 
-// 16-column grid layout
-// Rules: no overlap, adjacent images (zero-gap neighbours) must have different spans
-// Retries up to 30× to guarantee 10 images; falls back without adjacency rule if needed
+// 16-col × 8-row grid
+// Each image: left edge snaps to column, top edge snaps to row (2 sides aligned)
+// Rules: no cell overlap, adjacent images in same row must differ in span
+// Retries up to 30×; fallback relaxes adjacency rule
 type Placement = { row: number; startCol: number; span: number };
 
-function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
-  const TOTAL_COLS = 16;
-  const COL_W = 100 / TOTAL_COLS;
-  const ROW_RANGES: [number, number][] = [[25, 41], [50, 66]];
+const GRID_COLS = 16;
+const GRID_ROWS = 8;
+const COL_W = 100 / GRID_COLS;   // 6.25vw
+const ROW_H = 55 / GRID_ROWS;    // 6.875vh
+const ROW_START = 20;             // vh — images start at 20vh (below title)
 
-  const usedCols = [
-    new Array(TOTAL_COLS).fill(false),
-    new Array(TOTAL_COLS).fill(false),
-  ];
-  const placedInRow: Array<Array<{ startCol: number; span: number }>> = [[], []];
+function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
+  // 2D cell map: [row][col]
+  const usedCells = Array.from({ length: GRID_ROWS }, () =>
+    new Array(GRID_COLS).fill(false)
+  );
+  const placedInRow: Array<Array<{ startCol: number; span: number }>> =
+    Array.from({ length: GRID_ROWS }, () => []);
   const positions: ScatterPos[] = [];
 
   const allPlacements: Placement[] = [];
-  for (let row = 0; row < 2; row++) {
-    for (let startCol = 0; startCol < TOTAL_COLS; startCol++) {
+  for (let row = 0; row < GRID_ROWS; row++) {
+    for (let startCol = 0; startCol < GRID_COLS; startCol++) {
       for (let span = 2; span <= 5; span++) {
-        if (startCol + span <= TOTAL_COLS) {
+        if (startCol + span <= GRID_COLS) {
           allPlacements.push({ row, startCol, span });
         }
       }
@@ -47,14 +51,14 @@ function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
   for (const p of allPlacements) {
     if (positions.length >= 10) break;
 
-    // Rule 1: no column overlap
-    let colFree = true;
+    // Rule 1: no cell overlap
+    let cellFree = true;
     for (let c = p.startCol; c < p.startCol + p.span; c++) {
-      if (usedCols[p.row][c]) { colFree = false; break; }
+      if (usedCells[p.row][c]) { cellFree = false; break; }
     }
-    if (!colFree) continue;
+    if (!cellFree) continue;
 
-    // Rule 2: adjacent images must differ in span
+    // Rule 2: horizontal neighbours in same row must differ in span
     if (enforceAdjacency) {
       let spanConflict = false;
       for (const placed of placedInRow[p.row]) {
@@ -69,14 +73,13 @@ function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
     }
 
     for (let c = p.startCol; c < p.startCol + p.span; c++) {
-      usedCols[p.row][c] = true;
+      usedCells[p.row][c] = true;
     }
     placedInRow[p.row].push({ startCol: p.startCol, span: p.span });
 
-    const [yMin, yMax] = ROW_RANGES[p.row];
     positions.push({
       left: `${p.startCol * COL_W}vw`,
-      top: `${yMin + Math.random() * (yMax - yMin)}vh`,
+      top: `${ROW_START + p.row * ROW_H}vh`,  // top snaps to row grid line
       w: `${p.span * COL_W}vw`,
     });
   }
@@ -85,12 +88,11 @@ function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
 }
 
 function makeScatter(): ScatterPos[] {
-  // Retry with full rules; fallback relaxes adjacency if all retries fail
   for (let i = 0; i < 30; i++) {
     const result = runScatterAttempt(true);
     if (result.length >= 10) return result;
   }
-  return runScatterAttempt(false); // guaranteed 10 — no adjacency constraint
+  return runScatterAttempt(false);
 }
 
 // Sequence:
@@ -181,8 +183,8 @@ function CollageImage({
           scale: blurred ? 0.95 : 1,
         }}
         transition={{
-          filter: { duration: 0.55, ease: "easeInOut" },
-          scale: { duration: 0.55, ease: "easeInOut" },
+          filter: { duration: 0.6, ease: "easeInOut" },
+          scale: { duration: 0.6, ease: "easeInOut" },
         }}
         style={{
           opacity: scrollOpacity,
@@ -218,7 +220,7 @@ function DescriptionText({
     controls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.4, delay: 3.7, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.4, delay: 4.3, ease: [0.16, 1, 0.3, 1] },
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -268,8 +270,8 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const [allImagesIn, setAllImagesIn] = useState(false);
 
   useEffect(() => {
-    // Last image (idx=9) done at: 0.15 + 9*0.1 + 0.78 = 1.83s → fire at 1.9s
-    const t = setTimeout(() => setAllImagesIn(true), 1900);
+    // Last image done at ~1.83s + 0.5s pause = 2.33s
+    const t = setTimeout(() => setAllImagesIn(true), 2350);
     return () => clearTimeout(t);
   }, []);
 
@@ -287,11 +289,11 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const titleControls = useAnimationControls();
 
   useEffect(() => {
-    // blur starts at 1.9s, duration 0.55s → done at 2.45s → title at 2.55s
+    // blur starts at 2.35s, duration 0.6s → done at 2.95s → title at 3.1s
     titleControls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.4, delay: 2.55, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.4, delay: 3.1, ease: [0.16, 1, 0.3, 1] },
     });
 
     const handleMouseMove = (e: MouseEvent) => {
