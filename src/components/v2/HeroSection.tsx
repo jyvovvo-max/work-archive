@@ -117,6 +117,7 @@ function CollageImage({
   mousePxX,
   mousePxY,
   scrollOpacity,
+  scrollTranslateY,
   allImagesIn,
   onOpen,
 }: {
@@ -126,6 +127,7 @@ function CollageImage({
   mousePxX: MotionValue<number>;
   mousePxY: MotionValue<number>;
   scrollOpacity: MotionValue<number>;
+  scrollTranslateY: MotionValue<number>;
   allImagesIn: boolean;
   onOpen: (p: Project) => void;
 }) {
@@ -184,6 +186,7 @@ function CollageImage({
         zIndex: 2,
         perspective: "600px",
         cursor: "pointer",
+        y: scrollTranslateY,
       }}
     >
       {/* Inner: clean on entrance, blur+shrink after allImagesIn */}
@@ -196,8 +199,8 @@ function CollageImage({
           scale: blurred ? 0.95 : 1,
         }}
         transition={{
-          filter: { duration: blurred ? 1.0 : 0.2, ease: "easeInOut" },
-          scale: { duration: blurred ? 1.0 : 0.2, ease: "easeInOut" },
+          filter: { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" },
+          scale: { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" },
         }}
         style={{
           opacity: scrollOpacity,
@@ -223,9 +226,11 @@ function CollageImage({
 function DescriptionText({
   text,
   scrollOpacity,
+  descTranslateY,
 }: {
   text: string;
   scrollOpacity: MotionValue<number>;
+  descTranslateY: MotionValue<string>;
 }) {
   const controls = useAnimationControls();
 
@@ -247,8 +252,8 @@ function DescriptionText({
         right: "clamp(20px, 4vw, 56px)",
         zIndex: 5,
         pointerEvents: "none",
-        opacity: scrollOpacity,
         mixBlendMode: "difference",
+        y: descTranslateY,
       }}
     >
       <motion.p
@@ -295,9 +300,12 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
     return () => clearTimeout(t);
   }, []);
 
-  // Global scroll → hero fades 0–400px
+  // Global scroll → hero fades + slides up 0–400px
   const { scrollY } = useScroll();
   const scrollOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const scrollTranslateY = useTransform(scrollY, [0, 400], [0, -100]);
+  // Description slides up from 74vh to just below title (~28vh) = -46vh
+  const descTranslateY = useTransform(scrollY, [0, 400], ["0vh", "-46vh"]);
 
   // Pixel-based mouse for proximity tilt
   const rawMousePxX = useMotionValue(0);
@@ -402,6 +410,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
           mousePxX={mousePxX}
           mousePxY={mousePxY}
           scrollOpacity={scrollOpacity}
+          scrollTranslateY={scrollTranslateY}
           allImagesIn={allImagesIn}
           onOpen={onOpen}
         />
@@ -409,7 +418,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
 
       {/* ── Description — zIndex 5, above images ── */}
       {desc && (
-        <DescriptionText text={desc} scrollOpacity={scrollOpacity} />
+        <DescriptionText text={desc} scrollOpacity={scrollOpacity} descTranslateY={descTranslateY} />
       )}
     </section>
   );
