@@ -31,7 +31,7 @@ function makeScatter(): ScatterPos[] {
   const allPlacements: Placement[] = [];
   for (let row = 0; row < 2; row++) {
     for (let startCol = 0; startCol < TOTAL_COLS; startCol++) {
-      for (let span = 2; span <= 4; span++) {
+      for (let span = 3; span <= 6; span++) {
         if (startCol + span <= TOTAL_COLS) {
           allPlacements.push({ row, startCol, span });
         }
@@ -124,12 +124,12 @@ function CollageImage({
   return (
     // Outer: staggered clean fade-in
     <motion.div
-      initial={{ opacity: 0, scale: 0.92 }}
+      initial={{ opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
-        delay: 0.15 + idx * 0.08,
-        duration: 0.62,
-        ease: [0.16, 1, 0.3, 1],
+        delay: 0.15 + idx * 0.1,   // 80% speed: 0.08→0.1s gap
+        duration: 0.78,             // 80% speed: 0.62→0.78s
+        ease: [0.55, 0, 1, 0.6],   // ease-in: slow start → fast finish
       }}
       style={{
         position: "absolute",
@@ -189,7 +189,7 @@ function DescriptionText({
     controls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.4, delay: 3.1, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.4, delay: 3.7, ease: [0.16, 1, 0.3, 1] },
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -239,8 +239,8 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const [allImagesIn, setAllImagesIn] = useState(false);
 
   useEffect(() => {
-    // Last image (idx=9) done at: 0.15 + 9*0.08 + 0.62 ≈ 1.49s
-    const t = setTimeout(() => setAllImagesIn(true), 1500);
+    // Last image (idx=9) done at: 0.15 + 9*0.1 + 0.78 = 1.83s → fire at 1.9s
+    const t = setTimeout(() => setAllImagesIn(true), 1900);
     return () => clearTimeout(t);
   }, []);
 
@@ -258,10 +258,11 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
   const titleControls = useAnimationControls();
 
   useEffect(() => {
+    // blur starts at 1.9s, duration 0.55s → done at 2.45s → title at 2.55s
     titleControls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.4, delay: 2.0, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.4, delay: 2.55, ease: [0.16, 1, 0.3, 1] },
     });
 
     const handleMouseMove = (e: MouseEvent) => {

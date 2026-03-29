@@ -20,16 +20,7 @@ export default function Page() {
   const [gridOpen, setGridOpen] = useState(false);
   const [gridAboutOpen, setGridAboutOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-
   const aboutRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   useEffect(() => {
     if (typeof history !== "undefined") history.scrollRestoration = "auto";
@@ -147,18 +138,16 @@ export default function Page() {
         alwaysVisible={gridOpen}
       />
 
-      {/* Layer 1: Hero — desktop only, fixed behind */}
-      {!isMobile && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 1 }}>
-          <HeroSection
-            projects={randomWorks}
-            siteData={siteData}
-          />
-        </div>
-      )}
+      {/* Layer 1: Hero — fixed behind */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 1 }}>
+        <HeroSection
+          projects={randomWorks}
+          siteData={siteData}
+        />
+      </div>
 
-      {/* Spacer: desktop only — Selected Works slides over hero */}
-      {!isMobile && <div style={{ height: "100vh" }} />}
+      {/* Spacer — Selected Works slides over hero */}
+      <div style={{ height: "100vh" }} />
 
       {/* Layer 2: Selected Works — slides over Hero */}
       <div style={{
