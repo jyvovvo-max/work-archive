@@ -248,6 +248,7 @@ function DescriptionText({
         zIndex: 5,
         pointerEvents: "none",
         opacity: scrollOpacity,
+        mixBlendMode: "difference",
       }}
     >
       <motion.p
@@ -258,7 +259,6 @@ function DescriptionText({
           fontWeight: 300,
           fontSize: "clamp(10px, 2.5vw, 40px)",
           color: "#FFFFFF",
-          mixBlendMode: "difference",
           lineHeight: 1.36,
           margin: 0,
         }}
@@ -343,10 +343,11 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
       <div
         style={{
           position: "absolute",
-          top: "clamp(80px, 12vh, 130px)",
+          top: "clamp(52px, 6vh, 70px)",
           left: "clamp(20px, 4vw, 56px)",
           zIndex: 20,
           pointerEvents: "none",
+          mixBlendMode: "difference",
         }}
       >
         <div style={{ position: "relative", display: "inline-block" }}>
@@ -360,7 +361,6 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
               letterSpacing: "-0.045em",
               lineHeight: 0.88,
               color: "#FFFFFF",
-              mixBlendMode: "difference",
               margin: 0,
               whiteSpace: "nowrap",
               display: "block",
@@ -384,7 +384,6 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
               fontSize: "clamp(13px, 1.8vw, 26px)",
               lineHeight: 0.88,
               color: "rgba(255,255,255,0.5)",
-              mixBlendMode: "difference",
               whiteSpace: "nowrap",
             }}
           >
