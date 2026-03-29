@@ -19,7 +19,7 @@ type ScatterPos = { left: string; top: string; w: string };
 // Bounding box collision detection with estimated image heights (4:3 ratio)
 const GRID_COLS = 16;
 const COL_W = 100 / GRID_COLS; // 6.25vw
-const QUANTIZED_Y = [15, 23, 31, 39, 47, 54]; // vh top positions
+const QUANTIZED_Y = [20, 28, 36, 44, 52, 59]; // vh top positions
 const VW_TO_VH = 1.6; // at 1440×900: 1vw = 1.6vh
 const IMG_RATIO = 0.75; // assumed 4:3 aspect ratio → height = width * 0.75
 const GAP_VH = 2; // minimum vertical gap between images
