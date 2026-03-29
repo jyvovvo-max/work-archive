@@ -15,7 +15,8 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
 type ScatterPos = { left: string; top: string; w: string };
 
-// 16-column grid layout — no overlap, compositional gaps intentional
+// 16-column grid layout
+// Rules: no overlap, adjacent images (zero-gap neighbours) must have different spans
 function makeScatter(): ScatterPos[] {
   const TOTAL_COLS = 16;
   const COL_W = 100 / TOTAL_COLS;
@@ -25,13 +26,15 @@ function makeScatter(): ScatterPos[] {
     new Array(TOTAL_COLS).fill(false),
     new Array(TOTAL_COLS).fill(false),
   ];
+  // Track placed images per row for adjacency checks
+  const placedInRow: Array<Array<{ startCol: number; span: number }>> = [[], []];
   const positions: ScatterPos[] = [];
 
   type Placement = { row: number; startCol: number; span: number };
   const allPlacements: Placement[] = [];
   for (let row = 0; row < 2; row++) {
     for (let startCol = 0; startCol < TOTAL_COLS; startCol++) {
-      for (let span = 3; span <= 6; span++) {
+      for (let span = 2; span <= 5; span++) {
         if (startCol + span <= TOTAL_COLS) {
           allPlacements.push({ row, startCol, span });
         }
@@ -43,15 +46,30 @@ function makeScatter(): ScatterPos[] {
   for (const p of allPlacements) {
     if (positions.length >= 10) break;
 
-    let free = true;
+    // Rule 1: no column overlap
+    let colFree = true;
     for (let c = p.startCol; c < p.startCol + p.span; c++) {
-      if (usedCols[p.row][c]) { free = false; break; }
+      if (usedCols[p.row][c]) { colFree = false; break; }
     }
-    if (!free) continue;
+    if (!colFree) continue;
 
+    // Rule 2: adjacent images (directly touching, no gap) must differ in span
+    let spanConflict = false;
+    for (const placed of placedInRow[p.row]) {
+      const newIsRightOf = placed.startCol + placed.span === p.startCol;
+      const newIsLeftOf  = p.startCol + p.span === placed.startCol;
+      if ((newIsRightOf || newIsLeftOf) && placed.span === p.span) {
+        spanConflict = true;
+        break;
+      }
+    }
+    if (spanConflict) continue;
+
+    // Place
     for (let c = p.startCol; c < p.startCol + p.span; c++) {
       usedCols[p.row][c] = true;
     }
+    placedInRow[p.row].push({ startCol: p.startCol, span: p.span });
 
     const [yMin, yMax] = ROW_RANGES[p.row];
     positions.push({
