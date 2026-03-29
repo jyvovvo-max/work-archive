@@ -111,21 +111,23 @@ function makeScatter(): ScatterPos[] {
 //  4. Desc appears (5.0s delay, 1.5s)
 // Images sit behind text (zIndex 2); text zIndex 5/20
 function CollageImage({
-  src,
+  project,
   pos,
   idx,
   mousePxX,
   mousePxY,
   scrollOpacity,
   allImagesIn,
+  onOpen,
 }: {
-  src: string;
+  project: Project;
   pos: ScatterPos;
   idx: number;
   mousePxX: MotionValue<number>;
   mousePxY: MotionValue<number>;
   scrollOpacity: MotionValue<number>;
   allImagesIn: boolean;
+  onOpen: (p: Project) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
@@ -171,6 +173,7 @@ function CollageImage({
         duration: 1.0,
         ease: [0.55, 0, 1, 0.6],
       }}
+      onClick={() => onOpen(project)}
       style={{
         position: "absolute",
         left: pos.left,
@@ -180,6 +183,7 @@ function CollageImage({
         maxWidth: "440px",
         zIndex: 2,
         perspective: "600px",
+        cursor: "pointer",
       }}
     >
       {/* Inner: clean on entrance, blur+shrink after allImagesIn */}
@@ -206,8 +210,8 @@ function CollageImage({
         }}
       >
         <img
-          src={src}
-          alt=""
+          src={project.img}
+          alt={project.title}
           draggable={false}
           style={{ width: "100%", height: "auto", display: "block" }}
         />
@@ -253,7 +257,8 @@ function DescriptionText({
           fontFamily: FONT,
           fontWeight: 300,
           fontSize: "clamp(10px, 2.5vw, 40px)",
-          color: "#0A0A0A",
+          color: "#FFFFFF",
+          mixBlendMode: "difference",
           lineHeight: 1.36,
           margin: 0,
         }}
@@ -267,9 +272,10 @@ function DescriptionText({
 interface HeroProps {
   projects: Project[];
   siteData: SiteData | null;
+  onOpen: (p: Project) => void;
 }
 
-export default function HeroSection({ projects, siteData }: HeroProps) {
+export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => {
     try {
       const saved = sessionStorage.getItem("hero-scatter");
@@ -337,7 +343,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
       <div
         style={{
           position: "absolute",
-          top: "clamp(56px, 7vh, 80px)",
+          top: "clamp(80px, 12vh, 130px)",
           left: "clamp(20px, 4vw, 56px)",
           zIndex: 20,
           pointerEvents: "none",
@@ -353,7 +359,8 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
               fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
               letterSpacing: "-0.045em",
               lineHeight: 0.88,
-              color: "#0A0A0A",
+              color: "#FFFFFF",
+              mixBlendMode: "difference",
               margin: 0,
               whiteSpace: "nowrap",
               display: "block",
@@ -376,7 +383,8 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
               fontStyle: "normal",
               fontSize: "clamp(13px, 1.8vw, 26px)",
               lineHeight: 0.88,
-              color: "rgba(10,10,10,0.35)",
+              color: "rgba(255,255,255,0.5)",
+              mixBlendMode: "difference",
               whiteSpace: "nowrap",
             }}
           >
@@ -389,13 +397,14 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
       {heroProjects.map((project, i) => (
         <CollageImage
           key={project.id}
-          src={project.img}
+          project={project}
           pos={scatter[i % scatterLen]}
           idx={i}
           mousePxX={mousePxX}
           mousePxY={mousePxY}
           scrollOpacity={scrollOpacity}
           allImagesIn={allImagesIn}
+          onOpen={onOpen}
         />
       ))}
 

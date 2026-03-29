@@ -153,6 +153,7 @@ export default function Page() {
         <HeroSection
           projects={randomWorks}
           siteData={siteData}
+          onOpen={setSelected}
         />
       </div>
 
