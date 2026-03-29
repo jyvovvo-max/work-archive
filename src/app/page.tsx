@@ -69,7 +69,17 @@ export default function Page() {
   useEffect(() => {
     if (!didShuffle.current && projects.length > 0) {
       didShuffle.current = true;
-      setRandomWorks([...projects].sort(() => Math.random() - 0.5).slice(0, 10));
+      try {
+        const saved = sessionStorage.getItem("random-works-ids");
+        if (saved) {
+          const ids: number[] = JSON.parse(saved);
+          const ordered = ids.map(id => projects.find(p => p.id === id)).filter(Boolean) as typeof projects;
+          if (ordered.length > 0) { setRandomWorks(ordered); return; }
+        }
+      } catch {}
+      const shuffled = [...projects].sort(() => Math.random() - 0.5).slice(0, 10);
+      try { sessionStorage.setItem("random-works-ids", JSON.stringify(shuffled.map(p => p.id))); } catch {}
+      setRandomWorks(shuffled);
     }
   }, [projects]);
 

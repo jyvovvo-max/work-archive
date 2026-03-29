@@ -270,7 +270,15 @@ interface HeroProps {
 }
 
 export default function HeroSection({ projects, siteData }: HeroProps) {
-  const [scatter] = useState<ScatterPos[]>(() => makeScatter());
+  const [scatter] = useState<ScatterPos[]>(() => {
+    try {
+      const saved = sessionStorage.getItem("hero-scatter");
+      if (saved) return JSON.parse(saved) as ScatterPos[];
+    } catch {}
+    const fresh = makeScatter();
+    try { sessionStorage.setItem("hero-scatter", JSON.stringify(fresh)); } catch {}
+    return fresh;
+  });
 
   // Phase control:
   // Image 10 done at 1.05 + 1.0 = 2.05s → 0.5s pause → blur starts at 2.65s
