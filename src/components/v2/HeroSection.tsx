@@ -177,7 +177,7 @@ function CollageImage({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         animate={{
-          filter: blurred ? "blur(5px)" : "blur(0px)",
+          filter: blurred ? "blur(3px)" : "blur(0px)",
           scale: blurred ? 0.95 : 1,
         }}
         transition={{
