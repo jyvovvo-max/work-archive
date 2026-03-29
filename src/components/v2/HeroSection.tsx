@@ -281,15 +281,7 @@ interface HeroProps {
 }
 
 export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
-  const [scatter] = useState<ScatterPos[]>(() => {
-    try {
-      const saved = sessionStorage.getItem("hero-scatter");
-      if (saved) return JSON.parse(saved) as ScatterPos[];
-    } catch {}
-    const fresh = makeScatter();
-    try { sessionStorage.setItem("hero-scatter", JSON.stringify(fresh)); } catch {}
-    return fresh;
-  });
+  const [scatter] = useState<ScatterPos[]>(() => makeScatter());
 
   // Phase control:
   // Image 10 done at 1.05 + 1.0 = 2.05s → 0.5s pause → blur starts at 2.65s
@@ -303,10 +295,10 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
   // Global scroll → hero fades + slides up 0–400px
   const { scrollY } = useScroll();
   const scrollOpacity = useTransform(scrollY, [0, 400], [1, 0]);
-  // Images: move faster, done earlier (느끼는 거리감 — 배경처럼 빠르게)
-  const scrollTranslateY = useTransform(scrollY, [0, 300], [0, -120]);
-  // Description: delayed start, slower pace (가까운 요소처럼 천천히 따라옴)
-  const descTranslateY = useTransform(scrollY, [80, 500], ["0vh", "-46vh"]);
+  // Images: very fast, done by scroll 200px
+  const scrollTranslateY = useTransform(scrollY, [0, 200], [0, -160]);
+  // Description: starts late, finishes much later
+  const descTranslateY = useTransform(scrollY, [200, 700], ["0vh", "-46vh"]);
 
   // Pixel-based mouse for proximity tilt
   const rawMousePxX = useMotionValue(0);
