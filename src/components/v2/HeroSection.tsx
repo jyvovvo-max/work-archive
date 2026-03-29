@@ -303,9 +303,10 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
   // Global scroll → hero fades + slides up 0–400px
   const { scrollY } = useScroll();
   const scrollOpacity = useTransform(scrollY, [0, 400], [1, 0]);
-  const scrollTranslateY = useTransform(scrollY, [0, 400], [0, -100]);
-  // Description slides up from 74vh to just below title (~28vh) = -46vh
-  const descTranslateY = useTransform(scrollY, [0, 400], ["0vh", "-46vh"]);
+  // Images: move faster, done earlier (느끼는 거리감 — 배경처럼 빠르게)
+  const scrollTranslateY = useTransform(scrollY, [0, 300], [0, -120]);
+  // Description: delayed start, slower pace (가까운 요소처럼 천천히 따라옴)
+  const descTranslateY = useTransform(scrollY, [80, 500], ["0vh", "-46vh"]);
 
   // Pixel-based mouse for proximity tilt
   const rawMousePxX = useMotionValue(0);
