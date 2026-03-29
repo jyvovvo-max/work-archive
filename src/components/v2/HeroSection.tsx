@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Instrument_Serif } from "next/font/google";
 import {
   motion,
   useMotionValue,
@@ -12,11 +11,6 @@ import {
 } from "framer-motion";
 import { Project, SiteData } from "./types";
 
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal"],
-});
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
 type ScatterPos = { left: string; top: string; w: string };
@@ -24,7 +18,7 @@ type ScatterPos = { left: string; top: string; w: string };
 // 16-column grid layout — no overlap, compositional gaps intentional
 function makeScatter(): ScatterPos[] {
   const TOTAL_COLS = 16;
-  const COL_W = 100 / TOTAL_COLS; // 6.25vw per column
+  const COL_W = 100 / TOTAL_COLS;
   const ROW_RANGES: [number, number][] = [[25, 41], [50, 66]];
 
   const usedCols = [
@@ -70,7 +64,12 @@ function makeScatter(): ScatterPos[] {
   return positions;
 }
 
-// Images appear blurry and stay blurry; hover clears blur
+// Sequence:
+//  1. Images fade in clean (staggered)
+//  2. Once all images in → blur 5px + scale 0.95 simultaneously
+//  3. Title appears
+//  4. Desc appears
+// Hover always clears blur.
 function CollageImage({
   src,
   pos,
@@ -78,6 +77,7 @@ function CollageImage({
   mousePxX,
   mousePxY,
   scrollOpacity,
+  allImagesIn,
 }: {
   src: string;
   pos: ScatterPos;
@@ -85,6 +85,7 @@ function CollageImage({
   mousePxX: MotionValue<number>;
   mousePxY: MotionValue<number>;
   scrollOpacity: MotionValue<number>;
+  allImagesIn: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
@@ -118,12 +119,18 @@ function CollageImage({
     return () => { unsubX(); unsubY(); };
   }, [mousePxX, mousePxY, localRotateX, localRotateY]);
 
+  const blurred = allImagesIn && !hovered;
+
   return (
-    // Outer: staggered pop-in (images appear first, before title)
+    // Outer: staggered clean fade-in
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.1 + idx * 0.07, duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+      transition={{
+        delay: 0.15 + idx * 0.08,
+        duration: 0.62,
+        ease: [0.16, 1, 0.3, 1],
+      }}
       style={{
         position: "absolute",
         left: pos.left,
@@ -135,19 +142,18 @@ function CollageImage({
         perspective: "600px",
       }}
     >
-      {/* Inner: always blurry + slight scale-down; hover = sharp */}
+      {/* Inner: clean on entrance, blur+shrink after allImagesIn */}
       <motion.div
         ref={imgRef}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        initial={{ filter: "blur(5px)", scale: 0.95 }}
         animate={{
-          filter: hovered ? "blur(0px)" : "blur(5px)",
-          scale: hovered ? 1 : 0.95,
+          filter: blurred ? "blur(5px)" : "blur(0px)",
+          scale: blurred ? 0.95 : 1,
         }}
         transition={{
-          filter: { duration: 0.18, ease: "easeOut" },
-          scale: { duration: 0.18, ease: "easeOut" },
+          filter: { duration: 0.55, ease: "easeInOut" },
+          scale: { duration: 0.55, ease: "easeInOut" },
         }}
         style={{
           opacity: scrollOpacity,
@@ -170,7 +176,6 @@ function CollageImage({
   );
 }
 
-// Description: appears after images + title
 function DescriptionText({
   text,
   scrollOpacity,
@@ -184,7 +189,7 @@ function DescriptionText({
     controls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.6, delay: 1.7, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.4, delay: 3.1, ease: [0.16, 1, 0.3, 1] },
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -207,7 +212,6 @@ function DescriptionText({
         style={{
           fontFamily: FONT,
           fontWeight: 300,
-          // Scales proportionally with viewport like title — same vw ratio
           fontSize: "clamp(10px, 2.5vw, 40px)",
           color: "rgba(10,10,10,0.42)",
           lineHeight: 1.36,
@@ -228,24 +232,36 @@ interface HeroProps {
 export default function HeroSection({ projects, siteData }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
 
-  // Global scroll → all hero content fades together 0–400px
+  // Phase control:
+  // ~1.5s → all 10 images have entered → trigger simultaneous blur+shrink
+  // ~2.0s → title starts appearing (after blur settles)
+  // ~3.1s → description starts appearing
+  const [allImagesIn, setAllImagesIn] = useState(false);
+
+  useEffect(() => {
+    // Last image (idx=9) done at: 0.15 + 9*0.08 + 0.62 ≈ 1.49s
+    const t = setTimeout(() => setAllImagesIn(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Global scroll → hero fades 0–400px
   const { scrollY } = useScroll();
   const scrollOpacity = useTransform(scrollY, [0, 400], [1, 0]);
 
-  // Pixel-based mouse tracking for proximity tilt
+  // Pixel-based mouse for proximity tilt
   const rawMousePxX = useMotionValue(0);
   const rawMousePxY = useMotionValue(0);
   const mousePxX = useSpring(rawMousePxX, { stiffness: 50, damping: 20 });
   const mousePxY = useSpring(rawMousePxY, { stiffness: 50, damping: 20 });
 
-  // Title + subtitle appear AFTER images start (delay 0.85s)
+  // Title + subtitle: appear after images blur (delay 2.0s)
   const titleControls = useAnimationControls();
 
   useEffect(() => {
     titleControls.start({
       filter: "blur(0px)",
       opacity: 1,
-      transition: { duration: 1.4, delay: 0.85, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 1.4, delay: 2.0, ease: [0.16, 1, 0.3, 1] },
     });
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -272,7 +288,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
         overflow: "hidden",
       }}
     >
-      {/* ── Title area — appears after images ── */}
+      {/* ── Title area — appears after images blur ── */}
       <div
         style={{
           position: "absolute",
@@ -301,7 +317,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
             {title}
           </motion.h1>
 
-          {/* 2015–Present — Instrument Serif Roman, top-right of title */}
+          {/* 2015–Present — same font as title, responsive, top-right */}
           <motion.p
             initial={{ filter: "blur(20px)", opacity: 0 }}
             animate={titleControls}
@@ -310,11 +326,11 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
               top: 0,
               right: 0,
               margin: 0,
-              fontFamily: instrumentSerif.style.fontFamily,
+              fontFamily: FONT,
+              fontWeight: 300,
               fontStyle: "normal",
-              fontWeight: 400,
-              fontSize: "28px",
-              lineHeight: 0.67,
+              fontSize: "clamp(13px, 1.8vw, 26px)",
+              lineHeight: 0.88,
               color: "rgba(10,10,10,0.35)",
               whiteSpace: "nowrap",
             }}
@@ -324,7 +340,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
         </div>
       </div>
 
-      {/* ── Collage images — appear first ── */}
+      {/* ── Collage images — appear first, clean ── */}
       {heroProjects.map((project, i) => (
         <CollageImage
           key={project.id}
@@ -334,6 +350,7 @@ export default function HeroSection({ projects, siteData }: HeroProps) {
           mousePxX={mousePxX}
           mousePxY={mousePxY}
           scrollOpacity={scrollOpacity}
+          allImagesIn={allImagesIn}
         />
       ))}
 
