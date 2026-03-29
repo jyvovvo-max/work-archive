@@ -35,8 +35,10 @@ export default function Page() {
     fetchSiteData().then(setSiteData);
   }, []);
 
-  // Update URL hash when view changes
+  // Update URL hash when view changes (skip initial mount to preserve scroll restoration)
+  const didMountHash = useRef(false);
   useEffect(() => {
+    if (!didMountHash.current) { didMountHash.current = true; return; }
     if (selected) window.location.hash = `#/detail/${selected.id}`;
     else if (gridOpen) window.location.hash = "#/grid";
     else window.location.hash = "";

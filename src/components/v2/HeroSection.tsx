@@ -298,7 +298,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
   // Images: very fast, done by scroll 200px
   const scrollTranslateY = useTransform(scrollY, [0, 200], [0, -160]);
   // Description: starts late, finishes much later
-  const descTranslateY = useTransform(scrollY, [80, 500], ["0vh", "-46vh"]);
+  const descTranslateY = useTransform(scrollY, [80, 500], ["0vh", "-44vh"]);
 
   // Pixel-based mouse for proximity tilt
   const rawMousePxX = useMotionValue(0);
