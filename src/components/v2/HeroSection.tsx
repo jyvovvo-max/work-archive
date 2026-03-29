@@ -1,214 +1,244 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import {
+  motion,
+  useTransform,
+  useMotionValue,
+  useSpring,
+  useAnimationControls,
+  MotionValue,
+} from "framer-motion";
 import { Project, SiteData } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
-const ACCENT = "#0524FF";
 
 type ScatterPos = { left: string; top: string; w: string; rotate: number };
 
-// ── Gaussian cluster: images pile naturally in the center ──
-// Uses Central Limit Theorem (avg of 4 randoms ≈ normal distribution).
-// Result: dense overlap in center, a few cards extending to edges — like
-// photos casually thrown on a table.
-function gauss(): number {
-  return (Math.random() + Math.random() + Math.random() + Math.random()) / 4;
-}
-
+// 5 columns × 2 rows: each image gets its own zone → even fill, no clustering
 function makeScatter(): ScatterPos[] {
-  return Array.from({ length: 10 }, () => ({
-    left:   `${Math.max(8,  Math.min(65, 40 + (gauss() - 0.5) * 62))}vw`,
-    top:    `${Math.max(20, Math.min(72, 46 + (gauss() - 0.5) * 54))}vh`,
-    w:      `${Math.max(15, Math.min(27, 20 + (gauss() - 0.5) * 10))}vw`,
-    rotate: (Math.random() - 0.5) * 40,
-  }));
+  const positions: ScatterPos[] = [];
+  const COLS = 5, ROWS = 2;
+  const zoneW = 74 / COLS; // ~14.8vw per column; total span 3–77vw left edge
+
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const baseLeft = 3 + col * zoneW;
+      const baseTop = row === 0 ? 25 : 50; // row 0: 25–41vh, row 1: 50–66vh
+      positions.push({
+        left: `${baseLeft + Math.random() * (zoneW * 0.82)}vw`,
+        top: `${baseTop + Math.random() * 16}vh`,
+        w: `${14 + Math.random() * 8}vw`, // 14–22vw
+        rotate: (Math.random() - 0.5) * 30, // ±15°
+      });
+    }
+  }
+  // Shuffle so z-order isn't always left-to-right
+  return positions.sort(() => Math.random() - 0.5);
 }
 
-interface HeroProps {
-  projects: Project[];
-  siteData: SiteData | null;
-  categories: string[];
-  activeCategory: string | null;
-  onCategoryChange: (c: string | null) => void;
-  onOpenProject: (p: Project) => void;
-}
-
-function DraggableCard({
-  project, pos, zIndex, idx, onDragStart, onOpen,
+// Individual collage image — separate component so hooks are called per image
+function CollageImage({
+  src,
+  pos,
+  idx,
+  total,
+  scrollProgress,
+  mouseX,
+  mouseY,
 }: {
-  project: Project;
+  src: string;
   pos: ScatterPos;
-  zIndex: number;
   idx: number;
-  onDragStart: () => void;
-  onOpen: (p: Project) => void;
+  total: number;
+  scrollProgress: MotionValue<number>;
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
 }) {
-  const [hovered, setHovered] = useState(false);
+  // Each image's scroll-out range: starts at 0.08 + (i/total)*0.55, ends start+0.20
+  const start = 0.08 + (idx / total) * 0.55;
+  const end = start + 0.20;
+  const opacityEnd = start + 0.20 * 0.6; // at 60% of range opacity hits 0
+
+  const y = useTransform(scrollProgress, [start, end], ["0vh", "-85vh"]);
+  const opacity = useTransform(scrollProgress, [start, opacityEnd], [1, 0]);
+  const blurRaw = useTransform(scrollProgress, [start, end], [0, 18]);
+  const filter = useTransform(blurRaw, (v: number) => `blur(${v}px)`);
+
+  // Mouse tilt: max ±8 deg
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], [8, -8]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-8, 8]);
 
   return (
     <motion.div
-      drag
-      dragMomentum={false}
-      onDragStart={onDragStart}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-      // 툭툭툭: NO blur, just sharp opacity snap with stagger
-      initial={{ opacity: 0, rotate: pos.rotate }}
-      animate={{ opacity: 1, rotate: pos.rotate }}
-      transition={{ delay: 0.3 + idx * 0.1, duration: 0.12, ease: "easeOut" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.2 + idx * 0.07, duration: 0.5, ease: "easeOut" }}
       style={{
         position: "absolute",
         left: pos.left,
         top: pos.top,
         width: pos.w,
-        minWidth: "100px",
-        maxWidth: "420px",
-        zIndex,
-        cursor: "grab",
-        userSelect: "none",
+        minWidth: "80px",
+        maxWidth: "380px",
+        zIndex: 10,
+        perspective: "600px",
       }}
     >
       <motion.div
-        whileDrag={{ boxShadow: `0 0 0 1.5px ${ACCENT}, 0 16px 40px rgba(0,0,0,0.2)` }}
         style={{
-          position: "relative",
+          y,
+          opacity,
+          filter,
+          rotate: pos.rotate,
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d",
           borderRadius: "2px",
           overflow: "hidden",
           boxShadow: "0 4px 18px rgba(0,0,0,0.16)",
-          isolation: "isolate",
         }}
       >
-        {/* Image — no blur animation (툭) */}
         <img
-          src={project.img}
-          alt={project.title}
+          src={src}
+          alt=""
           draggable={false}
           style={{ width: "100%", height: "auto", display: "block" }}
         />
-
-        {/* + button on hover */}
-        <motion.button
-          animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.75 }}
-          transition={{ duration: 0.14 }}
-          onClick={(e) => { e.stopPropagation(); onOpen(project); }}
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            width: "28px",
-            height: "28px",
-            borderRadius: "50%",
-            background: "rgba(240,240,240,0.88)",
-            border: "1px solid rgba(0,0,0,0.2)",
-            color: "#0A0A0A",
-            fontFamily: FONT,
-            fontSize: "16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            pointerEvents: hovered ? "auto" : "none",
-          }}
-        >
-          +
-        </motion.button>
       </motion.div>
     </motion.div>
   );
 }
 
-// Word-by-word slide-up reveal for description text
-function SlideUpText({ text, startDelay = 0.8, fontStyle }: {
+// Description text with blur-in entrance
+function DescriptionText({
+  text,
+  scrollProgress,
+}: {
   text: string;
-  startDelay?: number;
-  fontStyle: React.CSSProperties;
+  scrollProgress: MotionValue<number>;
 }) {
-  const words = text.split(" ");
+  const controls = useAnimationControls();
+
+  useEffect(() => {
+    controls.start({
+      filter: "blur(0px)",
+      opacity: 1,
+      transition: { duration: 1.8, delay: 0.7, ease: [0.16, 1, 0.3, 1] },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const y = useTransform(scrollProgress, [0.62, 0.92], ["0px", "-57vh"]);
+
   return (
-    <p style={{ ...fontStyle, margin: 0, lineHeight: 1.5 }}>
-      {words.map((word, i) => (
-        <span
-          key={i}
-          style={{
-            display: "inline-block",
-            overflow: "hidden",
-            verticalAlign: "bottom",
-            marginRight: "0.28em",
-          }}
-        >
-          <motion.span
-            style={{ display: "inline-block" }}
-            initial={{ y: "110%", opacity: 0 }}
-            animate={{ y: "0%", opacity: 1 }}
-            transition={{
-              delay: startDelay + i * 0.045,
-              duration: 0.55,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-          >
-            {word}
-          </motion.span>
-        </span>
-      ))}
-    </p>
+    <motion.div
+      style={{
+        position: "absolute",
+        top: "74vh",
+        left: "clamp(20px, 4vw, 56px)",
+        right: "clamp(20px, 4vw, 56px)",
+        maxWidth: "clamp(280px, 42vw, 580px)",
+        zIndex: 5,
+        pointerEvents: "none",
+        y,
+      }}
+    >
+      <motion.p
+        initial={{ filter: "blur(20px)", opacity: 0 }}
+        animate={controls}
+        style={{
+          fontFamily: FONT,
+          fontWeight: 300,
+          fontSize: "clamp(12px, 1vw, 15px)",
+          color: "rgba(10,10,10,0.42)",
+          lineHeight: 1.6,
+          margin: 0,
+        }}
+      >
+        {text}
+      </motion.p>
+    </motion.div>
   );
 }
 
-export default function HeroSection({ projects, siteData, onOpenProject }: HeroProps) {
-  const [isMobile, setIsMobile] = useState(false);
-  const [zMap, setZMap] = useState<Record<number, number>>({});
-  const zCounter = useRef(20);
-  // Fresh random layout on every page mount/refresh
-  const [scatter] = useState<ScatterPos[]>(makeScatter);
+interface HeroProps {
+  scrollProgress: MotionValue<number>;
+  projects: Project[];
+  siteData: SiteData | null;
+}
+
+export default function HeroSection({ scrollProgress, projects, siteData }: HeroProps) {
+  const [scatter] = useState<ScatterPos[]>(() => makeScatter());
+
+  // Mouse tracking for tilt
+  const rawMouseX = useMotionValue(0);
+  const rawMouseY = useMotionValue(0);
+  const mouseX = useSpring(rawMouseX, { stiffness: 50, damping: 20 });
+  const mouseY = useSpring(rawMouseY, { stiffness: 50, damping: 20 });
+
+  const titleControls = useAnimationControls();
 
   useEffect(() => {
-    const update = () => setIsMobile(window.innerWidth < 768);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    titleControls.start({
+      filter: "blur(0px)",
+      opacity: 1,
+      transition: { duration: 1.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] },
+    });
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Normalize to -0.5 .. 0.5
+      rawMouseX.set(e.clientX / window.innerWidth - 0.5);
+      rawMouseY.set(e.clientY / window.innerHeight - 0.5);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const bringToFront = (id: number) => {
-    zCounter.current += 1;
-    setZMap(prev => ({ ...prev, [id]: zCounter.current }));
+  const title = siteData?.landingTitle || "Work Archive";
+  const subtitle = siteData?.landingSubtitle || "2015–Present";
+  const desc = siteData?.landingDescription || "";
+  const heroProjects = projects.slice(0, 10);
+  const total = heroProjects.length;
+
+  const infoTextStyle: React.CSSProperties = {
+    fontFamily: FONT,
+    fontStyle: "italic",
+    fontWeight: 300,
+    fontSize: "clamp(11px, 0.85vw, 13px)",
+    color: "rgba(10,10,10,0.35)",
+    letterSpacing: "0em",
+    margin: 0,
   };
 
-  const title = siteData?.landingTitle || "Work Archive";
-  const desc  = siteData?.landingDescription || "";
-  const heroProjects = projects.slice(0, 10);
-  const hPad = isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(24px, 4vw, 56px)";
-
   return (
-    <section style={{
-      position: "relative",
-      width: "100%",
-      height: "100vh",
-      overflow: "clip",   // clip ≠ hidden: clips visually but doesn't create a scroll container
-      background: "#F0F0F0",
-    }}>
-
-      {/* ── Title: blur-to-clean ── */}
-      <div style={{
+    <section
+      style={{
         position: "absolute",
-        top: isMobile ? "clamp(56px, 10vh, 80px)" : "clamp(54px, 7vh, 66px)",
-        left: hPad,
-        right: hPad,
-        zIndex: 1,
-        pointerEvents: "none",
-      }}>
+        inset: 0,
+        background: "#F0F0F0",
+        overflow: "hidden",
+      }}
+    >
+      {/* ── Title area ── */}
+      <div
+        style={{
+          position: "absolute",
+          top: "clamp(56px, 7vh, 80px)",
+          left: "clamp(20px, 4vw, 56px)",
+          zIndex: 20,
+          pointerEvents: "none",
+        }}
+      >
         <motion.h1
           initial={{ filter: "blur(28px)", opacity: 0 }}
-          animate={{ filter: "blur(0px)", opacity: 1 }}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          animate={titleControls}
           style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile
-              ? "clamp(44px, 14vw, 80px)"
-              : "calc((100vw - clamp(48px, 8vw, 112px)) / 6.9)",
+            fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
             letterSpacing: "-0.045em",
-            wordSpacing: "-0.3em",
             lineHeight: 0.88,
             color: "#0A0A0A",
             margin: 0,
@@ -218,62 +248,40 @@ export default function HeroSection({ projects, siteData, onOpenProject }: HeroP
           {title}
         </motion.h1>
 
-        {/* Mobile: description immediately after title, no gap */}
-        {isMobile && desc && (
-          <div style={{ marginTop: "8px" }}>
-            <SlideUpText
-              text={desc}
-              startDelay={0.8}
-              fontStyle={{
-                fontFamily: FONT,
-                fontWeight: 300,
-                fontSize: "clamp(12px, 3.5vw, 18px)",
-                letterSpacing: "-0.01em",
-                color: "rgba(10,10,10,0.38)",
-                wordBreak: "keep-all",
-              }}
-            />
-          </div>
-        )}
+        {/* 4-column info grid */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 0.3fr 1fr 1fr",
+            marginTop: "clamp(10px, 1.2vh, 18px)",
+            maxWidth: "clamp(320px, 55vw, 720px)",
+          }}
+        >
+          <p style={infoTextStyle}>{subtitle}</p>
+          <div />
+          <p style={infoTextStyle}>Brand design</p>
+          <p style={infoTextStyle}>Visual design</p>
+        </div>
       </div>
 
-      {/* ── Description (desktop): slide-up words from bottom ── */}
-      {!isMobile && desc && (
-        <div style={{
-          position: "absolute",
-          bottom: "clamp(44px, 7vh, 72px)",
-          left: hPad,
-          right: hPad,
-          zIndex: 1,
-          pointerEvents: "none",
-        }}>
-          <SlideUpText
-            text={desc}
-            startDelay={0.7}
-            fontStyle={{
-              fontFamily: FONT,
-              fontWeight: 300,
-              fontSize: "clamp(14px, 1.8vw, 28px)",
-              letterSpacing: "-0.01em",
-              color: "rgba(10,10,10,0.38)",
-              wordBreak: "keep-all",
-            }}
-          />
-        </div>
-      )}
-
-      {/* ── 10 draggable cards (desktop): 3-row grid, randomized, no blur ── */}
-      {!isMobile && heroProjects.map((project, i) => (
-        <DraggableCard
+      {/* ── Collage images ── */}
+      {heroProjects.map((project, i) => (
+        <CollageImage
           key={project.id}
-          project={project}
+          src={project.img}
           pos={scatter[i % scatter.length]}
-          zIndex={zMap[project.id] ?? (10 + i)}
           idx={i}
-          onDragStart={() => bringToFront(project.id)}
-          onOpen={onOpenProject}
+          total={total}
+          scrollProgress={scrollProgress}
+          mouseX={mouseX}
+          mouseY={mouseY}
         />
       ))}
+
+      {/* ── Description ── */}
+      {desc && (
+        <DescriptionText text={desc} scrollProgress={scrollProgress} />
+      )}
     </section>
   );
 }

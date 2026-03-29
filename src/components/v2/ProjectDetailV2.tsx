@@ -8,10 +8,10 @@ const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtDate = (m: string, y: string) => `${MONTHS[Math.max(0,parseInt(m,10)-1)]}, ${y}`;
 
-// Reused from v1 — pairs parser
+// pairs: 1-based index matching file numbering (001, 002, ...)
 function buildRows(images: string[], pairs?: string): string[][] {
   const pairGroups: number[][] = pairs
-    ? pairs.split("|").map(p => p.split("+").map(Number))
+    ? pairs.split("|").map(p => p.split("+").map(n => Number(n) - 1))
     : [];
   const pairedNums = new Set(pairGroups.flat());
   const used = new Set<number>();
@@ -33,6 +33,51 @@ function getYouTubeId(url: string): string | null {
   const m = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
   return m ? m[1] : null;
 }
+
+// ── Color extraction from cover image ──
+function rgbToHue(r: number, g: number, b: number): number {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max === min) return 220;
+  const d = max - min;
+  let h = 0;
+  if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return Math.round(h / 6 * 360);
+}
+
+function useExtractedColor(imgSrc: string) {
+  const [hue, setHue] = useState(220);
+  useEffect(() => {
+    if (!imgSrc) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = c.height = 60;
+        const ctx = c.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, 60, 60);
+        const d = ctx.getImageData(0, 0, 60, 60).data;
+        let r = 0, g = 0, b = 0;
+        const n = d.length / 4;
+        for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i+1]; b += d[i+2]; }
+        setHue(rgbToHue(r / n, g / n, b / n));
+      } catch { /* keep default */ }
+    };
+    img.src = imgSrc;
+  }, [imgSrc]);
+  return {
+    bg:          `hsl(${hue}, 22%, 9%)`,
+    footerBg:    `hsl(${hue}, 18%, 13%)`,
+    footerHover: `hsl(${hue}, 18%, 18%)`,
+    divider:     `hsl(${hue}, 14%, 22%)`,
+  };
+}
+
+// Header is rendered by page.tsx — no local header needed here
 
 // Gallery image with blur-to-clean scroll effect
 function GalleryImage({ src, alt, index, onLightbox }: {
@@ -73,7 +118,6 @@ function ParallelRow({ row, ri, onLightbox }: {
             index={ri + ci}
             onLightbox={() => onLightbox(ci)}
           />
-          {/* Hidden img to read natural ratio */}
           <img
             src={src}
             alt=""
@@ -109,6 +153,8 @@ export default function ProjectDetailV2({
   const containerRef = useRef<HTMLDivElement>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [prevHover, setPrevHover] = useState(false);
+  const [nextHover, setNextHover] = useState(false);
   const atBottom = useRef(false);
   const atTop = useRef(true);
   const cooldown = useRef(false);
@@ -122,24 +168,23 @@ export default function ProjectDetailV2({
   useEffect(() => { onNextRef.current = onNext; }, [onNext]);
   useEffect(() => { onPrevRef.current = onPrev; }, [onPrev]);
 
+  const colors = useExtractedColor(project.img);
+
   useEffect(() => {
     const u = () => setIsMobile(window.innerWidth < 768);
     u(); window.addEventListener("resize", u);
     return () => window.removeEventListener("resize", u);
   }, []);
 
-  // Reset on project change
   useEffect(() => {
     cooldown.current = true;
     atBottom.current = false;
     overBottom.current = 0;
     overTop.current = 0;
     if (containerRef.current) containerRef.current.scrollTop = 0;
-    // Short cooldown to allow scroll reset
     setTimeout(() => { cooldown.current = false; }, 400);
   }, [project.id]);
 
-  // Scroll tracking
   const handleScroll = () => {
     const el = containerRef.current;
     if (!el) return;
@@ -147,7 +192,6 @@ export default function ProjectDetailV2({
     atTop.current = el.scrollTop < 20;
   };
 
-  // Wheel overscroll → project switch
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -178,7 +222,6 @@ export default function ProjectDetailV2({
     return () => el.removeEventListener("wheel", handler);
   }, []);
 
-  // Touch overscroll
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -195,13 +238,13 @@ export default function ProjectDetailV2({
   }, []);
 
   const allImages = [project.img, ...(project.images ?? [])];
-  const galleryImages = project.images ?? []; // exclude cover from gallery rows
+  const galleryImages = project.images ?? [];
   const rows = buildRows(galleryImages.length > 0 ? galleryImages : [project.img], project.pairs);
 
   const goLightbox = (dir: 1 | -1) =>
     setLightboxIdx(i => i === null ? null : (i + dir + allImages.length) % allImages.length);
 
-  const pad = isMobile ? "0 clamp(16px, 4vw, 32px)" : "0 clamp(32px, 5vw, 72px)";
+  const hPad = isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(32px, 5vw, 72px)";
 
   return (
     <motion.div
@@ -215,44 +258,20 @@ export default function ProjectDetailV2({
         position: "fixed",
         inset: 0,
         zIndex: 600,
-        background: "#0A0A0A",
+        background: colors.bg,
+        transition: "background-color 0.8s ease",
         overflowY: "auto",
         overflowX: "hidden",
         scrollbarWidth: "none",
         color: "#F0EDE8",
       }}
     >
-      {/* ── Close button ── */}
-      <button
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          top: "22px",
-          right: "clamp(20px, 4vw, 56px)",
-          zIndex: 700,
-          fontFamily: FONT,
-          fontWeight: 300,
-          fontSize: "20px",
-          lineHeight: 1,
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "rgba(240,237,232,0.3)",
-          transition: "color 0.2s",
-          padding: "4px",
-        }}
-        onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-        onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.3)")}
-      >
-        ✕
-      </button>
-
-      {/* ── Cover image (full-width) ── */}
+      {/* ── Cover image — same horizontal padding as gallery ── */}
       <motion.div
         initial={{ filter: "blur(20px)", opacity: 0 }}
         animate={{ filter: "blur(0px)", opacity: 1 }}
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-        style={{ width: "100%", overflow: "hidden" }}
+        style={{ padding: `0 ${hPad}` }}
       >
         <img
           src={project.img}
@@ -264,8 +283,8 @@ export default function ProjectDetailV2({
       {/* ── Title + Meta ── */}
       <div style={{
         padding: isMobile
-          ? "clamp(32px, 5vh, 56px) clamp(16px, 4vw, 32px)"
-          : "clamp(48px, 7vh, 80px) clamp(32px, 5vw, 72px)",
+          ? `clamp(32px, 5vh, 56px) ${hPad}`
+          : `clamp(48px, 7vh, 80px) ${hPad}`,
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
         gap: isMobile ? "20px" : "clamp(24px, 4vw, 60px)",
@@ -280,7 +299,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: isMobile ? "clamp(24px, 7vw, 40px)" : "clamp(28px, 3.5vw, 52px)",
+              fontSize: isMobile ? "clamp(26px, 8.5vw, 48px)" : "clamp(32px, 4vw, 58px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
               color: "#F0EDE8",
@@ -318,7 +337,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT_KR,
               fontWeight: 300,
-              fontSize: isMobile ? "14px" : "clamp(13px, 1.1vw, 16px)",
+              fontSize: isMobile ? "15px" : "clamp(14px, 1.2vw, 18px)",
               lineHeight: 1.75,
               color: "rgba(240,237,232,0.6)",
               margin: "0 0 28px",
@@ -356,7 +375,7 @@ export default function ProjectDetailV2({
 
       {/* ── Gallery ── */}
       <div style={{
-        padding: pad,
+        padding: `0 ${hPad}`,
         display: "flex",
         flexDirection: "column",
         gap: "clamp(12px, 1.8vw, 20px)",
@@ -395,81 +414,97 @@ export default function ProjectDetailV2({
         )}
       </div>
 
-      {/* ── Bottom navigation: split screen ── */}
+      {/* ── Bottom navigation ── */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         marginTop: "clamp(64px, 8vh, 120px)",
-        borderTop: "1px solid rgba(240,237,232,0.07)",
+        borderTop: `1px solid ${colors.divider}`,
       }}>
         {/* Prev */}
-        <motion.div
+        <div
           onClick={onPrev}
-          whileHover={{ backgroundColor: "rgba(240,237,232,0.03)" }}
-          transition={{ duration: 0.2 }}
+          onMouseEnter={() => setPrevHover(true)}
+          onMouseLeave={() => setPrevHover(false)}
           style={{
             padding: isMobile
-              ? "clamp(24px, 4vh, 40px) clamp(16px, 3vw, 32px)"
-              : "clamp(32px, 5vh, 56px) clamp(32px, 5vw, 72px)",
+              ? `clamp(24px, 4vh, 40px) clamp(16px, 3vw, 32px)`
+              : `clamp(32px, 5vh, 56px) clamp(32px, 5vw, 72px)`,
             cursor: "pointer",
-            borderRight: "1px solid rgba(240,237,232,0.07)",
+            borderRight: `1px solid ${colors.divider}`,
+            background: prevHover ? colors.footerHover : colors.footerBg,
+            transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            gap: "12px",
           }}
         >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+              <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="8" x2="8" y2="14" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(240,237,232,0.22)",
+            }}>
+              Previous
+            </span>
+          </div>
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: "10px",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "rgba(240,237,232,0.25)",
-          }}>
-            ← Previous
-          </span>
-          <span style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: isMobile ? "14px" : "clamp(14px, 1.6vw, 20px)",
+            fontSize: isMobile ? "17px" : "clamp(17px, 2vw, 24px)",
             letterSpacing: "-0.01em",
             color: prevProject ? "#F0EDE8" : "rgba(240,237,232,0.2)",
             wordBreak: "keep-all",
           }}>
             {prevProject?.title || "—"}
           </span>
-        </motion.div>
+        </div>
 
         {/* Next */}
-        <motion.div
+        <div
           onClick={onNext}
-          whileHover={{ backgroundColor: "rgba(240,237,232,0.03)" }}
-          transition={{ duration: 0.2 }}
+          onMouseEnter={() => setNextHover(true)}
+          onMouseLeave={() => setNextHover(false)}
           style={{
             padding: isMobile
-              ? "clamp(24px, 4vh, 40px) clamp(16px, 3vw, 32px)"
-              : "clamp(32px, 5vh, 56px) clamp(32px, 5vw, 72px)",
+              ? `clamp(24px, 4vh, 40px) clamp(16px, 3vw, 32px)`
+              : `clamp(32px, 5vh, 56px) clamp(32px, 5vw, 72px)`,
             cursor: "pointer",
+            background: nextHover ? colors.footerHover : colors.footerBg,
+            transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
-            gap: "10px",
+            gap: "12px",
           }}
         >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(240,237,232,0.22)",
+            }}>
+              Next
+            </span>
+            <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+              <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="8" y1="8" x2="2" y2="14" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: "10px",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "rgba(240,237,232,0.25)",
-          }}>
-            Next →
-          </span>
-          <span style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: isMobile ? "14px" : "clamp(14px, 1.6vw, 20px)",
+            fontSize: isMobile ? "17px" : "clamp(17px, 2vw, 24px)",
             letterSpacing: "-0.01em",
             color: nextProject ? "#F0EDE8" : "rgba(240,237,232,0.2)",
             textAlign: "right",
@@ -477,7 +512,7 @@ export default function ProjectDetailV2({
           }}>
             {nextProject?.title || "—"}
           </span>
-        </motion.div>
+        </div>
       </div>
 
       {/* ── Lightbox ── */}
@@ -522,7 +557,6 @@ export default function ProjectDetailV2({
               />
             </AnimatePresence>
 
-            {/* Prev arrow */}
             <button
               onClick={e => { e.stopPropagation(); goLightbox(-1); }}
               style={{
@@ -539,7 +573,6 @@ export default function ProjectDetailV2({
               </svg>
             </button>
 
-            {/* Next arrow */}
             <button
               onClick={e => { e.stopPropagation(); goLightbox(1); }}
               style={{
@@ -556,7 +589,6 @@ export default function ProjectDetailV2({
               </svg>
             </button>
 
-            {/* Counter */}
             <div style={{
               position: "absolute", bottom: "24px", left: "50%", transform: "translateX(-50%)",
               fontFamily: FONT, fontSize: "10px", letterSpacing: "0.06em",
@@ -565,7 +597,6 @@ export default function ProjectDetailV2({
               {lightboxIdx + 1} / {allImages.length}
             </div>
 
-            {/* Close */}
             <button
               onClick={() => setLightboxIdx(null)}
               style={{

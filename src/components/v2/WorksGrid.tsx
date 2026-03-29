@@ -25,19 +25,21 @@ function WorkCard({ project, onOpen, colIdx }: {
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {/* Image — blur-to-clean on scroll */}
+      {/* Image — blur-to-clean on scroll (no y-transform to avoid overflow clipping) */}
       <motion.div
         animate={inView
-          ? { filter: "blur(0px)", opacity: 1, y: 0 }
-          : { filter: "blur(14px)", opacity: 0, y: 32 }
+          ? { filter: "blur(0px)", opacity: 1 }
+          : { filter: "blur(14px)", opacity: 0 }
         }
-        initial={{ filter: "blur(14px)", opacity: 0, y: 32 }}
+        initial={{ filter: "blur(14px)", opacity: 0 }}
         transition={{ duration: 1.1, delay: colIdx * 0.1, ease: [0.16, 1, 0.3, 1] }}
       >
-        <img
+        <motion.img
           src={project.img}
           alt={project.title}
-          style={{ width: "100%", height: "auto", display: "block" }}
+          animate={{ scale: hovered ? 1.04 : 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
         />
       </motion.div>
 
@@ -52,9 +54,9 @@ function WorkCard({ project, onOpen, colIdx }: {
           left: 0,
           right: 0,
           padding: "9px 16px",
-          background: "rgba(255,255,255,0.70)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
+          background: "rgba(255,255,255,0.30)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
           borderBottom: "1px solid rgba(0,0,0,0.06)",
           display: "flex",
           justifyContent: "space-between",

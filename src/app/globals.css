@@ -23,3 +23,9 @@ html, body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 ::selection { background: #fff; color: #000; }
+
+/* Prevent brightness/color shift in screenshots */
+*, *::before, *::after {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}

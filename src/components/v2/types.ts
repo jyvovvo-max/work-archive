@@ -20,4 +20,5 @@ export interface SiteData {
   aboutBio: string[];
   services: string[];
   experience: string[];
+  awards: string[];   // comma-separated in Sheets column "awards"
 }

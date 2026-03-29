@@ -42,6 +42,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
   const bio = siteData?.aboutBio ?? [];
   const services = siteData?.services ?? [];
   const experience = siteData?.experience ?? [];
+  const awards = siteData?.awards ?? [];
 
   // Split lists in half for two-column display
   const half = (arr: string[]) => [arr.slice(0, Math.ceil(arr.length / 2)), arr.slice(Math.ceil(arr.length / 2))];
@@ -155,6 +156,28 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
           </div>
         </BlurIn>
       </div>
+
+      {/* Awards — shown only when data exists */}
+      {awards.length > 0 && (
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "clamp(80px, 12vw, 160px) 1fr",
+          gap: "clamp(20px, 4vw, 60px)",
+          marginBottom: "clamp(48px, 7vh, 88px)",
+          alignItems: "start",
+        }}>
+          <BlurIn>
+            <span style={labelStyle}>Awards</span>
+          </BlurIn>
+          <BlurIn delay={0.06}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0 clamp(24px, 4vw, 60px)" }}>
+              {awards.map(a => (
+                <div key={a} style={listItemStyle}>{a}</div>
+              ))}
+            </div>
+          </BlurIn>
+        </div>
+      )}
 
       {/* Experience */}
       <div style={{

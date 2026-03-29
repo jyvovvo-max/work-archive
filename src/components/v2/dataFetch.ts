@@ -100,6 +100,7 @@ const FALLBACK_PROJECTS: Project[] = [
   },
 ];
 
+// rowToSiteData already reads map.awards below
 const FALLBACK_SITE: SiteData = {
   landingTitle: "Work Archive",
   landingSubtitle: "2015–Present",
@@ -118,6 +119,7 @@ const FALLBACK_SITE: SiteData = {
     "Luxury & Retail", "Fashion & Beauty", "Food & Beverage",
     "Culture & Arts", "Corporate Identity",
   ],
+  awards: [],   // populate via Sheets column "awards" (comma-separated)
 };
 
 export async function fetchProjects(): Promise<Project[]> {
@@ -153,6 +155,9 @@ export async function fetchSiteData(): Promise<SiteData> {
       experience: map.experience
         ? map.experience.split(",").map(s => s.trim()).filter(Boolean)
         : FALLBACK_SITE.experience,
+      awards: map.awards
+        ? map.awards.split(",").map(s => s.trim()).filter(Boolean)
+        : FALLBACK_SITE.awards,
     };
   } catch {
     return FALLBACK_SITE;
