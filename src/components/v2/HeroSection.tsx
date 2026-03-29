@@ -164,8 +164,8 @@ function CollageImage({
   return (
     // Outer: staggered clean fade-in — sits behind text (zIndex 2)
     <motion.div
-      initial={{ opacity: 0, scale: 0.94 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{
         delay: 0.15 + idx * 0.1,
         duration: 1.0,
