@@ -59,9 +59,12 @@ export default function Header({
     suppressRef.current = false;
   };
 
-  // Brief reveal on mount when onBack is set (detail view context)
+  // Brief reveal when onBack is set (detail view context); hide when onBack removed
   useEffect(() => {
-    if (!onBack || isMobile || alwaysVisible) return;
+    if (!onBack || isMobile || alwaysVisible) {
+      if (!onBack && !alwaysVisible && !isMobile) setVisible(false);
+      return;
+    }
     setVisible(true);
     const t = setTimeout(() => setVisible(false), 2500);
     return () => clearTimeout(t);
