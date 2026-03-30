@@ -111,10 +111,16 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
 
   return (
     <section style={{ background: "#F0F0F0" }}>
-      {/* "Recent Work" label bar — acrylic with black border */}
+      {/* "Selected Work" label bar — sticky at header height */}
       <div style={{
-        padding: "20px clamp(20px, 4vw, 56px) 18px",
-        background: "rgba(240,240,240,0.82)",
+        position: "sticky",
+        top: "52px",
+        zIndex: 10,
+        height: "52px",
+        display: "flex",
+        alignItems: "center",
+        padding: "0 clamp(20px, 4vw, 56px)",
+        background: "rgba(240,240,240,0.92)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
         borderTop: "1px solid rgba(0,0,0,0.15)",

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 import {
   motion,
   useMotionValue,
@@ -7,6 +7,7 @@ import {
   useAnimationControls,
   useScroll,
   useTransform,
+  useMotionValueEvent,
   MotionValue,
 } from "framer-motion";
 import { Project, SiteData } from "./types";
@@ -248,15 +249,10 @@ function CollageImage({
   );
 }
 
-function DescriptionText({
-  text,
-  scrollOpacity,
-  descTranslateY,
-}: {
+const DescriptionText = forwardRef<HTMLDivElement, {
   text: string;
-  scrollOpacity: MotionValue<number>;
-  descTranslateY: MotionValue<string>;
-}) {
+  y: MotionValue<number>;
+}>(({ text, y }, ref) => {
   const controls = useAnimationControls();
 
   useEffect(() => {
@@ -270,6 +266,7 @@ function DescriptionText({
 
   return (
     <motion.div
+      ref={ref}
       style={{
         position: "absolute",
         top: "74vh",
@@ -278,7 +275,7 @@ function DescriptionText({
         zIndex: 5,
         pointerEvents: "none",
         mixBlendMode: "difference",
-        y: descTranslateY,
+        y,
       }}
     >
       <motion.p
@@ -297,7 +294,7 @@ function DescriptionText({
       </motion.p>
     </motion.div>
   );
-}
+});
 
 interface HeroProps {
   projects: Project[];
@@ -317,13 +314,65 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
     return () => clearTimeout(t);
   }, []);
 
-  // Global scroll → hero fades + slides up 0–400px
+  // Global scroll
   const { scrollY } = useScroll();
   const scrollOpacity = useTransform(scrollY, [0, 400], [1, 0]);
-  // Images: very fast, done by scroll 200px
   const scrollTranslateY = useTransform(scrollY, [0, 200], [0, -160]);
-  // Description: starts late, finishes much later
-  const descTranslateY = useTransform(scrollY, [80, 500], ["0vh", "-44vh"]);
+
+  // Scroll-linked title + desc motion
+  const titleY = useMotionValue(0);
+  const descY  = useMotionValue(0);
+  const titleContainerRef = useRef<HTMLDivElement>(null);
+  const descContainerRef  = useRef<HTMLDivElement>(null);
+  const [latchScrollY, setLatchScrollY] = useState(1000);
+  const latchRef = useRef(1000);
+  useEffect(() => { latchRef.current = latchScrollY; }, [latchScrollY]);
+
+  // Calculate scroll position where title↔desc gap === desc↔bar gap
+  useEffect(() => {
+    const calc = () => {
+      const titleEl = titleContainerRef.current;
+      const descEl  = descContainerRef.current;
+      if (!titleEl || !descEl) return;
+      const vh = window.innerHeight;
+      const tr = titleEl.getBoundingClientRect();
+      const dr = descEl.getBoundingClientRect();
+      // At latch, desc has completed its -44vh phase-1 animation
+      const descOffset = -0.44 * vh;
+      // latch = barDocY + 0.88*vh - descBottom - descTop + titleBottom
+      // barDocY ≈ vh + 550 (spacer height in page.tsx)
+      const barDocY = vh + 550;
+      const latch = barDocY + 0.88 * vh
+        - (dr.bottom + descOffset)
+        - (dr.top    + descOffset)
+        + tr.bottom;
+      setLatchScrollY(Math.max(600, Math.round(latch)));
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
+
+  // Scroll handler: drive titleY and descY
+  useMotionValueEvent(scrollY, "change", (v) => {
+    const vh    = window.innerHeight;
+    const latch = latchRef.current;
+    const maxD  = -0.44 * vh; // desc phase-1 max offset
+
+    // Title: static until latch, then follows scroll 1:1
+    titleY.set(v > latch ? -(v - latch) : 0);
+
+    // Desc: phase-1 (80→500), hold, then follows scroll 1:1 after latch
+    if (v <= 80) {
+      descY.set(0);
+    } else if (v <= 500) {
+      descY.set(((v - 80) / 420) * maxD);
+    } else if (v > latch) {
+      descY.set(maxD - (v - latch));
+    } else {
+      descY.set(maxD);
+    }
+  });
 
   // Pixel-based mouse for proximity tilt
   const rawMousePxX = useMotionValue(0);
@@ -365,8 +414,9 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
         overflow: "hidden",
       }}
     >
-      {/* ── Title area — zIndex 20, always above images ── */}
-      <div
+      {/* ── Title area — zIndex 20, scroll-linked translateY after latch ── */}
+      <motion.div
+        ref={titleContainerRef}
         style={{
           position: "absolute",
           top: "clamp(52px, 6vh, 70px)",
@@ -374,6 +424,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
           zIndex: 20,
           pointerEvents: "none",
           mixBlendMode: "difference",
+          y: titleY,
         }}
       >
         <div style={{ position: "relative", display: "inline-block" }}>
@@ -416,7 +467,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
             {subtitle}
           </motion.p>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Collage images — zIndex 2, behind text ── */}
       {heroProjects.map((project, i) => (
@@ -436,7 +487,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
 
       {/* ── Description — zIndex 5, above images ── */}
       {desc && (
-        <DescriptionText text={desc} scrollOpacity={scrollOpacity} descTranslateY={descTranslateY} />
+        <DescriptionText ref={descContainerRef} text={desc} y={descY} />
       )}
     </section>
   );

@@ -146,8 +146,8 @@ export default function Header({
               style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "12px",
-                letterSpacing: "0.06em",
+                fontSize: "clamp(24px, 2.8vw, 38px)",
+                letterSpacing: "-0.01em",
                 color: nameColor,
                 userSelect: "none",
                 cursor: "pointer",
@@ -176,8 +176,8 @@ export default function Header({
                 style={{
                   fontFamily: FONT,
                   fontWeight: 300,
-                  fontSize: "11px",
-                  letterSpacing: "0.08em",
+                  fontSize: "clamp(24px, 2.8vw, 38px)",
+                  letterSpacing: "0.01em",
                   textTransform: "uppercase",
                   color: navColor,
                   background: "none",
