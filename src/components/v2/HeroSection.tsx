@@ -212,7 +212,7 @@ function CollageImage({
         <span
           style={{
             position: "absolute",
-            top: "-12px",
+            top: "-13px",
             right: "2px",
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: "10.8px",
