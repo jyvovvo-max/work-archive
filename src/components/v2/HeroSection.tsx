@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, forwardRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   motion,
   useMotionValue,
@@ -249,10 +249,7 @@ function CollageImage({
   );
 }
 
-const DescriptionText = forwardRef<HTMLDivElement, {
-  text: string;
-  y: MotionValue<number>;
-}>(({ text, y }, ref) => {
+function DescriptionText({ text, y }: { text: string; y: MotionValue<number> }) {
   const controls = useAnimationControls();
 
   useEffect(() => {
@@ -266,7 +263,6 @@ const DescriptionText = forwardRef<HTMLDivElement, {
 
   return (
     <motion.div
-      ref={ref}
       style={{
         position: "absolute",
         top: "74vh",
@@ -294,7 +290,7 @@ const DescriptionText = forwardRef<HTMLDivElement, {
       </motion.p>
     </motion.div>
   );
-});
+}
 
 interface HeroProps {
   projects: Project[];
@@ -323,30 +319,15 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
   const titleY = useMotionValue(0);
   const descY  = useMotionValue(0);
   const titleContainerRef = useRef<HTMLDivElement>(null);
-  const descContainerRef  = useRef<HTMLDivElement>(null);
   const [latchScrollY, setLatchScrollY] = useState(1000);
   const latchRef = useRef(1000);
   useEffect(() => { latchRef.current = latchScrollY; }, [latchScrollY]);
 
-  // Calculate scroll position where title↔desc gap === desc↔bar gap
+  // Latch: scroll Y where title + desc start moving up together.
+  // Should fire well before works section (vh + 550) slides over hero.
   useEffect(() => {
     const calc = () => {
-      const titleEl = titleContainerRef.current;
-      const descEl  = descContainerRef.current;
-      if (!titleEl || !descEl) return;
-      const vh = window.innerHeight;
-      const tr = titleEl.getBoundingClientRect();
-      const dr = descEl.getBoundingClientRect();
-      // At latch, desc has completed its -44vh phase-1 animation
-      const descOffset = -0.44 * vh;
-      // latch = barDocY + 0.88*vh - descBottom - descTop + titleBottom
-      // barDocY ≈ vh + 550 (spacer height in page.tsx)
-      const barDocY = vh + 550;
-      const latch = barDocY + 0.88 * vh
-        - (dr.bottom + descOffset)
-        - (dr.top    + descOffset)
-        + tr.bottom;
-      setLatchScrollY(Math.max(600, Math.round(latch)));
+      setLatchScrollY(Math.max(600, Math.round(window.innerHeight * 0.85)));
     };
     calc();
     window.addEventListener("resize", calc);
@@ -487,7 +468,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
 
       {/* ── Description — zIndex 5, above images ── */}
       {desc && (
-        <DescriptionText ref={descContainerRef} text={desc} y={descY} />
+        <DescriptionText text={desc} y={descY} />
       )}
     </section>
   );

@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import { Project } from "./types";
+import { Project, SiteData } from "./types";
+import Footer from "./Footer";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
@@ -145,10 +146,11 @@ interface Props {
   onPrev: () => void;
   nextProject?: Project;
   prevProject?: Project;
+  siteData?: SiteData | null;
 }
 
 export default function ProjectDetailV2({
-  project, onClose, onNext, onPrev, nextProject, prevProject,
+  project, onClose, onNext, onPrev, nextProject, prevProject, siteData,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
@@ -614,6 +616,8 @@ export default function ProjectDetailV2({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Footer siteData={siteData ?? null} />
     </motion.div>
   );
 }

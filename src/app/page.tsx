@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { Project, SiteData } from "@/components/v2/types";
-import { fetchProjects, fetchSiteData } from "@/components/v2/dataFetch";
+import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
 import Header from "@/components/v2/Header";
 import HeroSection from "@/components/v2/HeroSection";
 import WorksGrid from "@/components/v2/WorksGrid";
@@ -15,7 +15,7 @@ const GridViewOverlay = dynamic(() => import("@/components/v2/GridViewOverlay"),
 
 export default function Page() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [siteData, setSiteData] = useState<SiteData | null>(null);
+  const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
   const [selected, setSelected] = useState<Project | null>(null);
   const [gridOpen, setGridOpen] = useState(false);
   const [gridAboutOpen, setGridAboutOpen] = useState(false);
@@ -23,7 +23,10 @@ export default function Page() {
   const aboutRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (typeof history !== "undefined") history.scrollRestoration = "auto";
+    if (typeof history !== "undefined") {
+      history.scrollRestoration = "manual";
+      window.scrollTo(0, 0);
+    }
     const hash = window.location.hash;
     if (hash.startsWith("#/detail/")) {
       const id = parseInt(hash.replace("#/detail/", ""));
@@ -147,7 +150,7 @@ export default function Page() {
       </div>
 
       {/* Spacer — Selected Works slides over after desc finishes at ~500px */}
-      <div style={{ height: "calc(100vh + 550px)" }} />
+      <div style={{ height: "calc(100vh + 440px)" }} />
 
       {/* Layer 2: Selected Works — slides over Hero */}
       <div style={{
@@ -180,6 +183,7 @@ export default function Page() {
             onPrev={handlePrev}
             nextProject={nextProject}
             prevProject={prevProject}
+            siteData={siteData}
           />
         )}
       </AnimatePresence>
