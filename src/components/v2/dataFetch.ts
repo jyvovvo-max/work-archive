@@ -102,6 +102,7 @@ const FALLBACK_PROJECTS: Project[] = [
 
 // rowToSiteData already reads map.awards below
 const FALLBACK_SITE: SiteData = {
+  siteName: "Jinyoung Hwang",
   landingTitle: "Work Archive",
   landingSubtitle: "2015–Present",
   landingDescription:
@@ -150,6 +151,7 @@ export async function fetchSiteData(): Promise<SiteData> {
     const map: Record<string, string> = {};
     rows.forEach(r => { if (r.key) map[r.key] = r.value ?? ""; });
     return {
+      siteName: map.site_name || FALLBACK_SITE.siteName,
       landingTitle: map.landing_title || FALLBACK_SITE.landingTitle,
       landingSubtitle: map.landing_subtitle || FALLBACK_SITE.landingSubtitle,
       landingDescription: map.landing_description || FALLBACK_SITE.landingDescription,

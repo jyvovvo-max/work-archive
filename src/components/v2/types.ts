@@ -14,6 +14,7 @@ export interface Project {
 }
 
 export interface SiteData {
+  siteName: string;
   landingTitle: string;
   landingSubtitle: string;
   landingDescription: string;

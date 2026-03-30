@@ -19,7 +19,7 @@ interface HeaderProps {
 export default function Header({
   onHome, onViewAll, onAbout, onContact, onBack, zIndex = 500, alwaysVisible = false, siteData,
 }: HeaderProps) {
-  const siteName = siteData?.footerName || "Jinyoung Hwang";
+  const siteName = siteData?.siteName || "Jinyoung Hwang";
   const [visible, setVisible] = useState(alwaysVisible);
   const [isMobile, setIsMobile] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
