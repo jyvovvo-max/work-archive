@@ -14,7 +14,7 @@ const SHEETS_CSV =
 // 필요 키: landing_title, landing_subtitle, landing_description,
 //          about_bio (파이프 | 로 문단 구분), services (콤마 구분), experience (콤마 구분)
 const ABOUT_CSV =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOFxt3PRlK8ifjXZ1qXOM9HI4zL4J0z2eHu7mTquwXzBoS7RPhSNC0EjUVC_wWt5iyXK14rB_48W_3/pub?gid=REPLACE_WITH_ABOUT_GID&single=true&output=csv";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOFxt3PRlK8ifjXZ1qXOM9HI4zL4J0z2eHu7mTquwXzBoS7RPhSNC0EjUVC_wWt5iyXK14rB_48W_3/pub?gid=444601329&single=true&output=csv";
 
 function parseCSVRow(line: string): string[] {
   const fields: string[] = [];
