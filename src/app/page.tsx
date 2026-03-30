@@ -33,6 +33,11 @@ export default function Page() {
     }
     fetchProjects().then(setProjects);
     fetchSiteData().then(setSiteData);
+    const interval = setInterval(() => {
+      fetchProjects().then(setProjects);
+      fetchSiteData().then(setSiteData);
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Update URL hash when view changes (skip initial mount to preserve scroll restoration)
@@ -66,16 +71,16 @@ export default function Page() {
     return sel.length > 0 ? sel : projects;
   }, [projects]);
 
-const sortedSelectedWorks = useMemo(
-    () => [...selectedWorks].sort((a, b) => {
-      const da = parseInt(a.year) * 100 + parseInt(a.month);
-      const db = parseInt(b.year) * 100 + parseInt(b.month);
-      return db - da;
-    }),
-    [selectedWorks]
-  );
+  const [shuffledWorks, setShuffledWorks] = useState<Project[]>([]);
+  const didShuffle = useRef(false);
+  useEffect(() => {
+    if (!didShuffle.current && selectedWorks.length > 0) {
+      didShuffle.current = true;
+      setShuffledWorks([...selectedWorks].sort(() => Math.random() - 0.5));
+    }
+  }, [selectedWorks]);
 
-  const detailList = sortedSelectedWorks.length > 0 ? sortedSelectedWorks : projects;
+  const detailList = shuffledWorks.length > 0 ? shuffledWorks : projects;
   const detailIdx = selected ? detailList.findIndex(p => p.id === selected.id) : -1;
 
   const handleNext = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx + 1) % detailList.length]); };
@@ -135,7 +140,7 @@ const sortedSelectedWorks = useMemo(
       {/* Layer 1: Hero — fixed behind */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 1 }}>
         <HeroSection
-          projects={sortedSelectedWorks}
+          projects={shuffledWorks}
           siteData={siteData}
           onOpen={setSelected}
         />
@@ -151,7 +156,7 @@ const sortedSelectedWorks = useMemo(
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.12)",
       }}>
-        <WorksGrid projects={sortedSelectedWorks} onOpen={setSelected} />
+        <WorksGrid projects={shuffledWorks} onOpen={setSelected} />
       </div>
 
       {/* Layer 3: About + Footer — slides over Selected Works */}

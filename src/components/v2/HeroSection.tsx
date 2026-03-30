@@ -165,6 +165,12 @@ function CollageImage({
 
   const blurred = allImagesIn && !hovered;
 
+  const blurTransition = {
+    filter: { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" as const },
+    scale:  { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" as const },
+  };
+  const blurAnimate = { filter: blurred ? "blur(3px)" : "blur(0px)", scale: blurred ? 0.95 : 1 };
+
   return (
     // Outer: staggered clean fade-in — sits behind text (zIndex 2)
     <motion.div
@@ -189,35 +195,56 @@ function CollageImage({
         y: scrollTranslateY,
       }}
     >
-      {/* Inner: clean on entrance, blur+shrink after allImagesIn */}
+      {/* Tilt + opacity wrapper — contains both ID and image */}
       <motion.div
         ref={imgRef}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        animate={{
-          filter: blurred ? "blur(3px)" : "blur(0px)",
-          scale: blurred ? 0.95 : 1,
-        }}
-        transition={{
-          filter: { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" },
-          scale: { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" },
-        }}
         style={{
           opacity: scrollOpacity,
           rotateX: springRotateX,
           rotateY: springRotateY,
           transformStyle: "preserve-3d",
-          borderRadius: "2px",
-          overflow: "hidden",
-          boxShadow: "0 4px 18px rgba(0,0,0,0.16)",
+          position: "relative",
         }}
       >
-        <img
-          src={project.img}
-          alt={project.title}
-          draggable={false}
-          style={{ width: "100%", height: "auto", display: "block" }}
-        />
+        {/* ID label — top-right, outside image */}
+        <motion.span
+          animate={blurAnimate}
+          transition={blurTransition}
+          style={{
+            position: "absolute",
+            top: "-18px",
+            right: 0,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "9px",
+            fontWeight: 300,
+            letterSpacing: "0.1em",
+            color: "rgba(10,10,10,0.3)",
+            pointerEvents: "none",
+            lineHeight: 1,
+          }}
+        >
+          {String(project.id).padStart(3, "0")}
+        </motion.span>
+
+        {/* Image */}
+        <motion.div
+          animate={blurAnimate}
+          transition={blurTransition}
+          style={{
+            borderRadius: "2px",
+            overflow: "hidden",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.16)",
+          }}
+        >
+          <img
+            src={project.img}
+            alt={project.title}
+            draggable={false}
+            style={{ width: "100%", height: "auto", display: "block" }}
+          />
+        </motion.div>
       </motion.div>
     </motion.div>
   );
