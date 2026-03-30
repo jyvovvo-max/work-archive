@@ -1,51 +1,58 @@
 /**
  * Portfolio Upload Tool
- * Cloudinary 자동 업로드 + Google Sheets 업데이트
  *
- * 폴더 구조:
+ * 로컬 폴더 구조:
  *   portfolio-images/
- *     my-project/
- *       cover/          ← 커버 이미지 (1장)
- *       photo_a.jpg     ← 순서 = 파일명 알파벳 순
- *       photo_b.jpg
+ *     YYYY-MM_project-name/
+ *       cover/            ← 커버 이미지 1장 (파일명 무관)
+ *         any-name.jpg
+ *       01/               ← 순서 폴더 (숫자만), 파일명 무관
+ *         any-name.jpg
+ *       02/
+ *         any-name.jpg
  *
- * 순서 변경 방법:
- *   파일명 앞에 숫자를 붙이면 그 순서로 업로드됩니다.
- *   예: 01_hero.jpg, 02_detail.jpg, 03_closeup.jpg
- *   이미 업로드된 파일을 재정렬하려면 --reorder 플래그 사용:
- *   node upload.js --reorder my-project
+ * Cloudinary 자동 변환:
+ *   01/ → portfolio-images/{project}/001
+ *   02/ → portfolio-images/{project}/002
+ *
+ * 이미지 교체:  01/ 안 파일을 새 파일로 교체 후 실행 (자동 감지)
+ * 순서 변경:   폴더 번호 rename 후 실행 (자동 감지)
+ * 강제 재업로드: --reorder (state 무시하고 전체 재업로드)
+ *
+ * 사용법:
+ *   node upload.js                          전체 업로드
+ *   node upload.js --dry-run                미리보기
+ *   node upload.js 2025-03_my-project       특정 프로젝트만
+ *   node upload.js --reorder 2025-03_...    강제 전체 재업로드
  */
 
 require("dotenv").config();
-const fs = require("fs");
+const fs   = require("fs");
 const path = require("path");
 const { v2: cloudinary } = require("cloudinary");
-const { google } = require("googleapis");
-const sharp = require("sharp");
+const { google }         = require("googleapis");
+const sharp              = require("sharp");
 
-// ── 옵션 파싱 ──
-const args = process.argv.slice(2);
-const DRY_RUN    = args.includes("--dry-run");   // 실제 업로드 없이 미리보기
-const REORDER    = args.includes("--reorder");    // 특정 프로젝트 재정렬
-const TARGET     = args.find(a => !a.startsWith("--")) || null; // 특정 프로젝트만
+// ── 옵션 파싱 ──────────────────────────────────────────────────────────────
+const args    = process.argv.slice(2);
+const DRY_RUN = args.includes("--dry-run");
+const REORDER = args.includes("--reorder");  // state 무시, 전체 재업로드
+const TARGET  = args.find(a => !a.startsWith("--")) || null;
 
-// ── 설정 ──
+// ── 설정 ───────────────────────────────────────────────────────────────────
 const PORTFOLIO_DIR = process.env.PORTFOLIO_DIR
   || path.join(__dirname, "../portfolio-images");
 const CLD_BASE   = "portfolio-images";
 const STATE_FILE = path.join(__dirname, ".upload-state.json");
 const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".tiff"];
 
-// ── Cloudinary 설정 ──
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "doyfzvsly",
   api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ────────────────────────────────────────────
-// 상태 파일 (어떤 파일이 어떤 번호로 올라갔는지 기록)
-// ────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────────────────────
 function loadState() {
   try { return JSON.parse(fs.readFileSync(STATE_FILE, "utf-8")); }
   catch { return {}; }
@@ -54,27 +61,28 @@ function saveState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-// ────────────────────────────────────────────
-// 이미지 파일 목록 (알파벳 순 정렬)
-// 파일명 앞에 숫자를 붙이면 그 순서로 정렬됨
-// 예: 01_hero.jpg → 02_detail.jpg
-// ────────────────────────────────────────────
-function getImageFiles(dir) {
+// ── 숫자 폴더 목록 (01, 02, 03 ... 정수 순 정렬) ──────────────────────────
+function getNumberedFolders(dir) {
   return fs.readdirSync(dir)
     .filter(f => {
       const full = path.join(dir, f);
-      return fs.statSync(full).isFile()
-        && IMAGE_EXTS.includes(path.extname(f).toLowerCase());
+      return fs.statSync(full).isDirectory() && /^\d+$/.test(f);
     })
-    .sort(); // 알파벳 순 = 숫자 prefix 순
+    .sort((a, b) => parseInt(a) - parseInt(b));
 }
 
-// ────────────────────────────────────────────
-// 이미지 처리 + Cloudinary 업로드
-//
-// cover:  16:9 (1920×1080) 자동 크랍
-// 일반:   가로 최대 1920px 유지, 72dpi
-// ────────────────────────────────────────────
+// ── 폴더 안 첫 번째 이미지 파일명 ──────────────────────────────────────────
+function getFirstImage(folderPath) {
+  const files = fs.readdirSync(folderPath)
+    .filter(f => IMAGE_EXTS.includes(path.extname(f).toLowerCase()))
+    .sort();
+  return files.length > 0 ? files[0] : null;
+}
+
+// ── Cloudinary 업로드 ──────────────────────────────────────────────────────
+// cover:  1920×1080 16:9 크랍 (centre)
+// 일반:   가로 최대 1920px, 비율 유지
+// overwrite + invalidate → 교체 시 CDN 캐시 즉시 반영
 async function uploadFile(localPath, publicId, isCover = false) {
   if (DRY_RUN) {
     const tag = isCover ? "[cover 16:9 크랍]" : "[1920px 리사이즈]";
@@ -82,61 +90,53 @@ async function uploadFile(localPath, publicId, isCover = false) {
     return { public_id: publicId };
   }
 
-  // publicId = "portfolio-images/project/001"
-  // Dynamic Folder Mode에서는 folder + filename 분리 필요
-  const parts    = publicId.split("/");
-  const filename = parts.pop();
-  const folder   = parts.join("/");
+  const parts  = publicId.split("/");
+  parts.pop(); // filename 제거
+  const folder = parts.join("/");
 
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
-        asset_folder:    folder,   // 미디어 라이브러리 위치 (Dynamic Folder Mode)
-        public_id:       publicId, // URL 경로 (슬래시 포함 전체 경로)
+        asset_folder:    folder,
+        public_id:       publicId,
         use_filename:    false,
         unique_filename: false,
         overwrite:       true,
+        invalidate:      true,   // ← CDN 캐시 즉시 무효화
         resource_type:   "image",
       },
       (error, result) => (error ? reject(error) : resolve(result))
     );
 
     let pipeline = sharp(localPath).withMetadata({ density: 72 });
-
     if (isCover) {
-      // 16:9 크랍 — 중앙 기준
       pipeline = pipeline.resize(1920, 1080, { fit: "cover", position: "centre" });
     } else {
-      // 가로 최대 1920px, 세로는 비율 유지, 작은 이미지는 확대 안 함
       pipeline = pipeline.resize(1920, null, { withoutEnlargement: true });
     }
-
     pipeline.pipe(uploadStream);
   });
 }
 
-// ────────────────────────────────────────────
-// 프로젝트 처리
-// ────────────────────────────────────────────
+// ── 프로젝트 처리 ──────────────────────────────────────────────────────────
 async function processProject(projectDir, state) {
-  const dirName  = path.basename(projectDir);
-  // YYYY-MM_folder-name 형식 파싱, 아니면 전체 이름을 folder로 사용
-  const match    = dirName.match(/^(\d{4})-(\d{2})_(.+)$/);
-  const folder   = match ? match[3] : dirName; // Cloudinary 경로 + state key
+  const dirName = path.basename(projectDir);
+  const match   = dirName.match(/^(\d{4})-(\d{2})_(.+)$/);
+  const folder  = match ? match[3] : dirName;
 
-  if (!state[folder]) state[folder] = { files: {}, cover: null };
-  const ps = state[folder]; // project state
+  // state 구조: { cover: "filename", folders: { "01": "filename", "02": "filename" } }
+  if (!state[folder]) state[folder] = {};
+  const ps = state[folder];
+  if (!ps.folders) ps.folders = {};
 
   console.log(`\n[${dirName}]`);
 
   // ── cover ──
   const coverDir = path.join(projectDir, "cover");
   if (fs.existsSync(coverDir)) {
-    const coverFiles = getImageFiles(coverDir);
-    if (coverFiles.length > 0) {
-      const coverFile = coverFiles[0];
+    const coverFile = getFirstImage(coverDir);
+    if (coverFile) {
       const publicId = `${CLD_BASE}/${folder}/cover`;
-
       if (ps.cover === coverFile && !REORDER) {
         console.log(`  ⏭  cover (스킵)`);
       } else {
@@ -153,50 +153,46 @@ async function processProject(projectDir, state) {
     console.log(`  ⚠  cover 폴더 없음`);
   }
 
-  // ── 일반 이미지 (루트 파일만, 하위 폴더 제외) ──
-  const imageFiles = getImageFiles(projectDir);
+  // ── 숫자 폴더 이미지 ──
+  // 01/ → 001, 02/ → 002 ...
+  // 파일이 바뀌거나 폴더가 새로 생기면 자동 감지 → overwrite 업로드
+  const numberedFolders = getNumberedFolders(projectDir);
+  let uploaded = 0;
+  let skipped  = 0;
 
-  if (REORDER) {
-    // 재정렬: 현재 파일 순서 기준으로 전체 재번호 부여 + 재업로드
-    console.log(`  재정렬 모드: ${imageFiles.length}장 재업로드`);
-    ps.files = {};
-    for (let i = 0; i < imageFiles.length; i++) {
-      const num      = String(i + 1).padStart(3, "0");
-      const publicId = `${CLD_BASE}/${folder}/${num}`;
-      try {
-        await uploadFile(path.join(projectDir, imageFiles[i]), publicId);
-        ps.files[imageFiles[i]] = num;
-        console.log(`  ✓  ${imageFiles[i]} → ${num}`);
-      } catch (e) {
-        console.error(`  ✗  ${imageFiles[i]} 오류: ${e.message}`);
-      }
+  for (const folderNum of numberedFolders) {
+    const folderPath = path.join(projectDir, folderNum);
+    const file       = getFirstImage(folderPath);
+
+    if (!file) {
+      console.log(`  ⚠  ${folderNum}/ 이미지 없음 (스킵)`);
+      continue;
     }
-  } else {
-    // 일반 모드: 새 파일만 업로드, 기존은 스킵
-    const alreadyUploaded = new Set(Object.keys(ps.files));
-    const newFiles        = imageFiles.filter(f => !alreadyUploaded.has(f));
 
-    const existingNums = Object.values(ps.files).map(Number).filter(n => !isNaN(n));
-    let nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    const num      = String(parseInt(folderNum)).padStart(3, "0"); // "01" → "001"
+    const publicId = `${CLD_BASE}/${folder}/${num}`;
 
-    if (imageFiles.length - newFiles.length > 0)
-      console.log(`  ⏭  ${imageFiles.length - newFiles.length}장 스킵`);
+    // 같은 파일이면 스킵 (--reorder면 항상 재업로드)
+    if (ps.folders[folderNum] === file && !REORDER) {
+      skipped++;
+      continue;
+    }
 
-    for (const file of newFiles) {
-      const num      = String(nextNum).padStart(3, "0");
-      const publicId = `${CLD_BASE}/${folder}/${num}`;
-      try {
-        await uploadFile(path.join(projectDir, file), publicId);
-        ps.files[file] = num;
-        nextNum++;
-        console.log(`  ✓  ${file} → ${num}`);
-      } catch (e) {
-        console.error(`  ✗  ${file} 오류: ${e.message}`);
-      }
+    try {
+      await uploadFile(path.join(folderPath, file), publicId);
+      ps.folders[folderNum] = file;
+      uploaded++;
+      console.log(`  ✓  ${folderNum}/${file} → ${num}`);
+    } catch (e) {
+      console.error(`  ✗  ${folderNum}/ 오류: ${e.message}`);
     }
   }
 
-  const imageCount = Object.keys(ps.files).length;
+  if (skipped  > 0) console.log(`  ⏭  ${skipped}장 스킵`);
+  if (uploaded > 0) console.log(`  ↑  ${uploaded}장 업로드`);
+
+  // imageCount = 숫자 폴더 수 (cover 제외, gaps 없이 폴더 수 기준)
+  const imageCount = numberedFolders.length;
   console.log(`  → 총 ${imageCount}장`);
 
   const year  = match ? match[1] : "";
@@ -208,22 +204,18 @@ async function processProject(projectDir, state) {
   return { dirName, folder, title, year, month, imageCount };
 }
 
-// ────────────────────────────────────────────
-// 시간 역순으로 id 자동 부여 (최신 = 1)
-// ────────────────────────────────────────────
+// ── id 부여 (시간 역순, 최신=1) ────────────────────────────────────────────
 function assignIds(results) {
   const sorted = [...results].sort((a, b) => {
-    const dateA = `${a.year}-${String(a.month).padStart(2, "0")}`;
-    const dateB = `${b.year}-${String(b.month).padStart(2, "0")}`;
-    return dateB.localeCompare(dateA); // 최신이 앞
+    const dA = `${a.year}-${String(a.month).padStart(2, "0")}`;
+    const dB = `${b.year}-${String(b.month).padStart(2, "0")}`;
+    return dB.localeCompare(dA);
   });
   sorted.forEach((r, i) => { r.id = i + 1; });
-  return results; // id가 각 result에 부여됨
+  return results;
 }
 
-// ────────────────────────────────────────────
-// Google Sheets 업데이트
-// ────────────────────────────────────────────
+// ── Google Sheets 업데이트 ─────────────────────────────────────────────────
 async function updateGoogleSheets(results) {
   const keyFile       = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
@@ -247,16 +239,8 @@ async function updateGoogleSheets(results) {
   });
   const rows    = res.data.values || [];
   const headers = rows[0] || [];
-  const folderCol = headers.indexOf("folder");
-  const countCol  = headers.indexOf("imageCount");
 
-  const idCol       = headers.indexOf("id");
-  const titleCol    = headers.indexOf("title");
-  const yearCol     = headers.indexOf("year");
-  const monthCol    = headers.indexOf("month");
-  const categoryCol = headers.indexOf("category");
-  const descCol     = headers.indexOf("description");
-  const coworkCol   = headers.indexOf("coworkers");
+  const col = (name) => headers.indexOf(name);
 
   console.log("\n[Google Sheets]");
   for (const result of results) {
@@ -264,33 +248,42 @@ async function updateGoogleSheets(results) {
       console.log(`  [dry-run] id=${result.id} ${result.folder} (${result.year}-${result.month}) imageCount=${result.imageCount}`);
       continue;
     }
-    const existingIdx = rows.findIndex((r, i) => i > 0 && r[folderCol] === result.folder);
+
+    const existingIdx = rows.findIndex((r, i) => i > 0 && r[col("folder")] === result.folder);
+
     if (existingIdx > 0) {
       // 기존 행: id, imageCount 업데이트
       const updates = [];
-      if (idCol    >= 0) updates.push({ col: idCol,    val: result.id });
-      if (countCol >= 0) updates.push({ col: countCol, val: result.imageCount });
-      for (const { col, val } of updates) {
-        const cell = `시트1!${String.fromCharCode(65 + col)}${existingIdx + 1}`;
+      if (col("id")         >= 0) updates.push({ c: col("id"),         v: result.id });
+      if (col("imageCount") >= 0) updates.push({ c: col("imageCount"), v: result.imageCount });
+
+      for (const { c, v } of updates) {
+        const cell = `시트1!${String.fromCharCode(65 + c)}${existingIdx + 1}`;
         await sheets.spreadsheets.values.update({
           spreadsheetId, range: cell,
           valueInputOption: "RAW",
-          requestBody: { values: [[val]] },
+          requestBody: { values: [[v]] },
         });
       }
       console.log(`  ✓  업데이트: ${result.folder} (id=${result.id}, imageCount=${result.imageCount})`);
     } else {
-      // 새 행: 파싱된 메타데이터 자동 입력
-      const newRow = new Array(Math.max(...[idCol, titleCol, yearCol, monthCol, folderCol, countCol, categoryCol, descCol, coworkCol].filter(c => c >= 0)) + 1).fill("");
-      if (idCol       >= 0) newRow[idCol]       = result.id;
-      if (titleCol    >= 0) newRow[titleCol]    = result.title;
-      if (yearCol     >= 0) newRow[yearCol]     = result.year;
-      if (monthCol    >= 0) newRow[monthCol]    = result.month;
-      if (folderCol   >= 0) newRow[folderCol]   = result.folder;
-      if (countCol    >= 0) newRow[countCol]    = result.imageCount;
-      if (categoryCol >= 0) newRow[categoryCol] = "test";
-      if (descCol     >= 0) newRow[descCol]     = "test";
-      if (coworkCol   >= 0) newRow[coworkCol]   = "test";
+      // 새 행 추가
+      const maxCol = Math.max(
+        col("id"), col("title"), col("year"), col("month"),
+        col("folder"), col("imageCount"), col("category"),
+        col("description"), col("coworkers")
+      );
+      const newRow = new Array(maxCol + 1).fill("");
+      if (col("id")          >= 0) newRow[col("id")]          = result.id;
+      if (col("title")       >= 0) newRow[col("title")]       = result.title;
+      if (col("year")        >= 0) newRow[col("year")]        = result.year;
+      if (col("month")       >= 0) newRow[col("month")]       = result.month;
+      if (col("folder")      >= 0) newRow[col("folder")]      = result.folder;
+      if (col("imageCount")  >= 0) newRow[col("imageCount")]  = result.imageCount;
+      if (col("category")    >= 0) newRow[col("category")]    = "";
+      if (col("description") >= 0) newRow[col("description")] = "";
+      if (col("coworkers")   >= 0) newRow[col("coworkers")]   = "";
+
       await sheets.spreadsheets.values.append({
         spreadsheetId, range: "시트1!A:Z",
         valueInputOption: "RAW",
@@ -301,9 +294,7 @@ async function updateGoogleSheets(results) {
   }
 }
 
-// ────────────────────────────────────────────
-// 메인
-// ────────────────────────────────────────────
+// ── 메인 ───────────────────────────────────────────────────────────────────
 async function main() {
   if (!fs.existsSync(PORTFOLIO_DIR)) {
     console.error(`오류: "${PORTFOLIO_DIR}" 폴더를 찾을 수 없습니다.`);
@@ -315,7 +306,6 @@ async function main() {
     .map(f => path.join(PORTFOLIO_DIR, f))
     .filter(f => fs.statSync(f).isDirectory());
 
-  // 특정 프로젝트만 처리
   if (TARGET) {
     projectDirs = projectDirs.filter(d => path.basename(d) === TARGET);
     if (projectDirs.length === 0) {
@@ -324,7 +314,7 @@ async function main() {
     }
   }
 
-  console.log(`총 ${projectDirs.length}개 프로젝트${DRY_RUN ? " [DRY RUN]" : ""}${REORDER ? " [재정렬]" : ""}`);
+  console.log(`총 ${projectDirs.length}개 프로젝트${DRY_RUN ? " [DRY RUN]" : ""}${REORDER ? " [강제 재업로드]" : ""}`);
 
   const state   = loadState();
   const results = [];
@@ -332,10 +322,9 @@ async function main() {
   for (const dir of projectDirs) {
     const result = await processProject(dir, state);
     results.push(result);
-    if (!DRY_RUN) saveState(state); // 프로젝트마다 저장 (중간 중단 시 진행 상황 보존)
+    if (!DRY_RUN) saveState(state);
   }
 
-  // 전체 프로젝트 기준 id 재부여 (특정 프로젝트만 처리할 때도 전체 기준으로)
   if (!TARGET) assignIds(results);
 
   await updateGoogleSheets(results);
