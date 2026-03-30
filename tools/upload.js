@@ -254,7 +254,7 @@ async function updateGoogleSheets(results) {
     if (existingIdx > 0) {
       // 기존 행: id, imageCount 업데이트
       const updates = [];
-      if (col("id")         >= 0) updates.push({ c: col("id"),         v: result.id });
+      if (col("id") >= 0 && result.id !== undefined) updates.push({ c: col("id"), v: result.id });
       if (col("imageCount") >= 0) updates.push({ c: col("imageCount"), v: result.imageCount });
 
       for (const { c, v } of updates) {
