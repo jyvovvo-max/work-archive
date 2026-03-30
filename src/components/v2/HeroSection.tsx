@@ -208,16 +208,14 @@ function CollageImage({
           position: "relative",
         }}
       >
-        {/* ID label — top-right, outside image */}
-        <motion.span
-          animate={blurAnimate}
-          transition={blurTransition}
+        {/* ID label — top-right, outside image. tilt only (no blur) */}
+        <span
           style={{
             position: "absolute",
-            top: "-18px",
+            top: "-11px",
             right: 0,
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "9px",
+            fontSize: "10.8px",
             fontWeight: 300,
             letterSpacing: "0.1em",
             color: "rgba(10,10,10,0.3)",
@@ -226,7 +224,7 @@ function CollageImage({
           }}
         >
           {String(project.id).padStart(3, "0")}
-        </motion.span>
+        </span>
 
         {/* Image */}
         <motion.div
