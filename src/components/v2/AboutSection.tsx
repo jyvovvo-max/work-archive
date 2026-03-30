@@ -99,7 +99,9 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
             margin: 0,
             wordBreak: "keep-all",
           }}>
-            Brand Designer at<br />SHINSEGAE.
+            {(siteData?.aboutHeadline ?? "Brand Designer at\nSHINSEGAE.").split("\n").map((line, i, arr) => (
+              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+            ))}
           </h2>
         </BlurIn>
       </div>

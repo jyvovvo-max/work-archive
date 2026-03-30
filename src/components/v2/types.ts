@@ -17,8 +17,15 @@ export interface SiteData {
   landingTitle: string;
   landingSubtitle: string;
   landingDescription: string;
+  aboutHeadline: string;
   aboutBio: string[];
   services: string[];
   experience: string[];
-  awards: string[];   // comma-separated in Sheets column "awards"
+  awards: string[];
+  footerHeadline: string;
+  footerLocation: string;
+  footerEmail: string;
+  footerInstagramHandle: string;
+  footerInstagramUrl: string;
+  footerName: string;
 }

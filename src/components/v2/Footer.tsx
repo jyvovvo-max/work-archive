@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { SiteData } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -20,7 +21,14 @@ function BlurIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 }
 
-export default function Footer() {
+export default function Footer({ siteData }: { siteData: SiteData | null }) {
+  const headline = siteData?.footerHeadline ?? "I would love to hear from you!";
+  const location = siteData?.footerLocation ?? "Korea";
+  const email = siteData?.footerEmail ?? "";
+  const igHandle = siteData?.footerInstagramHandle ?? "";
+  const igUrl = siteData?.footerInstagramUrl ?? "";
+  const name = siteData?.footerName ?? "";
+
   const [time, setTime] = useState("");
 
   useEffect(() => {
@@ -96,7 +104,7 @@ export default function Footer() {
               letterSpacing: "0.01em",
               color: "#F0EDE8",
             }}>
-              I would love to hear from you!
+              {headline}
             </span>
           </span>
         </div>
@@ -112,7 +120,7 @@ export default function Footer() {
         {/* Visit */}
         <BlurIn delay={0.06}>
           <span style={labelStyle}>Visit;</span>
-          <div style={valueStyle}>Korea</div>
+          <div style={valueStyle}>{location}</div>
         </BlurIn>
 
         {/* Say hello */}
@@ -120,12 +128,12 @@ export default function Footer() {
           <span style={labelStyle}>Say hello;</span>
           <div>
             <a
-              href="mailto:jyvovvo@gmail.com"
+              href={`mailto:${email}`}
               style={linkStyle}
               onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
             >
-              → jyvovvo@gmail.com
+              → {email}
             </a>
           </div>
         </BlurIn>
@@ -135,14 +143,14 @@ export default function Footer() {
           <span style={labelStyle}>Follow me;</span>
           <div>
             <a
-              href="https://instagram.com/jyvovvo"
+              href={igUrl}
               target="_blank"
               rel="noreferrer"
               style={linkStyle}
               onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
             >
-              ↗ @jyvovvo
+              ↗ {igHandle}
             </a>
           </div>
         </BlurIn>
@@ -166,7 +174,7 @@ export default function Footer() {
             letterSpacing: "0.04em",
             color: "rgba(240,237,232,0.4)",
           }}>
-            Jinyoung Hwang.
+            {name}
           </span>
           <span style={{
             fontFamily: FONT,

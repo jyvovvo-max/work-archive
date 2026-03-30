@@ -75,7 +75,7 @@ function rowToProject(row: Record<string, string>): Project | null {
     images: imageCount > 0 ? cldImgs(row.folder, imageCount) : undefined,
     pairs: row.pairs || undefined,
     videoUrl: row.videoUrl || undefined,
-    selected: row.selected ? row.selected.toUpperCase() === "TRUE" : true,
+    selected: row.selected?.toUpperCase() === "TRUE",
   };
 }
 
@@ -106,6 +106,7 @@ const FALLBACK_SITE: SiteData = {
   landingSubtitle: "2015–Present",
   landingDescription:
     "Hello, Jinyoung Hwang here. I am a brand designer at the SHINSEGAE Brand Design Team. This archive records my work at SHINSEGAE, covering a broad spectrum from branding and packaging to signage, visual direction, and seasonal campaigns.",
+  aboutHeadline: "Brand Designer at\nSHINSEGAE.",
   aboutBio: [
     "Jinyoung Hwang is a brand designer with 10 years of experience at SHINSEGAE Brand Design Team, one of Korea's leading retail groups.",
     "The work spans brand identity, packaging, signage, visual direction, and seasonal campaigns — always grounded in strategic thinking and meticulous craft.",
@@ -119,7 +120,13 @@ const FALLBACK_SITE: SiteData = {
     "Luxury & Retail", "Fashion & Beauty", "Food & Beverage",
     "Culture & Arts", "Corporate Identity",
   ],
-  awards: [],   // populate via Sheets column "awards" (comma-separated)
+  awards: [],
+  footerHeadline: "I would love to hear from you!",
+  footerLocation: "Korea",
+  footerEmail: "jyvovvo@gmail.com",
+  footerInstagramHandle: "@jyvovvo",
+  footerInstagramUrl: "https://instagram.com/jyvovvo",
+  footerName: "Jinyoung Hwang",
 };
 
 export async function fetchProjects(): Promise<Project[]> {
@@ -146,6 +153,7 @@ export async function fetchSiteData(): Promise<SiteData> {
       landingTitle: map.landing_title || FALLBACK_SITE.landingTitle,
       landingSubtitle: map.landing_subtitle || FALLBACK_SITE.landingSubtitle,
       landingDescription: map.landing_description || FALLBACK_SITE.landingDescription,
+      aboutHeadline: map.about_headline || FALLBACK_SITE.aboutHeadline,
       aboutBio: map.about_bio
         ? map.about_bio.split("|").map(s => s.trim()).filter(Boolean)
         : FALLBACK_SITE.aboutBio,
@@ -158,6 +166,12 @@ export async function fetchSiteData(): Promise<SiteData> {
       awards: map.awards
         ? map.awards.split(",").map(s => s.trim()).filter(Boolean)
         : FALLBACK_SITE.awards,
+      footerHeadline: map.footer_headline || FALLBACK_SITE.footerHeadline,
+      footerLocation: map.footer_location || FALLBACK_SITE.footerLocation,
+      footerEmail: map.footer_email || FALLBACK_SITE.footerEmail,
+      footerInstagramHandle: map.footer_instagram_handle || FALLBACK_SITE.footerInstagramHandle,
+      footerInstagramUrl: map.footer_instagram_url || FALLBACK_SITE.footerInstagramUrl,
+      footerName: map.footer_name || FALLBACK_SITE.footerName,
     };
   } catch {
     return FALLBACK_SITE;

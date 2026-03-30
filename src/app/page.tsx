@@ -66,17 +66,7 @@ export default function Page() {
     return sel.length > 0 ? sel : projects;
   }, [projects]);
 
-  const [randomWorks, setRandomWorks] = useState<typeof projects>([]);
-  const didShuffle = useRef(false);
-  useEffect(() => {
-    if (!didShuffle.current && projects.length > 0) {
-      didShuffle.current = true;
-      const shuffled = [...projects].sort(() => Math.random() - 0.5).slice(0, 10);
-      setRandomWorks(shuffled);
-    }
-  }, [projects]);
-
-  const sortedSelectedWorks = useMemo(
+const sortedSelectedWorks = useMemo(
     () => [...selectedWorks].sort((a, b) => {
       const da = parseInt(a.year) * 100 + parseInt(a.month);
       const db = parseInt(b.year) * 100 + parseInt(b.month);
@@ -144,7 +134,7 @@ export default function Page() {
       {/* Layer 1: Hero — fixed behind */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 1 }}>
         <HeroSection
-          projects={randomWorks}
+          projects={sortedSelectedWorks}
           siteData={siteData}
           onOpen={setSelected}
         />
@@ -160,7 +150,7 @@ export default function Page() {
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.12)",
       }}>
-        <WorksGrid projects={randomWorks} onOpen={setSelected} />
+        <WorksGrid projects={sortedSelectedWorks} onOpen={setSelected} />
       </div>
 
       {/* Layer 3: About + Footer — slides over Selected Works */}
@@ -171,7 +161,7 @@ export default function Page() {
         borderTop: "1px solid rgba(0,0,0,0.08)",
       }}>
         <AboutSection ref={aboutRef} siteData={siteData} />
-        <Footer />
+        <Footer siteData={siteData} />
       </div>
 
       <AnimatePresence>

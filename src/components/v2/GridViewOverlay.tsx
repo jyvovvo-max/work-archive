@@ -228,7 +228,7 @@ export default function GridViewOverlay({
         )}
       </AnimatePresence>
 
-      <Footer />
+      <Footer siteData={siteData} />
     </motion.div>
   );
 }
