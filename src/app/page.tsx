@@ -129,6 +129,7 @@ const sortedSelectedWorks = useMemo(
         onBack={headerOnBack}
         zIndex={headerZIndex}
         alwaysVisible={gridOpen}
+        siteData={siteData}
       />
 
       {/* Layer 1: Hero — fixed behind */}

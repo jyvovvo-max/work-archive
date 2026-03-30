@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SiteData } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -11,12 +12,14 @@ interface HeaderProps {
   onContact: () => void;
   onBack?: () => void;
   zIndex?: number;
-  alwaysVisible?: boolean;  // true = stays visible, no hover-reveal needed
+  alwaysVisible?: boolean;
+  siteData?: SiteData | null;
 }
 
 export default function Header({
-  onHome, onViewAll, onAbout, onContact, onBack, zIndex = 500, alwaysVisible = false,
+  onHome, onViewAll, onAbout, onContact, onBack, zIndex = 500, alwaysVisible = false, siteData,
 }: HeaderProps) {
+  const siteName = siteData?.footerName || "Jinyoung Hwang";
   const [visible, setVisible] = useState(alwaysVisible);
   const [isMobile, setIsMobile] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -151,7 +154,7 @@ export default function Header({
                 paddingLeft: onBack ? "clamp(16px, 2vw, 28px)" : "0",
               }}
             >
-              Jinyoung Hwang
+              {siteName}
             </span>
           </div>
 
