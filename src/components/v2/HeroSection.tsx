@@ -213,7 +213,7 @@ function CollageImage({
           style={{
             position: "absolute",
             top: "-13px",
-            right: "2px",
+            right: "1px",
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: "10.8px",
             fontWeight: 300,
