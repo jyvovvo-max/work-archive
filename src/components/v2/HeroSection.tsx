@@ -527,29 +527,21 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
         </div>
       </motion.div>
 
-      {/* ── Images: collage on desktop, 2-col masonry on mobile ── */}
-      {isMobile ? (
-        <MobileGrid
-          projects={heroProjects}
+      {/* ── Collage images — zIndex 2, behind text ── */}
+      {heroProjects.map((project, i) => (
+        <CollageImage
+          key={project.id}
+          project={project}
+          pos={scatter[i % scatterLen]}
+          idx={i}
+          mousePxX={mousePxX}
+          mousePxY={mousePxY}
           scrollOpacity={scrollOpacity}
+          scrollTranslateY={scrollTranslateY}
+          allImagesIn={allImagesIn}
           onOpen={onOpen}
         />
-      ) : (
-        heroProjects.map((project, i) => (
-          <CollageImage
-            key={project.id}
-            project={project}
-            pos={scatter[i % scatterLen]}
-            idx={i}
-            mousePxX={mousePxX}
-            mousePxY={mousePxY}
-            scrollOpacity={scrollOpacity}
-            scrollTranslateY={scrollTranslateY}
-            allImagesIn={allImagesIn}
-            onOpen={onOpen}
-          />
-        ))
-      )}
+      ))}
 
       {/* ── Description — zIndex 5, above images ── */}
       {desc && (
