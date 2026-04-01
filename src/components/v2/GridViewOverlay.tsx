@@ -180,12 +180,13 @@ export default function GridViewOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
+      id="grid-overlay-scroll"
       style={{
         position: "fixed", inset: 0, zIndex: 550,
         background: "#F0F0F0",
         overflowY: "auto", overflowX: "hidden",
         scrollbarWidth: "none", color: "#0A0A0A",
-        paddingTop: "52px", // reserve space under always-visible header
+        paddingTop: "52px",
       }}
     >
       {/* Category filter pills — sticky below header */}

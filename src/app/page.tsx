@@ -18,7 +18,6 @@ export default function Page() {
   const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
   const [selected, setSelected] = useState<Project | null>(null);
   const [gridOpen, setGridOpen] = useState(false);
-  const [gridAboutOpen, setGridAboutOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
   const aboutRef = useRef<HTMLElement>(null);
 
@@ -99,7 +98,6 @@ export default function Page() {
 
   const handleCloseGrid = () => {
     setGridOpen(false);
-    setGridAboutOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -110,15 +108,19 @@ export default function Page() {
   };
 
   const scrollToContact = () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    if (gridOpen) {
+      document.getElementById("grid-overlay-scroll")?.scrollTo({ top: 999999, behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
   };
 
   const handleAbout = () => {
     if (gridOpen) {
-      setGridAboutOpen(o => !o);
+      setGridOpen(false);
+      setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
     } else {
       setSelected(null);
-      setGridOpen(false);
       setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
   };
@@ -195,7 +197,7 @@ export default function Page() {
             projects={projects}
             categories={categories}
             siteData={siteData}
-            aboutExpanded={gridAboutOpen}
+            aboutExpanded={false}
             onClose={handleCloseGrid}
             onOpen={p => { handleCloseGrid(); setSelected(p); }}
           />
