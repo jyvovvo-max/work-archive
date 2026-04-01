@@ -18,6 +18,7 @@ export default function Page() {
   const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
   const [selected, setSelected] = useState<Project | null>(null);
   const [gridOpen, setGridOpen] = useState(false);
+  const [detailFromGrid, setDetailFromGrid] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
   const aboutRef = useRef<HTMLElement>(null);
 
@@ -93,7 +94,12 @@ export default function Page() {
 
   const handleCloseDetail = () => {
     setSelected(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (detailFromGrid) {
+      setGridOpen(true);
+      setDetailFromGrid(false);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleCloseGrid = () => {
@@ -199,7 +205,7 @@ export default function Page() {
             siteData={siteData}
             aboutExpanded={false}
             onClose={handleCloseGrid}
-            onOpen={p => { handleCloseGrid(); setSelected(p); }}
+            onOpen={p => { setGridOpen(false); setDetailFromGrid(true); setSelected(p); }}
           />
         )}
       </AnimatePresence>
