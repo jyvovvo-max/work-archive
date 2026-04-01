@@ -147,6 +147,15 @@ export default function GridViewOverlay({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cols, setCols] = useState(3);
   const aboutRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!aboutExpanded) return;
+    const t = setTimeout(() => {
+      aboutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [aboutExpanded]);
 
   useEffect(() => {
     const update = () => {

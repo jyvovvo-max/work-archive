@@ -249,6 +249,75 @@ function CollageImage({
   );
 }
 
+function MobileGrid({
+  projects,
+  scrollOpacity,
+  onOpen,
+}: {
+  projects: Project[];
+  scrollOpacity: MotionValue<number>;
+  onOpen: (p: Project) => void;
+}) {
+  return (
+    <motion.div
+      style={{
+        position: "absolute",
+        top: "136px",
+        left: "20px",
+        right: "20px",
+        bottom: 0,
+        overflow: "hidden",
+        zIndex: 2,
+        opacity: scrollOpacity,
+        columnCount: 2,
+        columnGap: "8px",
+      }}
+    >
+      {projects.map((project, i) => (
+        <motion.div
+          key={project.id}
+          initial={{ opacity: 0, filter: "blur(10px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          transition={{ delay: 0.15 + i * 0.08, duration: 0.9, ease: [0.55, 0, 1, 0.6] }}
+          onClick={() => onOpen(project)}
+          style={{
+            breakInside: "avoid",
+            marginBottom: "8px",
+            cursor: "pointer",
+            position: "relative",
+          }}
+        >
+          <span style={{
+            position: "absolute",
+            top: "-11px",
+            right: "1px",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "9px",
+            fontWeight: 300,
+            letterSpacing: "0.1em",
+            color: "rgba(10,10,10,0.3)",
+            lineHeight: 1,
+          }}>
+            {String(project.id).padStart(3, "0")}
+          </span>
+          <img
+            src={project.img}
+            alt={project.title}
+            draggable={false}
+            style={{
+              width: "100%",
+              height: "auto",
+              display: "block",
+              borderRadius: "2px",
+              boxShadow: "0 3px 12px rgba(0,0,0,0.14)",
+            }}
+          />
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+
 function DescriptionText({ text, y }: { text: string; y: MotionValue<number> }) {
   const controls = useAnimationControls();
 
@@ -458,21 +527,29 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
         </div>
       </motion.div>
 
-      {/* ── Collage images — zIndex 2, behind text ── */}
-      {heroProjects.map((project, i) => (
-        <CollageImage
-          key={project.id}
-          project={project}
-          pos={scatter[i % scatterLen]}
-          idx={i}
-          mousePxX={mousePxX}
-          mousePxY={mousePxY}
+      {/* ── Images: collage on desktop, 2-col masonry on mobile ── */}
+      {isMobile ? (
+        <MobileGrid
+          projects={heroProjects}
           scrollOpacity={scrollOpacity}
-          scrollTranslateY={scrollTranslateY}
-          allImagesIn={allImagesIn}
           onOpen={onOpen}
         />
-      ))}
+      ) : (
+        heroProjects.map((project, i) => (
+          <CollageImage
+            key={project.id}
+            project={project}
+            pos={scatter[i % scatterLen]}
+            idx={i}
+            mousePxX={mousePxX}
+            mousePxY={mousePxY}
+            scrollOpacity={scrollOpacity}
+            scrollTranslateY={scrollTranslateY}
+            allImagesIn={allImagesIn}
+            onOpen={onOpen}
+          />
+        ))
+      )}
 
       {/* ── Description — zIndex 5, above images ── */}
       {desc && (
