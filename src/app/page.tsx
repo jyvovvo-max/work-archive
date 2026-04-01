@@ -65,7 +65,7 @@ export default function Page() {
       projects.flatMap(p =>
         p.category ? p.category.split(",").map(c => c.trim()).filter(Boolean) : []
       )
-    )].sort(),
+    )].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
     [projects]
   );
 

@@ -318,15 +318,16 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "11px",
-              letterSpacing: "0.08em",
+              fontSize: "clamp(22px, 2vw, 28px)",
+              letterSpacing: "0.02em",
               color: "rgba(240,237,232,0.28)",
               display: "flex",
-              gap: "16px",
+              gap: "24px",
+              alignItems: "baseline",
             }}
           >
+            <span>{String(project.id).padStart(3, "0")}</span>
             <span>{fmtDate(project.month, project.year)}</span>
-            {project.category && <span>_{project.category}</span>}
           </motion.div>
         </div>
 

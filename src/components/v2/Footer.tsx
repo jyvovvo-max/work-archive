@@ -68,7 +68,7 @@ export default function Footer({ siteData }: { siteData: SiteData | null }) {
     <footer style={{
       background: "#1A1A1A",
       borderTop: "1px solid rgba(240,237,232,0.06)",
-      padding: "clamp(45px, 5.6vh, 77px) clamp(20px, 4vw, 56px) clamp(26px, 3.2vh, 45px)",
+      padding: "clamp(41px, 5vh, 69px) clamp(18px, 3.6vw, 50px) clamp(23px, 2.9vh, 41px)",
     }}>
       {/* Headline */}
       <BlurIn>
@@ -89,7 +89,7 @@ export default function Footer({ siteData }: { siteData: SiteData | null }) {
             <span style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "clamp(14px, 1.6vw, 20px)",
+              fontSize: "clamp(13px, 1.44vw, 18px)",
               letterSpacing: "0.01em",
               color: "#F0EDE8",
             }}>
