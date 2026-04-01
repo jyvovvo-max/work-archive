@@ -52,7 +52,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
   const labelStyle: React.CSSProperties = {
     fontFamily: FONT,
     fontWeight: 300,
-    fontSize: "10px",
+    fontSize: "clamp(10px, 0.85vw, 13px)",
     letterSpacing: "0.14em",
     textTransform: "uppercase",
     color: "rgba(0,0,0,0.35)",
@@ -62,7 +62,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
   const listItemStyle: React.CSSProperties = {
     fontFamily: FONT,
     fontWeight: 300,
-    fontSize: "12px",
+    fontSize: "clamp(12px, 1.0vw, 15px)",
     letterSpacing: "0.02em",
     color: "rgba(0,0,0,0.55)",
     lineHeight: 2.0,

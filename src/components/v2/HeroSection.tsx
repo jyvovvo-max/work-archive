@@ -300,6 +300,13 @@ interface HeroProps {
 
 export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Phase control:
   // Image 10 done at 1.05 + 1.0 = 2.05s → 0.5s pause → blur starts at 2.65s
@@ -427,19 +434,20 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
             {title}
           </motion.h1>
 
-          {/* 2015–Present — same font as title, responsive, top-right */}
+          {/* 2015–Present — desktop: top-right corner / mobile: below title */}
           <motion.p
             initial={{ filter: "blur(20px)", opacity: 0 }}
             animate={titleControls}
             style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              margin: 0,
+              position: isMobile ? "static" : "absolute",
+              top: isMobile ? undefined : 0,
+              right: isMobile ? undefined : 0,
+              display: "block",
+              margin: isMobile ? "6px 0 0 0" : 0,
               fontFamily: FONT,
               fontWeight: 300,
               fontStyle: "normal",
-              fontSize: "clamp(13px, 1.8vw, 26px)",
+              fontSize: isMobile ? "clamp(10px, 3vw, 13px)" : "clamp(13px, 1.8vw, 26px)",
               lineHeight: 0.88,
               color: "rgba(255,255,255,0.5)",
               whiteSpace: "nowrap",
