@@ -62,7 +62,7 @@ function CategoryBar({ categories, active, onChange }: {
             onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.95)"; e.currentTarget.style.color = "#0A0A0A"; } }}
             onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.70)"; e.currentTarget.style.color = "rgba(0,0,0,0.55)"; } }}
           >
-            {cat}
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
           </button>
         );
       })}
