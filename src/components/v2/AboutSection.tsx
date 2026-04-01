@@ -136,25 +136,26 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
         </div>
       </div>
 
-      {/* Services */}
+      {/* Services + Experience side by side */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "clamp(80px, 12vw, 160px) 1fr",
+        gridTemplateColumns: "1fr 1fr",
         gap: "clamp(20px, 4vw, 60px)",
-        marginBottom: "clamp(48px, 7vh, 88px)",
         alignItems: "start",
       }}>
-        <BlurIn>
-          <span style={labelStyle}>Services</span>
+        {/* Services */}
+        <BlurIn delay={0.04}>
+          <div>
+            <div style={{ ...labelStyle, marginBottom: "20px" }}>Services</div>
+            {services.map(s => <div key={s} style={listItemStyle}>{s}</div>)}
+          </div>
         </BlurIn>
-        <BlurIn delay={0.06}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0 clamp(24px, 4vw, 60px)",
-          }}>
-            <div>{svcA.map(s => <div key={s} style={listItemStyle}>{s}</div>)}</div>
-            <div>{svcB.map(s => <div key={s} style={listItemStyle}>{s}</div>)}</div>
+
+        {/* Experience */}
+        <BlurIn delay={0.08}>
+          <div>
+            <div style={{ ...labelStyle, marginBottom: "20px" }}>Experience</div>
+            {experience.map(s => <div key={s} style={listItemStyle}>{s}</div>)}
           </div>
         </BlurIn>
       </div>
@@ -165,7 +166,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
           display: "grid",
           gridTemplateColumns: "clamp(80px, 12vw, 160px) 1fr",
           gap: "clamp(20px, 4vw, 60px)",
-          marginBottom: "clamp(48px, 7vh, 88px)",
+          marginTop: "clamp(48px, 7vh, 88px)",
           alignItems: "start",
         }}>
           <BlurIn>
@@ -180,28 +181,6 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
           </BlurIn>
         </div>
       )}
-
-      {/* Experience */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "clamp(80px, 12vw, 160px) 1fr",
-        gap: "clamp(20px, 4vw, 60px)",
-        alignItems: "start",
-      }}>
-        <BlurIn>
-          <span style={labelStyle}>Experience</span>
-        </BlurIn>
-        <BlurIn delay={0.06}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0 clamp(24px, 4vw, 60px)",
-          }}>
-            <div>{expA.map(s => <div key={s} style={listItemStyle}>{s}</div>)}</div>
-            <div>{expB.map(s => <div key={s} style={listItemStyle}>{s}</div>)}</div>
-          </div>
-        </BlurIn>
-      </div>
     </section>
   );
 });
