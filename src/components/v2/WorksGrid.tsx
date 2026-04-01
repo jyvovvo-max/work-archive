@@ -8,10 +8,11 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 const fmtDate = (month: string, year: string) =>
   `${MONTHS[Math.max(0, parseInt(month, 10) - 1)]}, ${year}`;
 
-function WorkCard({ project, onOpen, colIdx }: {
+function WorkCard({ project, onOpen, colIdx, isMobile }: {
   project: Project;
   onOpen: (p: Project) => void;
   colIdx: number;
+  isMobile: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-6% 0px" });
@@ -43,10 +44,10 @@ function WorkCard({ project, onOpen, colIdx }: {
         />
       </motion.div>
 
-      {/* White acrylic bar — slides down from top on hover (80% height padding) */}
+      {/* White acrylic bar — always visible on mobile, slides in on hover on desktop */}
       <motion.div
-        animate={{ y: hovered ? "0%" : "-100%" }}
-        initial={{ y: "-100%" }}
+        animate={{ y: isMobile || hovered ? "0%" : "-100%" }}
+        initial={{ y: isMobile ? "0%" : "-100%" }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: "absolute",
@@ -99,9 +100,13 @@ interface WorksGridProps {
 
 export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
   const [cols, setCols] = useState(2);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const update = () => setCols(window.innerWidth < 640 ? 1 : 2);
+    const update = () => {
+      setCols(window.innerWidth < 640 ? 1 : 2);
+      setIsMobile(window.innerWidth < 768);
+    };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -148,6 +153,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
             project={p}
             onOpen={onOpen}
             colIdx={i % cols}
+            isMobile={isMobile}
           />
         ))}
       </div>

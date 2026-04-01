@@ -422,7 +422,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
+              fontSize: isMobile ? "calc((100vw - 40px) / 7.2)" : "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
               letterSpacing: "-0.045em",
               lineHeight: 0.88,
               color: "#FFFFFF",

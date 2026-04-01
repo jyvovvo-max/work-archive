@@ -68,7 +68,7 @@ export default function Footer({ siteData }: { siteData: SiteData | null }) {
     <footer style={{
       background: "#1A1A1A",
       borderTop: "1px solid rgba(240,237,232,0.06)",
-      padding: "clamp(41px, 5vh, 69px) clamp(18px, 3.6vw, 50px) clamp(23px, 2.9vh, 41px)",
+      padding: "clamp(20px, 2.5vh, 35px) clamp(18px, 3.6vw, 50px) clamp(12px, 1.5vh, 20px)",
     }}>
       {/* Headline */}
       <BlurIn>
