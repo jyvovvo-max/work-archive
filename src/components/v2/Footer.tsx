@@ -48,17 +48,6 @@ export default function Footer({ siteData }: { siteData: SiteData | null }) {
     return () => clearInterval(id);
   }, []);
 
-  const labelStyle: React.CSSProperties = {
-    fontFamily: FONT,
-    fontWeight: 300,
-    fontSize: "10px",
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
-    color: "rgba(240,237,232,0.28)",
-    marginBottom: "20px",
-    display: "block",
-  };
-
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT,
     fontWeight: 300,
@@ -77,13 +66,13 @@ export default function Footer({ siteData }: { siteData: SiteData | null }) {
 
   return (
     <footer style={{
-      background: "#050505",
+      background: "#1A1A1A",
       borderTop: "1px solid rgba(240,237,232,0.06)",
-      padding: "clamp(56px, 7vh, 96px) clamp(20px, 4vw, 56px) clamp(32px, 4vh, 56px)",
+      padding: "clamp(45px, 5.6vh, 77px) clamp(20px, 4vw, 56px) clamp(26px, 3.2vh, 45px)",
     }}>
       {/* Headline */}
       <BlurIn>
-        <div style={{ marginBottom: "clamp(48px, 7vh, 80px)" }}>
+        <div style={{ marginBottom: "clamp(38px, 5.6vh, 64px)" }}>
           <span style={{
             display: "inline-flex",
             alignItems: "center",
@@ -110,22 +99,18 @@ export default function Footer({ siteData }: { siteData: SiteData | null }) {
         </div>
       </BlurIn>
 
-      {/* Three columns */}
+      {/* Three columns — labels removed */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: "clamp(32px, 4vw, 60px)",
-        marginBottom: "clamp(48px, 7vh, 80px)",
+        marginBottom: "clamp(38px, 5.6vh, 64px)",
       }}>
-        {/* Visit */}
         <BlurIn delay={0.06}>
-          <span style={labelStyle}>Visit;</span>
           <div style={valueStyle}>{location}</div>
         </BlurIn>
 
-        {/* Say hello */}
         <BlurIn delay={0.12}>
-          <span style={labelStyle}>Say hello;</span>
           <div>
             <a
               href={`mailto:${email}`}
@@ -138,9 +123,7 @@ export default function Footer({ siteData }: { siteData: SiteData | null }) {
           </div>
         </BlurIn>
 
-        {/* Follow */}
         <BlurIn delay={0.18}>
-          <span style={labelStyle}>Follow me;</span>
           <div>
             <a
               href={igUrl}

@@ -5,7 +5,6 @@ import { useRef } from "react";
 import { SiteData } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
-const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
 
 function BlurIn({
   children,
@@ -44,30 +43,6 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
   const experience = siteData?.experience ?? [];
   const awards = siteData?.awards ?? [];
 
-  // Split lists in half for two-column display
-  const half = (arr: string[]) => [arr.slice(0, Math.ceil(arr.length / 2)), arr.slice(Math.ceil(arr.length / 2))];
-  const [svcA, svcB] = half(services);
-  const [expA, expB] = half(experience);
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: FONT,
-    fontWeight: 300,
-    fontSize: "clamp(10px, 0.85vw, 13px)",
-    letterSpacing: "0.14em",
-    textTransform: "uppercase",
-    color: "rgba(0,0,0,0.35)",
-    marginBottom: "24px",
-  };
-
-  const listItemStyle: React.CSSProperties = {
-    fontFamily: FONT,
-    fontWeight: 300,
-    fontSize: "clamp(12px, 1.0vw, 15px)",
-    letterSpacing: "0.02em",
-    color: "rgba(0,0,0,0.55)",
-    lineHeight: 2.0,
-  };
-
   return (
     <section
       ref={ref}
@@ -77,53 +52,39 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
         borderTop: "1px solid rgba(0,0,0,0.1)",
       }}
     >
-      {/* Top row: label + headline */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "clamp(80px, 12vw, 160px) 1fr",
-        gap: "clamp(20px, 4vw, 60px)",
-        marginBottom: "clamp(56px, 8vh, 100px)",
-        alignItems: "start",
-      }}>
-        <BlurIn>
-          <span style={labelStyle}>About</span>
-        </BlurIn>
-        <BlurIn delay={0.08}>
-          <h2 style={{
-            fontFamily: FONT,
-            fontWeight: 300,
-            fontSize: "clamp(22px, 3.2vw, 44px)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.2,
-            color: "#0A0A0A",
-            margin: 0,
-            wordBreak: "keep-all",
-          }}>
-            {(siteData?.aboutHeadline ?? "Brand Designer at\nSHINSEGAE.").split("\n").map((line, i, arr) => (
-              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
-            ))}
-          </h2>
-        </BlurIn>
-      </div>
+      {/* Headline — full width, 80% of previous size */}
+      <BlurIn>
+        <h2 style={{
+          fontFamily: FONT,
+          fontWeight: 300,
+          fontSize: "clamp(18px, 2.56vw, 35px)",
+          letterSpacing: "-0.02em",
+          lineHeight: 1.2,
+          color: "#0A0A0A",
+          margin: "0 0 clamp(48px, 7vh, 88px) 0",
+          wordBreak: "keep-all",
+        }}>
+          {(siteData?.aboutHeadline ?? "Brand Designer at\nSHINSEGAE.").split("\n").map((line, i, arr) => (
+            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+          ))}
+        </h2>
+      </BlurIn>
 
-      {/* Bio */}
+      {/* 7-column grid: col 1-3 = Bio, col 4-5 = gap, col 6 = Services, col 7 = Experience */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "clamp(80px, 12vw, 160px) 1fr",
-        gap: "clamp(20px, 4vw, 60px)",
-        marginBottom: "clamp(48px, 7vh, 88px)",
+        gridTemplateColumns: "repeat(7, 1fr)",
+        gap: "clamp(16px, 2vw, 32px)",
         alignItems: "start",
       }}>
-        <BlurIn>
-          <span style={labelStyle}>Bio</span>
-        </BlurIn>
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Bio — columns 1–3 */}
+        <div style={{ gridColumn: "1 / 4", display: "flex", flexDirection: "column", gap: "20px" }}>
           {bio.map((p, i) => (
             <BlurIn key={i} delay={i * 0.06}>
               <p style={{
-                fontFamily: FONT_KR,
+                fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(13px, 1.1vw, 16px)",
+                fontSize: "clamp(15px, 1.3vw, 19px)",
                 lineHeight: 1.8,
                 color: "rgba(0,0,0,0.6)",
                 margin: 0,
@@ -134,52 +95,63 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
             </BlurIn>
           ))}
         </div>
-      </div>
 
-      {/* Services + Experience side by side */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "clamp(20px, 4vw, 60px)",
-        alignItems: "start",
-      }}>
-        {/* Services */}
-        <BlurIn delay={0.04}>
-          <div>
-            <div style={{ ...labelStyle, marginBottom: "20px" }}>Services</div>
-            {services.map(s => <div key={s} style={listItemStyle}>{s}</div>)}
+        {/* Columns 4–5: intentional gap — no content */}
+
+        {/* Services — column 6 */}
+        <BlurIn delay={0.08} style={{ gridColumn: "6" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {services.map(s => (
+              <div key={s} style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: "clamp(12px, 1.0vw, 15px)",
+                letterSpacing: "0.02em",
+                color: "rgba(0,0,0,0.55)",
+                lineHeight: 2.0,
+              }}>{s}</div>
+            ))}
           </div>
         </BlurIn>
 
-        {/* Experience */}
-        <BlurIn delay={0.08}>
-          <div>
-            <div style={{ ...labelStyle, marginBottom: "20px" }}>Experience</div>
-            {experience.map(s => <div key={s} style={listItemStyle}>{s}</div>)}
+        {/* Experience — column 7 */}
+        <BlurIn delay={0.12} style={{ gridColumn: "7" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {experience.map(s => (
+              <div key={s} style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: "clamp(12px, 1.0vw, 15px)",
+                letterSpacing: "0.02em",
+                color: "rgba(0,0,0,0.55)",
+                lineHeight: 2.0,
+              }}>{s}</div>
+            ))}
           </div>
         </BlurIn>
       </div>
 
-      {/* Awards — shown only when data exists */}
+      {/* Awards — below grid, shown only when data exists */}
       {awards.length > 0 && (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "clamp(80px, 12vw, 160px) 1fr",
-          gap: "clamp(20px, 4vw, 60px)",
-          marginTop: "clamp(48px, 7vh, 88px)",
-          alignItems: "start",
-        }}>
-          <BlurIn>
-            <span style={labelStyle}>Awards</span>
-          </BlurIn>
-          <BlurIn delay={0.06}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0 clamp(24px, 4vw, 60px)" }}>
-              {awards.map(a => (
-                <div key={a} style={listItemStyle}>{a}</div>
-              ))}
-            </div>
-          </BlurIn>
-        </div>
+        <BlurIn delay={0.06}>
+          <div style={{
+            marginTop: "clamp(48px, 7vh, 88px)",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "0 clamp(24px, 4vw, 60px)",
+          }}>
+            {awards.map(a => (
+              <div key={a} style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: "clamp(12px, 1.0vw, 15px)",
+                letterSpacing: "0.02em",
+                color: "rgba(0,0,0,0.55)",
+                lineHeight: 2.0,
+              }}>{a}</div>
+            ))}
+          </div>
+        </BlurIn>
       )}
     </section>
   );

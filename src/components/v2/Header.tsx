@@ -141,23 +141,21 @@ export default function Header({
                 </svg>
               </button>
             )}
-            {onBack && (
-              <span
-                onClick={onHome}
-                style={{
-                  fontFamily: FONT,
-                  fontWeight: 300,
-                  fontSize: "clamp(12px, 1.7vw, 25px)",
-                  letterSpacing: "-0.01em",
-                  color: nameColor,
-                  userSelect: "none",
-                  cursor: "pointer",
-                  paddingLeft: "clamp(16px, 2vw, 28px)",
-                }}
-              >
-                {siteName}
-              </span>
-            )}
+            <span
+              onClick={onHome}
+              style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: "clamp(12px, 1.7vw, 25px)",
+                letterSpacing: "-0.01em",
+                color: nameColor,
+                userSelect: "none",
+                cursor: "pointer",
+                paddingLeft: onBack ? "clamp(16px, 2vw, 28px)" : "0",
+              }}
+            >
+              {siteName}
+            </span>
           </div>
 
           {/* Right nav */}
