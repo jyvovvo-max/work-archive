@@ -407,7 +407,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
         ref={titleContainerRef}
         style={{
           position: "absolute",
-          top: "clamp(52px, 6vh, 70px)",
+          top: "62px",
           left: "clamp(20px, 4vw, 56px)",
           zIndex: 20,
           pointerEvents: "none",

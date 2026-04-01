@@ -318,16 +318,12 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "clamp(22px, 2vw, 28px)",
+              fontSize: "clamp(20px, 1.8vw, 25px)",
               letterSpacing: "0.02em",
               color: "rgba(240,237,232,0.28)",
-              display: "flex",
-              gap: "24px",
-              alignItems: "baseline",
             }}
           >
-            <span>{String(project.id).padStart(3, "0")}</span>
-            <span>{fmtDate(project.month, project.year)}</span>
+            {String(project.id).padStart(3, "0")}-{MONTHS[Math.max(0, parseInt(project.month, 10) - 1)]}-{project.year}
           </motion.div>
         </div>
 
