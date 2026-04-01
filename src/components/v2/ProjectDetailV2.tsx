@@ -80,7 +80,9 @@ function useExtractedColor(imgSrc: string) {
 
 // Header is rendered by page.tsx — no local header needed here
 
-// Gallery image with blur-to-clean scroll effect
+const isVideoUrl = (src: string) => src.includes("/video/upload/");
+
+// Gallery media — image or video depending on URL
 function GalleryImage({ src, alt, index, onLightbox }: {
   src: string; alt: string; index: number; onLightbox: () => void;
 }) {
@@ -96,10 +98,21 @@ function GalleryImage({ src, alt, index, onLightbox }: {
       }
       initial={{ filter: "blur(12px)", opacity: 0, y: 24 }}
       transition={{ duration: 0.95, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
-      onClick={onLightbox}
-      style={{ cursor: "zoom-in" }}
+      onClick={isVideoUrl(src) ? undefined : onLightbox}
+      style={{ cursor: isVideoUrl(src) ? "default" : "zoom-in" }}
     >
-      <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+      {isVideoUrl(src) ? (
+        <video
+          src={src}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ width: "100%", height: "auto", display: "block" }}
+        />
+      ) : (
+        <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+      )}
     </motion.div>
   );
 }

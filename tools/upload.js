@@ -45,6 +45,7 @@ const PORTFOLIO_DIR = process.env.PORTFOLIO_DIR
 const CLD_BASE   = "portfolio-images";
 const STATE_FILE = path.join(__dirname, ".upload-state.json");
 const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".tiff"];
+const VIDEO_EXTS = [".mp4", ".mov", ".webm", ".avi"];
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "doyfzvsly",
@@ -79,6 +80,17 @@ function getFirstImage(folderPath) {
   return files.length > 0 ? files[0] : null;
 }
 
+// ── 폴더 안 첫 번째 미디어 (이미지 또는 영상) ───────────────────────────────
+function getFirstMedia(folderPath) {
+  const files = fs.readdirSync(folderPath).sort();
+  for (const f of files) {
+    const ext = path.extname(f).toLowerCase();
+    if (IMAGE_EXTS.includes(ext)) return { file: f, isVideo: false };
+    if (VIDEO_EXTS.includes(ext)) return { file: f, isVideo: true };
+  }
+  return null;
+}
+
 // ── Cloudinary 업로드 ──────────────────────────────────────────────────────
 // cover:  1920×1080 16:9 크랍 (centre)
 // 일반:   가로 최대 1920px, 비율 유지
@@ -91,7 +103,7 @@ async function uploadFile(localPath, publicId, isCover = false) {
   }
 
   const parts  = publicId.split("/");
-  parts.pop(); // filename 제거
+  parts.pop();
   const folder = parts.join("/");
 
   return new Promise((resolve, reject) => {
@@ -102,7 +114,7 @@ async function uploadFile(localPath, publicId, isCover = false) {
         use_filename:    false,
         unique_filename: false,
         overwrite:       true,
-        invalidate:      true,   // ← CDN 캐시 즉시 무효화
+        invalidate:      true,
         resource_type:   "image",
       },
       (error, result) => (error ? reject(error) : resolve(result))
@@ -115,6 +127,27 @@ async function uploadFile(localPath, publicId, isCover = false) {
       pipeline = pipeline.resize(1920, null, { withoutEnlargement: true });
     }
     pipeline.pipe(uploadStream);
+  });
+}
+
+async function uploadVideo(localPath, publicId) {
+  if (DRY_RUN) {
+    console.log(`  [dry-run] [video] ${path.basename(localPath)} → ${publicId}`);
+    return { public_id: publicId };
+  }
+
+  const parts  = publicId.split("/");
+  parts.pop();
+  const folder = parts.join("/");
+
+  return cloudinary.uploader.upload(localPath, {
+    asset_folder:    folder,
+    public_id:       publicId,
+    use_filename:    false,
+    unique_filename: false,
+    overwrite:       true,
+    invalidate:      true,
+    resource_type:   "video",
   });
 }
 
@@ -153,47 +186,56 @@ async function processProject(projectDir, state) {
     console.log(`  ⚠  cover 폴더 없음`);
   }
 
-  // ── 숫자 폴더 이미지 ──
-  // 01/ → 001, 02/ → 002 ...
-  // 파일이 바뀌거나 폴더가 새로 생기면 자동 감지 → overwrite 업로드
+  // ── 숫자 폴더 미디어 (이미지 + 영상) ──
   const numberedFolders = getNumberedFolders(projectDir);
   let uploaded = 0;
   let skipped  = 0;
+  const videoSlots = [];  // 영상인 슬롯 번호 (1-based)
+
+  if (!ps.videoSlots) ps.videoSlots = {};
 
   for (const folderNum of numberedFolders) {
     const folderPath = path.join(projectDir, folderNum);
-    const file       = getFirstImage(folderPath);
+    const media      = getFirstMedia(folderPath);
 
-    if (!file) {
-      console.log(`  ⚠  ${folderNum}/ 이미지 없음 (스킵)`);
+    if (!media) {
+      console.log(`  ⚠  ${folderNum}/ 미디어 없음 (스킵)`);
       continue;
     }
 
-    const num      = String(parseInt(folderNum)).padStart(3, "0"); // "01" → "001"
+    const { file, isVideo } = media;
+    const slotNum  = parseInt(folderNum);
+    const num      = String(slotNum).padStart(3, "0");
     const publicId = `${CLD_BASE}/${folder}/${num}`;
 
-    // 같은 파일이면 스킵 (--reorder면 항상 재업로드)
-    if (ps.folders[folderNum] === file && !REORDER) {
+    if (isVideo) videoSlots.push(slotNum);
+
+    const stateKey = ps.folders[folderNum];
+    if (stateKey === file && ps.videoSlots[folderNum] === isVideo && !REORDER) {
       skipped++;
       continue;
     }
 
     try {
-      await uploadFile(path.join(folderPath, file), publicId);
-      ps.folders[folderNum] = file;
+      if (isVideo) {
+        await uploadVideo(path.join(folderPath, file), publicId);
+      } else {
+        await uploadFile(path.join(folderPath, file), publicId);
+      }
+      ps.folders[folderNum]      = file;
+      ps.videoSlots[folderNum]   = isVideo;
       uploaded++;
-      console.log(`  ✓  ${folderNum}/${file} → ${num}`);
+      console.log(`  ✓  ${folderNum}/${file} → ${num}${isVideo ? " [video]" : ""}`);
     } catch (e) {
       console.error(`  ✗  ${folderNum}/ 오류: ${e.message}`);
     }
   }
 
-  if (skipped  > 0) console.log(`  ⏭  ${skipped}장 스킵`);
-  if (uploaded > 0) console.log(`  ↑  ${uploaded}장 업로드`);
+  if (skipped  > 0) console.log(`  ⏭  ${skipped}개 스킵`);
+  if (uploaded > 0) console.log(`  ↑  ${uploaded}개 업로드`);
 
-  // imageCount = 숫자 폴더 수 (cover 제외, gaps 없이 폴더 수 기준)
   const imageCount = numberedFolders.length;
-  console.log(`  → 총 ${imageCount}장`);
+  console.log(`  → 총 ${imageCount}개${videoSlots.length > 0 ? `, 영상 슬롯: ${videoSlots.join(",")}` : ""}`);
 
   const year  = match ? match[1] : "";
   const month = match ? String(parseInt(match[2])) : "";
@@ -201,7 +243,7 @@ async function processProject(projectDir, state) {
     ? folder.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
     : folder;
 
-  return { dirName, folder, title, year, month, imageCount };
+  return { dirName, folder, title, year, month, imageCount, videoSlots };
 }
 
 // ── id 부여 (시간 역순, 최신=1) ────────────────────────────────────────────
@@ -251,11 +293,13 @@ async function updateGoogleSheets(results) {
 
     const existingIdx = rows.findIndex((r, i) => i > 0 && r[col("folder")] === result.folder);
 
+    const videoSlotsStr = (result.videoSlots || []).join(",");
+
     if (existingIdx > 0) {
-      // 기존 행: id, imageCount 업데이트
       const updates = [];
       if (col("id") >= 0 && result.id !== undefined) updates.push({ c: col("id"), v: result.id });
       if (col("imageCount") >= 0) updates.push({ c: col("imageCount"), v: result.imageCount });
+      if (col("videos") >= 0) updates.push({ c: col("videos"), v: videoSlotsStr });
 
       for (const { c, v } of updates) {
         const cell = `시트1!${String.fromCharCode(65 + c)}${existingIdx + 1}`;
@@ -283,6 +327,7 @@ async function updateGoogleSheets(results) {
       if (col("category")    >= 0) newRow[col("category")]    = "";
       if (col("description") >= 0) newRow[col("description")] = "";
       if (col("coworkers")   >= 0) newRow[col("coworkers")]   = "";
+      if (col("videos")      >= 0) newRow[col("videos")]      = videoSlotsStr;
 
       await sheets.spreadsheets.values.append({
         spreadsheetId, range: "시트1!A:Z",

@@ -1,8 +1,16 @@
 import { Project, SiteData } from "./types";
 
-export const CLD = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
-export const cldImgs = (folder: string, count: number) =>
-  Array.from({ length: count }, (_, i) => `${CLD}${folder}/${String(i + 1).padStart(3, "0")}`);
+export const CLD       = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
+export const CLD_VIDEO = "https://res.cloudinary.com/doyfzvsly/video/upload/portfolio-images/";
+
+export const cldImgs = (folder: string, count: number, videoSlots: number[] = []) =>
+  Array.from({ length: count }, (_, i) => {
+    const slot = i + 1;
+    const num  = String(slot).padStart(3, "0");
+    return videoSlots.includes(slot)
+      ? `${CLD_VIDEO}${folder}/${num}`
+      : `${CLD}${folder}/${num}`;
+  });
 
 // Sheet 1: projects
 const SHEETS_CSV =
@@ -60,7 +68,8 @@ function parseCSV(text: string): Record<string, string>[] {
 function rowToProject(row: Record<string, string>): Project | null {
   const id = parseInt(row.id);
   if (!id || !row.title || !row.folder) return null;
-  const imageCount = parseInt(row.imageCount) || 0;
+  const imageCount  = parseInt(row.imageCount) || 0;
+  const videoSlots  = (row.videos ?? "").split(",").map(n => parseInt(n)).filter(n => !isNaN(n) && n > 0);
   return {
     id,
     title: row.title,
@@ -72,7 +81,7 @@ function rowToProject(row: Record<string, string>): Project | null {
       ? row.coworkers.split(",").map(s => s.trim()).filter(Boolean)
       : [],
     img: `${CLD}${row.folder}/cover`,
-    images: imageCount > 0 ? cldImgs(row.folder, imageCount) : undefined,
+    images: imageCount > 0 ? cldImgs(row.folder, imageCount, videoSlots) : undefined,
     pairs: row.pairs || undefined,
     videoUrl: row.videoUrl || undefined,
     selected: row.selected?.toUpperCase() === "TRUE",
