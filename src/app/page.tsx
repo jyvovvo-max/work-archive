@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-import { Project, SiteData } from "@/components/v2/types";
+import { Project, SiteData, Lang } from "@/components/v2/types";
 import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
 import Header from "@/components/v2/Header";
 import HeroSection from "@/components/v2/HeroSection";
@@ -19,6 +19,7 @@ export default function Page() {
   const [selected, setSelected] = useState<Project | null>(null);
   const [gridOpen, setGridOpen] = useState(false);
   const [detailFromGrid, setDetailFromGrid] = useState(false);
+  const [lang, setLang] = useState<Lang>("ko");
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
   const aboutRef = useRef<HTMLElement>(null);
 
@@ -146,6 +147,8 @@ export default function Page() {
         zIndex={headerZIndex}
         alwaysVisible={gridOpen}
         siteData={siteData}
+        lang={lang}
+        onLangToggle={() => setLang(l => l === "ko" ? "en" : "ko")}
       />
 
       {/* Layer 1: Hero — fixed behind */}
@@ -192,6 +195,7 @@ export default function Page() {
             nextProject={nextProject}
             prevProject={prevProject}
             siteData={siteData}
+            lang={lang}
           />
         )}
       </AnimatePresence>

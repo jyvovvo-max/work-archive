@@ -1,5 +1,5 @@
 "use client";
-import { forwardRef } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData } from "./types";
@@ -42,6 +42,13 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
   const services = siteData?.services ?? [];
   const experience = siteData?.experience ?? [];
   const awards = siteData?.awards ?? [];
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   return (
     <section
@@ -71,14 +78,15 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
       </BlurIn>
 
       {/* 7-column grid: col 1-3 = Bio, col 4-5 = gap, col 6 = Services, col 7 = Experience */}
+      {/* Mobile: Bio full 7 cols, Services col 1-2, Experience col 3-4 (stacked below) */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(7, 1fr)",
         gap: "clamp(16px, 2vw, 32px)",
         alignItems: "start",
       }}>
-        {/* Bio — columns 1–3 */}
-        <div style={{ gridColumn: "1 / 4", display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Bio — desktop: 1–3 / mobile: 1–8 (full) */}
+        <div style={{ gridColumn: isMobile ? "1 / 8" : "1 / 4", display: "flex", flexDirection: "column", gap: "20px" }}>
           {bio.map((p, i) => (
             <BlurIn key={i} delay={i * 0.06}>
               <p style={{
@@ -96,10 +104,10 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
           ))}
         </div>
 
-        {/* Columns 4–5: intentional gap — no content */}
+        {/* Columns 4–5: intentional gap — no content (desktop only) */}
 
-        {/* Services — column 6 */}
-        <BlurIn delay={0.08} style={{ gridColumn: "6" }}>
+        {/* Services — desktop: col 6 / mobile: col 1-3 (below bio) */}
+        <BlurIn delay={0.08} style={{ gridColumn: isMobile ? "1 / 3" : "6" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {services.map(s => (
               <div key={s} style={{
@@ -114,8 +122,8 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
           </div>
         </BlurIn>
 
-        {/* Experience — column 7 */}
-        <BlurIn delay={0.12} style={{ gridColumn: "7" }}>
+        {/* Experience — desktop: col 7 / mobile: col 3-5 (next to Services) */}
+        <BlurIn delay={0.12} style={{ gridColumn: isMobile ? "3 / 5" : "7" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {experience.map(s => (
               <div key={s} style={{

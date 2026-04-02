@@ -5,6 +5,7 @@ export interface Project {
   month: string;
   category: string;
   description: string;
+  descriptionEn?: string;
   coworkers: string[];
   img: string;
   images?: string[];
@@ -12,6 +13,8 @@ export interface Project {
   videoUrl?: string;
   selected: boolean;
 }
+
+export type Lang = "ko" | "en";
 
 export interface SiteData {
   siteName: string;

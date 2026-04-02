@@ -77,6 +77,7 @@ function rowToProject(row: Record<string, string>): Project | null {
     month: row.month ?? "1",
     category: row.category ?? "",
     description: row.description ?? "",
+    descriptionEn: row.description_en || undefined,
     coworkers: row.coworkers
       ? row.coworkers.split(",").map(s => s.trim()).filter(Boolean)
       : [],

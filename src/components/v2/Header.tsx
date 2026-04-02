@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SiteData } from "./types";
+import { SiteData, Lang } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -14,10 +14,13 @@ interface HeaderProps {
   zIndex?: number;
   alwaysVisible?: boolean;
   siteData?: SiteData | null;
+  lang?: Lang;
+  onLangToggle?: () => void;
 }
 
 export default function Header({
   onHome, onViewAll, onAbout, onContact, onBack, zIndex = 500, alwaysVisible = false, siteData,
+  lang = "ko", onLangToggle,
 }: HeaderProps) {
   const siteName = siteData?.siteName || "Jinyoung Hwang";
   const [visible, setVisible] = useState(alwaysVisible);
@@ -192,6 +195,30 @@ export default function Header({
                 {label}
               </button>
             ))}
+
+            {/* KO / EN toggle */}
+            {onLangToggle && (
+              <button
+                onClick={onLangToggle}
+                style={{
+                  fontFamily: FONT,
+                  fontWeight: 300,
+                  fontSize: "clamp(11px, 1.4vw, 20px)",
+                  letterSpacing: "0.06em",
+                  color: navColor,
+                  background: "none",
+                  border: `1px solid ${border}`,
+                  borderRadius: "100px",
+                  cursor: "pointer",
+                  padding: "3px 10px",
+                  transition: "color 0.15s, border-color 0.15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = navHover; }}
+                onMouseLeave={e => { e.currentTarget.style.color = navColor; }}
+              >
+                {lang === "ko" ? "EN" : "KO"}
+              </button>
+            )}
           </nav>
         </motion.header>
       )}

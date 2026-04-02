@@ -17,6 +17,19 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-6% 0px" });
   const [hovered, setHovered] = useState(false);
+  const [isCentered, setIsCentered] = useState(false);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsCentered(entry.isIntersecting),
+      { rootMargin: "-42% 0px -42% 0px", threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isMobile]);
 
   return (
     <div
@@ -44,10 +57,10 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
         />
       </motion.div>
 
-      {/* White acrylic bar — always visible on mobile, slides in on hover on desktop */}
+      {/* White acrylic bar — centered card on mobile, hover on desktop */}
       <motion.div
-        animate={{ y: isMobile || hovered ? "0%" : "-100%" }}
-        initial={{ y: isMobile ? "0%" : "-100%" }}
+        animate={{ y: isCentered || (!isMobile && hovered) ? "0%" : "-100%" }}
+        initial={{ y: "-100%" }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: "absolute",
@@ -112,7 +125,9 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  if (projects.length === 0) return null;
+  if (projects.length === 0) return (
+    <section style={{ background: "#F0F0F0", minHeight: "100vh" }} />
+  );
 
   return (
     <section style={{ background: "#F0F0F0" }}>

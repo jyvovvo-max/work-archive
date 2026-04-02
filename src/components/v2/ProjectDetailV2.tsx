@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import { Project, SiteData } from "./types";
+import { Project, SiteData, Lang } from "./types";
 import Footer from "./Footer";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
@@ -160,10 +160,11 @@ interface Props {
   nextProject?: Project;
   prevProject?: Project;
   siteData?: SiteData | null;
+  lang?: Lang;
 }
 
 export default function ProjectDetailV2({
-  project, onClose, onNext, onPrev, nextProject, prevProject, siteData,
+  project, onClose, onNext, onPrev, nextProject, prevProject, siteData, lang = "ko",
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
@@ -282,6 +283,7 @@ export default function ProjectDetailV2({
       }}
     >
       {/* ── Cover image — same horizontal padding as gallery ── */}
+      {/* Mobile: paddingTop 0 (full bleed under header is intentional) */}
       <motion.div
         initial={{ filter: "blur(20px)", opacity: 0 }}
         animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -296,9 +298,10 @@ export default function ProjectDetailV2({
       </motion.div>
 
       {/* ── Title + Meta ── */}
+      {/* Mobile: paddingTop += 52px (header height) so content starts below fixed header */}
       <div style={{
         padding: isMobile
-          ? `clamp(32px, 5vh, 56px) ${hPad}`
+          ? `calc(52px + clamp(32px, 5vh, 56px)) ${hPad} clamp(32px, 5vh, 56px)`
           : `clamp(48px, 7vh, 80px) ${hPad}`,
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
@@ -353,10 +356,12 @@ export default function ProjectDetailV2({
               lineHeight: 1.75,
               color: "rgba(240,237,232,0.6)",
               margin: "0 0 28px",
-              wordBreak: "keep-all",
+              wordBreak: lang === "ko" ? "keep-all" : "normal",
             }}
           >
-            {project.description}
+            {lang === "en" && project.descriptionEn
+              ? project.descriptionEn
+              : project.description}
           </motion.p>
           {project.coworkers.length > 0 && (
             <motion.div
