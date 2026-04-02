@@ -80,14 +80,22 @@ function useExtractedColor(imgSrc: string) {
 
 // Header is rendered by page.tsx — no local header needed here
 
-const isVideoUrl = (src: string) => src.includes("/video/upload/");
+// Convert image URL → video URL for auto-detection probe
+const CLD_IMG_PREFIX  = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/";
+const CLD_VID_PREFIX  = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/";
+const toVideoUrl = (src: string) =>
+  src.startsWith(CLD_IMG_PREFIX)
+    ? src.replace(CLD_IMG_PREFIX, CLD_VID_PREFIX)
+    : src;
 
-// Gallery media — image or video depending on URL
+// Gallery media — auto-detects video by probing video URL first, falls back to image on error
 function GalleryImage({ src, alt, index, onLightbox }: {
   src: string; alt: string; index: number; onLightbox: () => void;
 }) {
+  const [isImg, setIsImg] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: false, margin: "-12% 0px" });
+  const videoSrc = toVideoUrl(src);
 
   return (
     <motion.div
@@ -98,21 +106,21 @@ function GalleryImage({ src, alt, index, onLightbox }: {
       }
       initial={{ filter: "blur(12px)", opacity: 0, y: 24 }}
       transition={{ duration: 0.95, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
-      onClick={isVideoUrl(src) ? undefined : onLightbox}
-      style={{ cursor: isVideoUrl(src) ? "default" : "zoom-in" }}
+      onClick={isImg ? onLightbox : undefined}
+      style={{ cursor: isImg ? "zoom-in" : "default" }}
     >
-      {isVideoUrl(src) ? (
+      {isImg ? (
+        <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+      ) : (
         <video
           autoPlay
           muted
           loop
           playsInline
+          src={videoSrc}
+          onError={() => setIsImg(true)}
           style={{ width: "100%", height: "auto", display: "block" }}
-        >
-          <source src={src} type="video/mp4" />
-        </video>
-      ) : (
-        <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+        />
       )}
     </motion.div>
   );
