@@ -47,9 +47,9 @@ function makeMobileScatter(containerW: number, containerH: number): MPos[] {
     if (positions.length >= 8) break;
     const h = imgH(c.span);
     const box: Box = {
-      x1: c.col * M_COL_W_PCT - M_GAP_PCT,
-      x2: (c.col + c.span) * M_COL_W_PCT + M_GAP_PCT,
-      y1: c.topPct - M_GAP_PCT,
+      x1: c.col * M_COL_W_PCT,              // no x-gap: column boundaries are precise
+      x2: (c.col + c.span) * M_COL_W_PCT,
+      y1: c.topPct - M_GAP_PCT,             // gap only on y-axis
       y2: c.topPct + h + M_GAP_PCT,
     };
     if (placed.some(p => !(box.x2 <= p.x1 || p.x2 <= box.x1 || box.y2 <= p.y1 || p.y2 <= box.y1))) continue;
@@ -395,7 +395,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
       const { width, height } = el.getBoundingClientRect();
       if (width > 0 && height > 0) setPositions(makeMobileScatter(width, height));
     };
-    const t = setTimeout(calc, 80);
+    const t = setTimeout(calc, 200);
     return () => clearTimeout(t);
   }, []);
 
