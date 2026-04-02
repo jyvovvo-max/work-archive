@@ -106,8 +106,8 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
 
         {/* Columns 4–5: intentional gap — no content (desktop only) */}
 
-        {/* Services — desktop: col 6 / mobile: col 1-3 (below bio) */}
-        <BlurIn delay={0.08} style={{ gridColumn: isMobile ? "1 / 3" : "6" }}>
+        {/* Services — desktop: col 6 / mobile: col 1-4 (3 cols) */}
+        <BlurIn delay={0.08} style={{ gridColumn: isMobile ? "1 / 4" : "6" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {services.map(s => (
               <div key={s} style={{
@@ -122,8 +122,8 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => 
           </div>
         </BlurIn>
 
-        {/* Experience — desktop: col 7 / mobile: col 3-5 (next to Services) */}
-        <BlurIn delay={0.12} style={{ gridColumn: isMobile ? "3 / 5" : "7" }}>
+        {/* Experience — desktop: col 7 / mobile: col 4-7 (3 cols) */}
+        <BlurIn delay={0.12} style={{ gridColumn: isMobile ? "4 / 7" : "7" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {experience.map(s => (
               <div key={s} style={{
