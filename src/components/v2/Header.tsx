@@ -196,7 +196,7 @@ export default function Header({
               </button>
             ))}
 
-            {/* KO / EN toggle — shows both, highlights active */}
+            {/* KO / EN toggle — single pill, shows target language */}
             {onLangToggle && (
               <button
                 onClick={onLangToggle}
@@ -205,20 +205,18 @@ export default function Header({
                   fontWeight: 300,
                   fontSize: "clamp(11px, 1.4vw, 20px)",
                   letterSpacing: "0.06em",
+                  color: navColor,
                   background: "none",
                   border: `1px solid ${border}`,
                   borderRadius: "100px",
                   cursor: "pointer",
                   padding: "3px 10px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  color: navColor,
+                  transition: "color 0.15s, border-color 0.15s",
                 }}
+                onMouseEnter={e => { e.currentTarget.style.color = navHover; }}
+                onMouseLeave={e => { e.currentTarget.style.color = navColor; }}
               >
-                <span style={{ color: lang === "ko" ? navHover : navColor, opacity: lang === "ko" ? 1 : 0.35, transition: "opacity 0.2s" }}>KO</span>
-                <span style={{ opacity: 0.3 }}>/</span>
-                <span style={{ color: lang === "en" ? navHover : navColor, opacity: lang === "en" ? 1 : 0.35, transition: "opacity 0.2s" }}>EN</span>
+                {lang === "ko" ? "EN" : "KO"}
               </button>
             )}
           </nav>

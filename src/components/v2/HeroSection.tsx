@@ -505,9 +505,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
 
   const title    = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
-  const desc = lang === "en" && siteData?.landingDescriptionEn
-    ? siteData.landingDescriptionEn
-    : siteData?.landingDescription || "";
+  const desc = siteData?.landingDescriptionEn || siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 8);
 
   return (
@@ -731,9 +729,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
 
   const title = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
-  const desc = lang === "en" && siteData?.landingDescriptionEn
-    ? siteData.landingDescriptionEn
-    : siteData?.landingDescription || "";
+  const desc = siteData?.landingDescriptionEn || siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 10);
   const scatterLen = Math.max(scatter.length, 1);
 
