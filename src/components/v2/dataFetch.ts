@@ -164,11 +164,15 @@ export async function fetchSiteData(): Promise<SiteData> {
       siteName: map.site_name || FALLBACK_SITE.siteName,
       landingTitle: map.landing_title || FALLBACK_SITE.landingTitle,
       landingSubtitle: map.landing_subtitle || FALLBACK_SITE.landingSubtitle,
-      landingDescription: map.landing_description || FALLBACK_SITE.landingDescription,
+      landingDescription: map.landing_description_kr || map.landing_description || FALLBACK_SITE.landingDescription,
+      landingDescriptionEn: map.landing_description_en || undefined,
       aboutHeadline: map.about_headline || FALLBACK_SITE.aboutHeadline,
-      aboutBio: map.about_bio
-        ? map.about_bio.split("|").map(s => s.trim()).filter(Boolean)
+      aboutBio: (map.about_bio_kr || map.about_bio)
+        ? (map.about_bio_kr || map.about_bio).split("|").map(s => s.trim()).filter(Boolean)
         : FALLBACK_SITE.aboutBio,
+      aboutBioEn: map.about_bio_en
+        ? map.about_bio_en.split("|").map(s => s.trim()).filter(Boolean)
+        : undefined,
       services: map.services
         ? map.services.split(",").map(s => s.trim()).filter(Boolean)
         : FALLBACK_SITE.services,

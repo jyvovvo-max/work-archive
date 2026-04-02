@@ -157,6 +157,7 @@ export default function Page() {
           projects={shuffledWorks}
           siteData={siteData}
           onOpen={setSelected}
+          lang={lang}
         />
       </div>
 
@@ -180,7 +181,7 @@ export default function Page() {
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.08)",
       }}>
-        <AboutSection ref={aboutRef} siteData={siteData} />
+        <AboutSection ref={aboutRef} siteData={siteData} lang={lang} />
         <Footer siteData={siteData} />
       </div>
 
@@ -210,6 +211,7 @@ export default function Page() {
             aboutExpanded={false}
             onClose={handleCloseGrid}
             onOpen={p => { setGridOpen(false); setDetailFromGrid(true); setSelected(p); }}
+            lang={lang}
           />
         )}
       </AnimatePresence>

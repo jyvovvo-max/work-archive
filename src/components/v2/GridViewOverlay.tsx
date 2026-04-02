@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Project, SiteData } from "./types";
+import { Project, SiteData, Lang } from "./types";
 import AboutSection from "./AboutSection";
 import Footer from "./Footer";
 
@@ -17,6 +17,7 @@ interface GridViewProps {
   aboutExpanded: boolean;
   onClose: () => void;
   onOpen: (p: Project) => void;
+  lang?: Lang;
 }
 
 // Category filter pills — sticky bar, sits below always-visible header (top: 52px)
@@ -143,6 +144,7 @@ export default function GridViewOverlay({
   aboutExpanded,
   onClose,
   onOpen,
+  lang = "ko",
 }: GridViewProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cols, setCols] = useState(3);
@@ -233,7 +235,7 @@ export default function GridViewOverlay({
             transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
             style={{ overflow: "hidden", borderTop: "1px solid rgba(0,0,0,0.08)" }}
           >
-            <AboutSection siteData={siteData} ref={aboutRef} />
+            <AboutSection siteData={siteData} ref={aboutRef} lang={lang} />
           </motion.div>
         )}
       </AnimatePresence>

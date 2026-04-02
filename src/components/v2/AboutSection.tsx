@@ -2,7 +2,7 @@
 import { forwardRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { SiteData } from "./types";
+import { SiteData, Lang } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -35,10 +35,13 @@ function BlurIn({
 
 interface AboutProps {
   siteData: SiteData | null;
+  lang?: Lang;
 }
 
-const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData }, ref) => {
-  const bio = siteData?.aboutBio ?? [];
+const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko" }, ref) => {
+  const bio = (lang === "en" && siteData?.aboutBioEn?.length)
+    ? siteData.aboutBioEn
+    : siteData?.aboutBio ?? [];
   const services = siteData?.services ?? [];
   const experience = siteData?.experience ?? [];
   const awards = siteData?.awards ?? [];

@@ -10,7 +10,7 @@ import {
   useMotionValueEvent,
   MotionValue,
 } from "framer-motion";
-import { Project, SiteData } from "./types";
+import { Project, SiteData, Lang } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -365,12 +365,13 @@ function MobileGrid({
 
 // ── Mobile Hero Layout ──
 // Flow order: Title → Subtitle → Description → Scatter images (B+C hybrid scatter)
-function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY, onOpen }: {
+function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY, onOpen, lang = "ko" }: {
   projects: Project[];
   siteData: SiteData | null;
   scrollOpacity: MotionValue<number>;
   scrollTranslateY: MotionValue<number>;
   onOpen: (p: Project) => void;
+  lang?: Lang;
 }) {
   const [positions, setPositions] = useState<MPos[]>([]);
   const [allImagesIn, setAllImagesIn] = useState(false);
@@ -399,9 +400,11 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
     return () => clearTimeout(t);
   }, []);
 
-  const title    = siteData?.landingTitle       || "Work Archive";
-  const subtitle = siteData?.landingSubtitle    || "2015–Present";
-  const desc     = siteData?.landingDescription || "";
+  const title    = siteData?.landingTitle || "Work Archive";
+  const subtitle = siteData?.landingSubtitle || "2015–Present";
+  const desc = lang === "en" && siteData?.landingDescriptionEn
+    ? siteData.landingDescriptionEn
+    : siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 8);
 
   return (
@@ -568,9 +571,10 @@ interface HeroProps {
   projects: Project[];
   siteData: SiteData | null;
   onOpen: (p: Project) => void;
+  lang?: Lang;
 }
 
-export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
+export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -661,7 +665,9 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
 
   const title = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
-  const desc = siteData?.landingDescription || "";
+  const desc = lang === "en" && siteData?.landingDescriptionEn
+    ? siteData.landingDescriptionEn
+    : siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 10);
   const scatterLen = Math.max(scatter.length, 1);
 
@@ -674,6 +680,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
         scrollOpacity={scrollOpacity}
         scrollTranslateY={scrollTranslateY}
         onOpen={onOpen}
+        lang={lang}
       />
     );
   }

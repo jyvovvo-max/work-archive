@@ -21,8 +21,10 @@ export interface SiteData {
   landingTitle: string;
   landingSubtitle: string;
   landingDescription: string;
+  landingDescriptionEn?: string;
   aboutHeadline: string;
   aboutBio: string[];
+  aboutBioEn?: string[];
   services: string[];
   experience: string[];
   awards: string[];
