@@ -14,6 +14,51 @@ import { Project, SiteData } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
+// ── Mobile scatter (B+C hybrid) ──
+// 6-column grid with runtime container dimensions for accurate overlap detection
+const M_COLS = 6;
+const M_COL_W_PCT = 100 / M_COLS; // 16.67%
+const M_Y_LEVELS = [5, 22, 40, 58, 72]; // % of scatter container height
+const M_GAP_PCT = 4;   // min gap between images (% of container)
+const M_IMG_RATIO = 0.75; // 4:3 crop applied to 16:9 source
+const M_SPAN_MIN = 2;
+const M_SPAN_MAX = 4;
+
+type MPos = { leftPct: number; topPct: number; widthPct: number };
+
+function makeMobileScatter(containerW: number, containerH: number): MPos[] {
+  function imgH(span: number): number {
+    // height as % of container, using actual pixel dimensions
+    return (span * M_COL_W_PCT / 100 * containerW * M_IMG_RATIO) / containerH * 100;
+  }
+  type Box = { x1: number; x2: number; y1: number; y2: number };
+  const placed: Box[] = [];
+  const positions: MPos[] = [];
+  const candidates: { col: number; span: number; topPct: number }[] = [];
+  for (const topPct of M_Y_LEVELS) {
+    for (let col = 0; col < M_COLS; col++) {
+      for (let span = M_SPAN_MIN; span <= M_SPAN_MAX; span++) {
+        if (col + span <= M_COLS) candidates.push({ col, span, topPct });
+      }
+    }
+  }
+  candidates.sort(() => Math.random() - 0.5);
+  for (const c of candidates) {
+    if (positions.length >= 8) break;
+    const h = imgH(c.span);
+    const box: Box = {
+      x1: c.col * M_COL_W_PCT - M_GAP_PCT,
+      x2: (c.col + c.span) * M_COL_W_PCT + M_GAP_PCT,
+      y1: c.topPct - M_GAP_PCT,
+      y2: c.topPct + h + M_GAP_PCT,
+    };
+    if (placed.some(p => !(box.x2 <= p.x1 || p.x2 <= box.x1 || box.y2 <= p.y1 || p.y2 <= box.y1))) continue;
+    placed.push(box);
+    positions.push({ leftPct: c.col * M_COL_W_PCT, topPct: c.topPct, widthPct: c.span * M_COL_W_PCT });
+  }
+  return positions;
+}
+
 type ScatterPos = { left: string; top: string; w: string };
 
 // Y-quantized grid: 16 columns × 6 discrete Y levels
@@ -318,6 +363,164 @@ function MobileGrid({
   );
 }
 
+// ── Mobile Hero Layout ──
+// Flow order: Title → Subtitle → Description → Scatter images (B+C hybrid scatter)
+function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY, onOpen }: {
+  projects: Project[];
+  siteData: SiteData | null;
+  scrollOpacity: MotionValue<number>;
+  scrollTranslateY: MotionValue<number>;
+  onOpen: (p: Project) => void;
+}) {
+  const [positions, setPositions] = useState<MPos[]>([]);
+  const [allImagesIn, setAllImagesIn] = useState(false);
+  const scatterRef = useRef<HTMLDivElement>(null);
+  const titleControls = useAnimationControls();
+
+  useEffect(() => {
+    titleControls.start({
+      filter: "blur(0px)", opacity: 1,
+      transition: { duration: 1.5, delay: 4.0, ease: [0.16, 1, 0.3, 1] },
+    });
+    const t = setTimeout(() => setAllImagesIn(true), 2650);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Calculate scatter once layout settles (actual container dimensions)
+  useEffect(() => {
+    const calc = () => {
+      const el = scatterRef.current;
+      if (!el) return;
+      const { width, height } = el.getBoundingClientRect();
+      if (width > 0 && height > 0) setPositions(makeMobileScatter(width, height));
+    };
+    const t = setTimeout(calc, 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  const title    = siteData?.landingTitle       || "Work Archive";
+  const subtitle = siteData?.landingSubtitle    || "2015–Present";
+  const desc     = siteData?.landingDescription || "";
+  const heroProjects = projects.slice(0, 8);
+
+  return (
+    <section style={{
+      position: "absolute", inset: 0,
+      background: "#F0F0F0",
+      display: "flex", flexDirection: "column",
+    }}>
+      {/* ── Text flow: Title → Subtitle → Description ── */}
+      <div style={{
+        flexShrink: 0,
+        padding: "62px 20px 20px",
+        zIndex: 20,
+        pointerEvents: "none",
+        mixBlendMode: "difference",
+      }}>
+        <motion.h1
+          initial={{ filter: "blur(28px)", opacity: 0 }}
+          animate={titleControls}
+          style={{
+            fontFamily: FONT, fontWeight: 300,
+            fontSize: "calc((100vw - 40px) / 7.2)",
+            letterSpacing: "-0.045em", lineHeight: 0.88,
+            color: "#FFFFFF", margin: "0 0 8px",
+            whiteSpace: "nowrap", display: "block",
+          }}
+        >
+          {title}
+        </motion.h1>
+        <motion.p
+          initial={{ filter: "blur(20px)", opacity: 0 }}
+          animate={titleControls}
+          style={{
+            fontFamily: FONT, fontWeight: 300,
+            fontSize: "clamp(10px, 3vw, 13px)",
+            lineHeight: 0.88, color: "rgba(255,255,255,0.5)",
+            margin: "0 0 18px", display: "block",
+          }}
+        >
+          {subtitle}
+        </motion.p>
+        {desc && (
+          <motion.p
+            initial={{ filter: "blur(20px)", opacity: 0 }}
+            animate={titleControls}
+            style={{
+              fontFamily: FONT, fontWeight: 300,
+              fontSize: "clamp(10px, 2.8vw, 14px)",
+              color: "rgba(255,255,255,0.75)",
+              lineHeight: 1.4, margin: 0,
+            }}
+          >
+            {desc}
+          </motion.p>
+        )}
+      </div>
+
+      {/* ── Scatter image container — fills remaining height ── */}
+      <motion.div
+        ref={scatterRef}
+        style={{ flex: 1, position: "relative", overflow: "hidden", opacity: scrollOpacity }}
+      >
+        {heroProjects.map((project, i) => {
+          const pos = positions[i];
+          if (!pos) return null;
+          return (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 + i * 0.1, duration: 1.0, ease: [0.55, 0, 1, 0.6] }}
+              onClick={() => onOpen(project)}
+              style={{
+                position: "absolute",
+                left: `${pos.leftPct}%`,
+                top: `${pos.topPct}%`,
+                width: `${pos.widthPct}%`,
+                cursor: "pointer",
+                y: scrollTranslateY,
+              }}
+            >
+              {/* ID label */}
+              <span style={{
+                position: "absolute", top: "-11px", right: "1px",
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "9px", fontWeight: 300,
+                letterSpacing: "0.1em", color: "rgba(10,10,10,0.3)",
+                lineHeight: 1, pointerEvents: "none",
+              }}>
+                {String(project.id).padStart(3, "0")}
+              </span>
+              <motion.div
+                animate={{
+                  filter: allImagesIn ? "blur(3px)" : "blur(0px)",
+                  scale:  allImagesIn ? 0.95 : 1,
+                }}
+                transition={{ duration: allImagesIn ? 1.0 : 0.1, ease: "easeInOut" }}
+                style={{ borderRadius: "2px", overflow: "hidden", boxShadow: "0 4px 18px rgba(0,0,0,0.16)" }}
+              >
+                <img
+                  src={project.img}
+                  alt={project.title}
+                  draggable={false}
+                  style={{
+                    width: "100%",
+                    aspectRatio: "4/3",   // 16:9 cropped to 4:3 (left/right crop)
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              </motion.div>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+    </section>
+  );
+}
+
 function DescriptionText({ text, y }: { text: string; y: MotionValue<number> }) {
   const controls = useAnimationControls();
 
@@ -462,6 +665,19 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
   const heroProjects = projects.slice(0, 10);
   const scatterLen = Math.max(scatter.length, 1);
 
+  // ── Mobile: separate layout with flow text + B+C hybrid scatter ──
+  if (isMobile) {
+    return (
+      <MobileHeroLayout
+        projects={projects}
+        siteData={siteData}
+        scrollOpacity={scrollOpacity}
+        scrollTranslateY={scrollTranslateY}
+        onOpen={onOpen}
+      />
+    );
+  }
+
   return (
     <section
       style={{
@@ -491,7 +707,7 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: isMobile ? "calc((100vw - 40px) / 7.2)" : "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
+              fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
               letterSpacing: "-0.045em",
               lineHeight: 0.88,
               color: "#FFFFFF",
@@ -503,20 +719,20 @@ export default function HeroSection({ projects, siteData, onOpen }: HeroProps) {
             {title}
           </motion.h1>
 
-          {/* 2015–Present — desktop: top-right corner / mobile: below title */}
+          {/* 2015–Present — top-right corner */}
           <motion.p
             initial={{ filter: "blur(20px)", opacity: 0 }}
             animate={titleControls}
             style={{
-              position: isMobile ? "static" : "absolute",
-              top: isMobile ? undefined : 0,
-              right: isMobile ? undefined : 0,
+              position: "absolute",
+              top: 0,
+              right: 0,
               display: "block",
-              margin: isMobile ? "6px 0 0 0" : 0,
+              margin: 0,
               fontFamily: FONT,
               fontWeight: 300,
               fontStyle: "normal",
-              fontSize: isMobile ? "clamp(10px, 3vw, 13px)" : "clamp(13px, 1.8vw, 26px)",
+              fontSize: "clamp(13px, 1.8vw, 26px)",
               lineHeight: 0.88,
               color: "rgba(255,255,255,0.5)",
               whiteSpace: "nowrap",
