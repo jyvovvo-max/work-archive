@@ -103,13 +103,14 @@ function GalleryImage({ src, alt, index, onLightbox }: {
     >
       {isVideoUrl(src) ? (
         <video
-          src={src}
           autoPlay
           muted
           loop
           playsInline
           style={{ width: "100%", height: "auto", display: "block" }}
-        />
+        >
+          <source src={src} type="video/mp4" />
+        </video>
       ) : (
         <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
       )}

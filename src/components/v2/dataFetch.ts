@@ -1,7 +1,7 @@
 import { Project, SiteData } from "./types";
 
 export const CLD       = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
-export const CLD_VIDEO = "https://res.cloudinary.com/doyfzvsly/video/upload/portfolio-images/";
+export const CLD_VIDEO = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/portfolio-images/";
 
 export const cldImgs = (folder: string, count: number, videoSlots: number[] = []) =>
   Array.from({ length: count }, (_, i) => {
