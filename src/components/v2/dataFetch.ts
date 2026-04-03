@@ -180,7 +180,8 @@ export async function fetchSiteData(): Promise<SiteData> {
       awards: map.awards
         ? map.awards.split(",").map(s => s.trim()).filter(Boolean)
         : FALLBACK_SITE.awards,
-      footerHeadline: map.footer_headline || FALLBACK_SITE.footerHeadline,
+      footerHeadline: map.footer_headline_kr || map.footer_headline || FALLBACK_SITE.footerHeadline,
+      footerHeadlineEn: map.footer_headline_en || undefined,
       footerLocation: map.footer_location || FALLBACK_SITE.footerLocation,
       footerEmail: map.footer_email || FALLBACK_SITE.footerEmail,
       footerInstagramHandle: map.footer_instagram_handle || FALLBACK_SITE.footerInstagramHandle,

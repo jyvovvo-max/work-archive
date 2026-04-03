@@ -29,6 +29,7 @@ export interface SiteData {
   experience: string[];
   awards: string[];
   footerHeadline: string;
+  footerHeadlineEn?: string;
   footerLocation: string;
   footerEmail: string;
   footerInstagramHandle: string;

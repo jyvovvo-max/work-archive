@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { SiteData } from "./types";
+import { SiteData, Lang } from "./types";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -22,8 +22,10 @@ function BlurIn({ children, delay = 0, style }: { children: React.ReactNode; del
   );
 }
 
-export default function Footer({ siteData }: { siteData: SiteData | null }) {
-  const headline = siteData?.footerHeadline ?? "I would love to hear from you!";
+export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData | null; lang?: Lang }) {
+  const headline = (lang === "en" && siteData?.footerHeadlineEn)
+    ? siteData.footerHeadlineEn
+    : siteData?.footerHeadline ?? "I would love to hear from you!";
   const location = siteData?.footerLocation ?? "Korea";
   const email = siteData?.footerEmail ?? "";
   const igHandle = siteData?.footerInstagramHandle ?? "";

@@ -176,7 +176,7 @@ export default function Page() {
         borderTop: "1px solid rgba(0,0,0,0.08)",
       }}>
         <AboutSection ref={aboutRef} siteData={siteData} lang={lang} />
-        <Footer siteData={siteData} />
+        <Footer siteData={siteData} lang={lang} />
       </div>
 
       <AnimatePresence>
