@@ -84,13 +84,13 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
       {/* Mobile: Bio full 7 cols, Services col 1-2, Experience col 3-4 (stacked below) */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(7, 1fr)",
+        gridTemplateColumns: isMobile ? "repeat(8, 1fr)" : "repeat(7, 1fr)",
         rowGap: isMobile ? "clamp(34px, 4.9vh, 62px)" : "clamp(16px, 2vw, 32px)",
         columnGap: "clamp(16px, 2vw, 32px)",
         alignItems: "start",
       }}>
         {/* Bio — desktop: 1–3 / mobile: 1–8 (full) */}
-        <div style={{ gridColumn: isMobile ? "1 / 8" : "1 / 4", display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div style={{ gridColumn: isMobile ? "1 / 9" : "1 / 4", display: "flex", flexDirection: "column", gap: "20px" }}>
           {bio.map((p, i) => (
             <BlurIn key={i} delay={i * 0.06}>
               <p style={{
@@ -110,7 +110,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
 
         {/* Columns 4–5: intentional gap — no content (desktop only) */}
 
-        {/* Services — desktop: col 6 / mobile: col 1-4 (3 cols) */}
+        {/* Services — desktop: col 6 / mobile: col 1-3 */}
         <BlurIn delay={0.08} style={{ gridColumn: isMobile ? "1 / 4" : "6" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {services.map(s => (
@@ -126,7 +126,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
           </div>
         </BlurIn>
 
-        {/* Experience — desktop: col 7 / mobile: col 4-7 (3 cols) */}
+        {/* Experience — desktop: col 7 / mobile: col 4-6 */}
         <BlurIn delay={0.12} style={{ gridColumn: isMobile ? "4 / 7" : "7" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {experience.map(s => (
