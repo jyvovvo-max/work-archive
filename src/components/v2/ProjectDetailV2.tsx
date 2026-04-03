@@ -291,13 +291,12 @@ export default function ProjectDetailV2({
         color: "#F0EDE8",
       }}
     >
-      {/* ── Cover image — same horizontal padding as gallery ── */}
-      {/* Mobile: paddingTop 0 (full bleed under header is intentional) */}
+      {/* ── Cover image — mobile: paddingTop 52px to clear fixed header ── */}
       <motion.div
         initial={{ filter: "blur(20px)", opacity: 0 }}
         animate={{ filter: "blur(0px)", opacity: 1 }}
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-        style={{ padding: `0 ${hPad}` }}
+        style={{ padding: isMobile ? `52px ${hPad} 0` : `0 ${hPad}` }}
       >
         <img
           src={project.img}
