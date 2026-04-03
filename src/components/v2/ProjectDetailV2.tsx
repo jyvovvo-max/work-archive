@@ -382,7 +382,7 @@ export default function ProjectDetailV2({
                 <span key={c} style={{
                   fontFamily: FONT,
                   fontWeight: 300,
-                  fontSize: isMobile ? "9.5px" : "10px",
+                  fontSize: isMobile ? "10px" : "10.5px",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   background: "rgba(240,237,232,0.06)",
