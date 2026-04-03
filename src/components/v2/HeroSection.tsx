@@ -18,7 +18,7 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 // 6-column grid with runtime container dimensions for accurate overlap detection
 const M_COLS = 6;
 const M_COL_W_PCT = 100 / M_COLS; // 16.67%
-const M_Y_LEVELS = [5, 22, 40, 58, 72]; // % of scatter container height
+const M_Y_LEVELS = [21, 36, 52, 65, 78]; // % of scatter container height
 const M_GAP_PCT = 4;   // min gap between images (% of container)
 const M_IMG_RATIO = 0.75; // 4:3 crop applied to 16:9 source
 const M_SPAN_MIN = 2;
