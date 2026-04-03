@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Jinyoung Hwang — Work Archive",
   description: "Work archive of Jinyoung Hwang, brand designer at SHINSEGAE.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.jpg",
   },
 };
 
