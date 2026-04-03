@@ -71,7 +71,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
           letterSpacing: "-0.02em",
           lineHeight: 1.2,
           color: "#0A0A0A",
-          margin: "0 0 clamp(48px, 7vh, 88px) 0",
+          margin: isMobile ? "0 0 clamp(34px, 4.9vh, 62px) 0" : "0 0 clamp(48px, 7vh, 88px) 0",
           wordBreak: "keep-all",
         }}>
           {(siteData?.aboutHeadline ?? "Brand Designer at\nSHINSEGAE.").split("\n").map((line, i, arr) => (
@@ -85,7 +85,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(7, 1fr)",
-        gap: "clamp(16px, 2vw, 32px)",
+        gap: isMobile ? "clamp(34px, 4.9vh, 62px) clamp(16px, 2vw, 32px)" : "clamp(16px, 2vw, 32px)",
         alignItems: "start",
       }}>
         {/* Bio — desktop: 1–3 / mobile: 1–8 (full) */}
