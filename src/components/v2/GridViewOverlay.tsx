@@ -105,18 +105,18 @@ function GridCard({ project, onClose, onOpen, idx }: {
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0, scale: isCentered && isMobile ? 1.03 : 1 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.02, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => { onClose(); onOpen(project); }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {/* Image — scales on hover */}
+      {/* Image — scales on hover / centered mobile */}
       <motion.img
         src={project.img}
         alt={project.title}
-        animate={{ scale: hovered ? 1.04 : 1 }}
+        animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
       />

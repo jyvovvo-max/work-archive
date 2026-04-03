@@ -37,8 +37,6 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
       onClick={() => onOpen(project)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      animate={{ scale: isCentered && isMobile ? 1.03 : 1 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
       {/* Image — blur-to-clean on scroll */}
@@ -53,7 +51,7 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
         <motion.img
           src={project.img}
           alt={project.title}
-          animate={{ scale: hovered ? 1.04 : 1 }}
+          animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
         />
