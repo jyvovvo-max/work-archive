@@ -85,7 +85,8 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(7, 1fr)",
-        gap: isMobile ? "clamp(34px, 4.9vh, 62px) clamp(16px, 2vw, 32px)" : "clamp(16px, 2vw, 32px)",
+        rowGap: isMobile ? "clamp(34px, 4.9vh, 62px)" : "clamp(16px, 2vw, 32px)",
+        columnGap: "clamp(16px, 2vw, 32px)",
         alignItems: "start",
       }}>
         {/* Bio — desktop: 1–3 / mobile: 1–8 (full) */}
