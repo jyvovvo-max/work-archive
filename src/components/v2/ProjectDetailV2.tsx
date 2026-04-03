@@ -380,7 +380,7 @@ export default function ProjectDetailV2({
             >
               {project.coworkers.map(c => (
                 <span key={c} style={{
-                  fontFamily: FONT,
+                  fontFamily: "'Noto Sans KR', 'Noto Sans', sans-serif",
                   fontWeight: 300,
                   fontSize: isMobile ? "10px" : "10.5px",
                   letterSpacing: "0.06em",
