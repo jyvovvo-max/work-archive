@@ -196,7 +196,7 @@ export default function Header({
               </button>
             ))}
 
-            {/* KO / EN toggle — single pill, shows target language */}
+            {/* KO / EN toggle — single pill, shows current language */}
             {onLangToggle && (
               <button
                 onClick={onLangToggle}
@@ -216,7 +216,7 @@ export default function Header({
                 onMouseEnter={e => { e.currentTarget.style.color = navHover; }}
                 onMouseLeave={e => { e.currentTarget.style.color = navColor; }}
               >
-                {lang === "ko" ? "EN" : "KO"}
+                {lang === "ko" ? "KO" : "EN"}
               </button>
             )}
           </nav>

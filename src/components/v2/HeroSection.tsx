@@ -363,7 +363,6 @@ function MobileGrid({
   );
 }
 
-// ── Scatter card — WorkCard와 동일한 IntersectionObserver 중앙 타이틀 로직 ──
 function ScatterCard({ project, pos, idx, allImagesIn, scrollTranslateY, onOpen }: {
   project: Project;
   pos: MPos;
@@ -372,23 +371,8 @@ function ScatterCard({ project, pos, idx, allImagesIn, scrollTranslateY, onOpen 
   scrollTranslateY: MotionValue<number>;
   onOpen: (p: Project) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isCentered, setIsCentered] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsCentered(entry.isIntersecting),
-      { rootMargin: "-42% 0px -42% 0px", threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <motion.div
-      ref={ref}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.15 + idx * 0.1, duration: 1.0, ease: [0.55, 0, 1, 0.6] }}
@@ -413,55 +397,23 @@ function ScatterCard({ project, pos, idx, allImagesIn, scrollTranslateY, onOpen 
         {String(project.id).padStart(3, "0")}
       </span>
 
-      <div style={{ position: "relative", overflow: "hidden", borderRadius: "2px", boxShadow: "0 4px 18px rgba(0,0,0,0.16)" }}>
-        {/* 중앙 타이틀 바 — WorkCard와 동일한 acrylic 스타일 */}
-        <motion.div
-          animate={{ y: isCentered ? "0%" : "-100%" }}
-          initial={{ y: "-100%" }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            position: "absolute",
-            top: 0, left: 0, right: 0,
-            padding: "7px 10px",
-            background: "rgba(255,255,255,0.30)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "8px",
-            zIndex: 1,
-            pointerEvents: "none",
-          }}
-        >
-          <span style={{
-            fontFamily: FONT, fontWeight: 300,
-            fontSize: "clamp(10px, 3.2vw, 14px)",
-            letterSpacing: "-0.01em", color: "#0A0A0A",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }}>
-            {project.title}
-          </span>
-        </motion.div>
-
-        <motion.img
-          src={project.img}
-          alt={project.title}
-          draggable={false}
-          animate={{
-            filter: allImagesIn && !isCentered ? "blur(3px)" : "blur(0px)",
-            scale:  allImagesIn && !isCentered ? 0.95 : 1,
-          }}
-          transition={{ duration: allImagesIn ? 1.0 : 0.1, ease: "easeInOut" }}
-          style={{
-            width: "100%",
-            aspectRatio: "4/3",
-            objectFit: "cover",
-            display: "block",
-          }}
-        />
-      </div>
+      <motion.img
+        src={project.img}
+        alt={project.title}
+        draggable={false}
+        animate={{
+          filter: allImagesIn ? "blur(0px)" : "blur(0px)",
+          scale: 1,
+        }}
+        style={{
+          width: "100%",
+          aspectRatio: "4/3",
+          objectFit: "cover",
+          display: "block",
+          borderRadius: "2px",
+          boxShadow: "0 4px 18px rgba(0,0,0,0.16)",
+        }}
+      />
     </motion.div>
   );
 }
