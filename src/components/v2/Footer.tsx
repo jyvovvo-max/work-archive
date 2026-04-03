@@ -124,12 +124,14 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
       ) : (
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "clamp(32px, 4vw, 60px)",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          columnGap: "clamp(16px, 2vw, 32px)",
           marginBottom: "clamp(38px, 5.6vh, 64px)",
         }}>
-          <BlurIn delay={0.06}><div style={valueStyle}>{location}</div></BlurIn>
-          <BlurIn delay={0.12}>
+          <BlurIn delay={0.06} style={{ gridColumn: "1" }}>
+            <div style={valueStyle}>{location}</div>
+          </BlurIn>
+          <BlurIn delay={0.12} style={{ gridColumn: "2" }}>
             <a
               href={`mailto:${email}`}
               style={linkStyle}
@@ -139,7 +141,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               {email}
             </a>
           </BlurIn>
-          <BlurIn delay={0.18}>
+          <BlurIn delay={0.18} style={{ gridColumn: "3" }}>
             <a
               href={igUrl}
               target="_blank"

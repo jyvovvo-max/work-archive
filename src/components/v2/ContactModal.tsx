@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function ContactModal({ open, onClose, email }: Props) {
+  const [from, setFrom] = useState("");
   const [message, setMessage] = useState("");
 
   // Close on Escape
@@ -21,8 +22,8 @@ export default function ContactModal({ open, onClose, email }: Props) {
   }, [open, onClose]);
 
   const handleSend = () => {
-    const mailto = `mailto:${email}?body=${encodeURIComponent(message)}`;
-    window.location.href = mailto;
+    const body = from ? `From: ${from}\n\n${message}` : message;
+    window.location.href = `mailto:${email}?body=${encodeURIComponent(body)}`;
   };
 
   return (
@@ -90,8 +91,27 @@ export default function ContactModal({ open, onClose, email }: Props) {
               fontFamily: FONT, fontWeight: 300, fontSize: "13px",
               color: "rgba(240,237,232,0.3)", letterSpacing: "0.02em",
             }}>
-              → {email}
+              To: {email}
             </div>
+
+            {/* From */}
+            <input
+              type="email"
+              value={from}
+              onChange={e => setFrom(e.target.value)}
+              placeholder="Your email"
+              style={{
+                fontFamily: FONT, fontWeight: 300, fontSize: "13px",
+                letterSpacing: "0.02em", lineHeight: 1.7,
+                color: "#F0EDE8", background: "rgba(240,237,232,0.04)",
+                border: "1px solid rgba(240,237,232,0.1)",
+                borderRadius: "2px", padding: "10px 16px",
+                outline: "none", width: "100%", boxSizing: "border-box",
+                transition: "border-color 0.18s",
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.3)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.1)")}
+            />
 
             {/* Message */}
             <textarea
