@@ -9,6 +9,7 @@ import HeroSection from "@/components/v2/HeroSection";
 import WorksGrid from "@/components/v2/WorksGrid";
 import AboutSection from "@/components/v2/AboutSection";
 import Footer from "@/components/v2/Footer";
+import ContactModal from "@/components/v2/ContactModal";
 
 const ProjectDetailV2 = dynamic(() => import("@/components/v2/ProjectDetailV2"), { ssr: false });
 const GridViewOverlay = dynamic(() => import("@/components/v2/GridViewOverlay"), { ssr: false });
@@ -20,6 +21,7 @@ export default function Page() {
   const [gridOpen, setGridOpen] = useState(false);
   const [detailFromGrid, setDetailFromGrid] = useState(false);
   const [lang, setLang] = useState<Lang>("ko");
+  const [contactOpen, setContactOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
   const aboutRef = useRef<HTMLElement>(null);
 
@@ -114,14 +116,6 @@ export default function Page() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const scrollToContact = () => {
-    if (gridOpen) {
-      document.getElementById("grid-overlay-scroll")?.scrollTo({ top: 999999, behavior: "smooth" });
-    } else {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    }
-  };
-
   const handleAbout = () => {
     if (gridOpen) {
       setGridOpen(false);
@@ -142,7 +136,7 @@ export default function Page() {
         onHome={scrollToTop}
         onViewAll={() => { handleCloseDetail(); setGridOpen(true); }}
         onAbout={handleAbout}
-        onContact={scrollToContact}
+        onContact={() => setContactOpen(true)}
         onBack={headerOnBack}
         zIndex={headerZIndex}
         alwaysVisible={gridOpen}
@@ -215,6 +209,12 @@ export default function Page() {
           />
         )}
       </AnimatePresence>
+
+      <ContactModal
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        email={siteData?.footerEmail ?? ""}
+      />
     </div>
   );
 }

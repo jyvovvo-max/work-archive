@@ -67,7 +67,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         <h2 style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(18px, 2.56vw, 35px)",
+          fontSize: "clamp(19px, 2.69vw, 37px)",
           letterSpacing: "-0.02em",
           lineHeight: 1.2,
           color: "#0A0A0A",
@@ -96,7 +96,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <p style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(15px, 1.3vw, 19px)",
+                fontSize: "clamp(16px, 1.37vw, 20px)",
                 lineHeight: 1.8,
                 color: "rgba(0,0,0,0.6)",
                 margin: 0,
@@ -117,7 +117,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <div key={s} style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(12px, 1.0vw, 15px)",
+                fontSize: "clamp(13px, 1.05vw, 16px)",
                 letterSpacing: "0.02em",
                 color: "rgba(0,0,0,0.55)",
                 lineHeight: 2.0,
@@ -133,7 +133,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <div key={s} style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(12px, 1.0vw, 15px)",
+                fontSize: "clamp(13px, 1.05vw, 16px)",
                 letterSpacing: "0.02em",
                 color: "rgba(0,0,0,0.55)",
                 lineHeight: 2.0,
@@ -156,7 +156,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <div key={a} style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(12px, 1.0vw, 15px)",
+                fontSize: "clamp(13px, 1.05vw, 16px)",
                 letterSpacing: "0.02em",
                 color: "rgba(0,0,0,0.55)",
                 lineHeight: 2.0,
