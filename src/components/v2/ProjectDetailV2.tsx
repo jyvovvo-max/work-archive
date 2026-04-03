@@ -325,7 +325,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: isMobile ? "clamp(26px, 8.5vw, 48px)" : "clamp(32px, 4vw, 58px)",
+              fontSize: isMobile ? "clamp(27px, 8.76vw, 49px)" : "clamp(34px, 4.2vw, 61px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
               color: "#F0EDE8",
@@ -360,7 +360,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT_KR,
               fontWeight: 300,
-              fontSize: isMobile ? "15px" : "clamp(14px, 1.2vw, 18px)",
+              fontSize: isMobile ? "15.5px" : "clamp(15px, 1.26vw, 19px)",
               lineHeight: 1.75,
               color: "rgba(240,237,232,0.6)",
               margin: "0 0 28px",
@@ -382,7 +382,7 @@ export default function ProjectDetailV2({
                 <span key={c} style={{
                   fontFamily: FONT,
                   fontWeight: 300,
-                  fontSize: "9px",
+                  fontSize: isMobile ? "9.5px" : "10px",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   background: "rgba(240,237,232,0.06)",

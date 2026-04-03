@@ -78,9 +78,32 @@ function GridCard({ project, onClose, onOpen, idx }: {
   idx: number;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [isCentered, setIsCentered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsCentered(entry.isIntersecting),
+      { rootMargin: "-42% 0px -42% 0px", threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isMobile]);
 
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.02, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -98,10 +121,10 @@ function GridCard({ project, onClose, onOpen, idx }: {
         style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
       />
 
-      {/* White acrylic hover bar slides from top */}
+      {/* White acrylic bar — centered on mobile, hover on desktop */}
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
         <motion.div
-          animate={{ y: hovered ? "0%" : "-100%" }}
+          animate={{ y: isCentered || (!isMobile && hovered) ? "0%" : "-100%" }}
           initial={{ y: "-100%" }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           style={{

@@ -533,7 +533,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
             animate={titleControls}
             style={{
               fontFamily: FONT, fontWeight: 300,
-              fontSize: "clamp(10px, 2.8vw, 14px)",
+              fontSize: "clamp(12px, 3.36vw, 17px)",
               color: "rgba(255,255,255,0.75)",
               lineHeight: 1.4, margin: 0,
             }}
