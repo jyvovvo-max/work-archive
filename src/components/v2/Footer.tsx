@@ -74,11 +74,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
       {/* Headline */}
       <BlurIn>
         <div style={{ marginBottom: "clamp(38px, 5.6vh, 64px)" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
-            <span style={{
-              width: "8px", height: "8px", borderRadius: "50%",
-              background: "#F0EDE8", display: "inline-block", flexShrink: 0,
-            }} />
+          <span style={{ display: "inline-flex", alignItems: "center" }}>
             <span style={{
               fontFamily: FONT, fontWeight: 300,
               fontSize: "clamp(14px, 1.51vw, 19px)",  // 105% of clamp(13px,1.44vw,18px)
