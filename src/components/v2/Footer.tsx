@@ -152,30 +152,28 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
         </div>
       )}
 
-      {/* Bottom bar */}
-      <BlurIn delay={0.22}>
-        <div style={{
-          borderTop: "1px solid rgba(240,237,232,0.06)",
-          paddingTop: "20px",
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          flexWrap: "wrap", gap: "8px",
+      {/* Bottom bar — no BlurIn to ensure always visible */}
+      <div style={{
+        borderTop: "1px solid rgba(240,237,232,0.06)",
+        paddingTop: "20px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        flexWrap: "wrap", gap: "8px",
+      }}>
+        <span style={{
+          fontFamily: FONT, fontWeight: 300,
+          fontSize: "14px",
+          letterSpacing: "0.04em", color: "rgba(240,237,232,0.4)",
         }}>
-          <span style={{
-            fontFamily: FONT, fontWeight: 300,
-            fontSize: "14px",          // 105% of 13px
-            letterSpacing: "0.04em", color: "rgba(240,237,232,0.4)",
-          }}>
-            {name}
-          </span>
-          <span style={{
-            fontFamily: FONT, fontWeight: 300,
-            fontSize: "12px",          // 105% of 11px
-            letterSpacing: "0.08em", color: "rgba(240,237,232,0.2)",
-          }}>
-            KOR, {time}
-          </span>
-        </div>
-      </BlurIn>
+          {name}
+        </span>
+        <span style={{
+          fontFamily: FONT, fontWeight: 300,
+          fontSize: "12px",
+          letterSpacing: "0.08em", color: "rgba(240,237,232,0.2)",
+        }}>
+          KOR, {time}
+        </span>
+      </div>
     </footer>
   );
 }
