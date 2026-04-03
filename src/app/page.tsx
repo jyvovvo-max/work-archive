@@ -86,7 +86,7 @@ export default function Page() {
     }
   }, [selectedWorks]);
 
-  const detailList = shuffledWorks.length > 0 ? shuffledWorks : projects;
+  const detailList = [...projects].sort((a, b) => a.id - b.id);
   const detailIdx = selected ? detailList.findIndex(p => p.id === selected.id) : -1;
 
   const handleNext = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx + 1) % detailList.length]); };
