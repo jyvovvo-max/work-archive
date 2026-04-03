@@ -415,7 +415,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT_KR,
               fontWeight: 300,
-              fontSize: isMobile ? "15.5px" : "clamp(15px, 1.26vw, 19px)",
+              fontSize: isMobile ? "15.5px" : "clamp(16px, 1.32vw, 20px)",
               lineHeight: 1.75,
               color: "rgba(240,237,232,0.6)",
               margin: "0 0 28px",
@@ -437,7 +437,7 @@ export default function ProjectDetailV2({
                 <span key={c} style={{
                   fontFamily: "'Noto Sans KR', 'Noto Sans', sans-serif",
                   fontWeight: 300,
-                  fontSize: isMobile ? "10px" : "10.5px",
+                  fontSize: isMobile ? "10px" : "11px",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   background: "rgba(240,237,232,0.06)",
