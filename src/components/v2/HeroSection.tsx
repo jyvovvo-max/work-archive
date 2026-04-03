@@ -465,11 +465,38 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
     <section style={{
       position: "absolute", inset: 0,
       background: "#F0F0F0",
-      display: "flex", flexDirection: "column",
+      overflow: "hidden",
     }}>
-      {/* ── Text flow: Title → Subtitle → Description ── */}
+      {/* ── Scatter images — fill entire section, behind text ── */}
+      <motion.div
+        ref={scatterRef}
+        style={{
+          position: "absolute", inset: 0,
+          opacity: scrollOpacity,
+          zIndex: 2,
+        }}
+      >
+        {heroProjects.map((project, i) => {
+          const pos = positions[i];
+          if (!pos) return null;
+          return (
+            <ScatterCard
+              key={project.id}
+              project={project}
+              pos={pos}
+              idx={i}
+              allImagesIn={allImagesIn}
+              scrollTranslateY={scrollTranslateY}
+              onOpen={onOpen}
+            />
+          );
+        })}
+      </motion.div>
+
+      {/* ── Text — absolute, on top of images ── */}
       <div style={{
-        flexShrink: 0,
+        position: "absolute",
+        top: 0, left: 0, right: 0,
         padding: "62px 20px 20px",
         zIndex: 20,
         pointerEvents: "none",
@@ -515,28 +542,6 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
           </motion.p>
         )}
       </div>
-
-      {/* ── Scatter image container — fills remaining height ── */}
-      <motion.div
-        ref={scatterRef}
-        style={{ flex: 1, position: "relative", overflow: "hidden", opacity: scrollOpacity }}
-      >
-        {heroProjects.map((project, i) => {
-          const pos = positions[i];
-          if (!pos) return null;
-          return (
-            <ScatterCard
-              key={project.id}
-              project={project}
-              pos={pos}
-              idx={i}
-              allImagesIn={allImagesIn}
-              scrollTranslateY={scrollTranslateY}
-              onOpen={onOpen}
-            />
-          );
-        })}
-      </motion.div>
     </section>
   );
 }
