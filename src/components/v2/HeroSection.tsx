@@ -402,9 +402,10 @@ function ScatterCard({ project, pos, idx, allImagesIn, scrollTranslateY, onOpen 
         alt={project.title}
         draggable={false}
         animate={{
-          filter: allImagesIn ? "blur(0px)" : "blur(0px)",
-          scale: 1,
+          filter: allImagesIn ? "blur(3px)" : "blur(0px)",
+          scale:  allImagesIn ? 0.95 : 1,
         }}
+        transition={{ duration: allImagesIn ? 1.0 : 0.1, ease: "easeInOut" }}
         style={{
           width: "100%",
           aspectRatio: "4/3",
