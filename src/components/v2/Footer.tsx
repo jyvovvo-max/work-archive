@@ -53,10 +53,9 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
     return () => clearInterval(id);
   }, []);
 
-  // 105% of original sizes
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300,
-    fontSize: "13px",           // 12px × 1.05
+    fontSize: "13px",
     letterSpacing: "0.03em",
     color: "rgba(240,237,232,0.55)",
     lineHeight: 2.0,
@@ -77,7 +76,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           <span style={{ display: "inline-flex", alignItems: "center" }}>
             <span style={{
               fontFamily: FONT, fontWeight: 300,
-              fontSize: "clamp(12px, 1.28vw, 16px)",  // 85% of clamp(14px,1.51vw,19px)
+              fontSize: "clamp(12px, 1.28vw, 16px)",
               letterSpacing: "0.01em", color: "#F0EDE8",
             }}>
               {headline}
@@ -86,7 +85,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
         </div>
       </BlurIn>
 
-      {/* Info — mobile: 8-col grid, all items in col 1-3 stacked / desktop: 3 cols */}
+      {/* Info */}
       {isMobile ? (
         <BlurIn delay={0.06} style={{ marginBottom: "clamp(38px, 5.6vh, 64px)" }}>
           <div style={{
@@ -114,6 +113,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               >
                 {igHandle}
               </a>
+              {/* Clock — below instagram on mobile */}
+              <div style={valueStyle}>KOR, {time}</div>
             </div>
           </div>
         </BlurIn>
@@ -149,29 +150,24 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               {igHandle}
             </a>
           </BlurIn>
+          {/* Clock — rightmost column on desktop */}
+          <BlurIn delay={0.24} style={{ gridColumn: "7" }}>
+            <div style={valueStyle}>KOR, {time}</div>
+          </BlurIn>
         </div>
       )}
 
-      {/* Bottom bar — no BlurIn to ensure always visible */}
+      {/* Bottom bar — always visible */}
       <div style={{
         borderTop: "1px solid rgba(240,237,232,0.06)",
         paddingTop: "20px",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        flexWrap: "wrap", gap: "8px",
       }}>
         <span style={{
           fontFamily: FONT, fontWeight: 300,
-          fontSize: "14px",
+          fontSize: "12px",
           letterSpacing: "0.04em", color: "rgba(240,237,232,0.4)",
         }}>
           {name}
-        </span>
-        <span style={{
-          fontFamily: FONT, fontWeight: 300,
-          fontSize: "12px",
-          letterSpacing: "0.08em", color: "rgba(240,237,232,0.2)",
-        }}>
-          KOR, {time}
         </span>
       </div>
     </footer>
