@@ -114,7 +114,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
                 {igHandle}
               </a>
               {/* Clock — below instagram on mobile */}
-              <div style={valueStyle}>KOR, {time}</div>
+              <div style={valueStyle}>KST, {time}</div>
             </div>
           </div>
         </BlurIn>
@@ -152,7 +152,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           </BlurIn>
           {/* Clock — rightmost column on desktop */}
           <BlurIn delay={0.24} style={{ gridColumn: "7" }}>
-            <div style={valueStyle}>KOR, {time}</div>
+            <div style={valueStyle}>KST, {time}</div>
           </BlurIn>
         </div>
       )}
