@@ -93,9 +93,19 @@ function GalleryImage({ src, alt, index, onLightbox }: {
   src: string; alt: string; index: number; onLightbox: () => void;
 }) {
   const [isImg, setIsImg] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [hovered, setHovered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const inView = useInView(ref, { once: false, margin: "-12% 0px" });
   const videoSrc = toVideoUrl(src);
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    const next = !muted;
+    videoRef.current.muted = next;
+    setMuted(next);
+  };
 
   return (
     <motion.div
@@ -107,20 +117,65 @@ function GalleryImage({ src, alt, index, onLightbox }: {
       initial={{ filter: "blur(12px)", opacity: 0, y: 24 }}
       transition={{ duration: 0.95, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
       onClick={isImg ? onLightbox : undefined}
-      style={{ cursor: isImg ? "zoom-in" : "default" }}
+      onMouseEnter={() => !isImg && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ cursor: isImg ? "zoom-in" : "default", position: "relative" }}
     >
       {isImg ? (
         <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
       ) : (
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          src={videoSrc}
-          onError={() => setIsImg(true)}
-          style={{ width: "100%", height: "auto", display: "block" }}
-        />
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            src={videoSrc}
+            onError={() => setIsImg(true)}
+            style={{ width: "100%", height: "auto", display: "block" }}
+          />
+          {/* Speaker icon — visible on hover */}
+          {hovered && (
+            <div
+              onClick={e => { e.stopPropagation(); toggleMute(); }}
+              style={{
+                position: "absolute",
+                bottom: "12px",
+                right: "12px",
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                background: "rgba(0,0,0,0.45)",
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "background 0.18s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.65)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.45)")}
+            >
+              {muted ? (
+                /* muted — speaker with X */
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <line x1="23" y1="9" x2="17" y2="15"/>
+                  <line x1="17" y1="9" x2="23" y2="15"/>
+                </svg>
+              ) : (
+                /* unmuted — speaker with waves */
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
+              )}
+            </div>
+          )}
+        </>
       )}
     </motion.div>
   );
