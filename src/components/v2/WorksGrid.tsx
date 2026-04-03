@@ -32,14 +32,16 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   }, [isMobile]);
 
   return (
-    <div
+    <motion.div
       ref={ref}
       onClick={() => onOpen(project)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      animate={{ scale: isCentered && isMobile ? 1.03 : 1 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {/* Image — blur-to-clean on scroll (no y-transform to avoid overflow clipping) */}
+      {/* Image — blur-to-clean on scroll */}
       <motion.div
         animate={inView
           ? { filter: "blur(0px)", opacity: 1 }
@@ -102,7 +104,7 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
           {fmtDate(project.month, project.year)}
         </span>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
 

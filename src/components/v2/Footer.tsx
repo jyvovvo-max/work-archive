@@ -77,7 +77,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           <span style={{ display: "inline-flex", alignItems: "center" }}>
             <span style={{
               fontFamily: FONT, fontWeight: 300,
-              fontSize: "clamp(14px, 1.51vw, 19px)",  // 105% of clamp(13px,1.44vw,18px)
+              fontSize: "clamp(12px, 1.28vw, 16px)",  // 85% of clamp(14px,1.51vw,19px)
               letterSpacing: "0.01em", color: "#F0EDE8",
             }}>
               {headline}

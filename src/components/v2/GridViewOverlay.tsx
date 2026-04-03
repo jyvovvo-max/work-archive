@@ -105,7 +105,7 @@ function GridCard({ project, onClose, onOpen, idx }: {
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: 1, y: 0, scale: isCentered && isMobile ? 1.03 : 1 }}
       transition={{ delay: idx * 0.02, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => { onClose(); onOpen(project); }}
       onMouseEnter={() => setHovered(true)}
