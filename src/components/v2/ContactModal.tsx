@@ -8,22 +8,54 @@ interface Props {
   open: boolean;
   onClose: () => void;
   email: string;
+  igHandle: string;
+  igUrl: string;
 }
 
-export default function ContactModal({ open, onClose, email }: Props) {
+export default function ContactModal({ open, onClose, email, igHandle, igUrl }: Props) {
   const [from, setFrom] = useState("");
   const [message, setMessage] = useState("");
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     if (open) window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  const handleSend = () => {
+  const handleMailSend = () => {
     const body = from ? `From: ${from}\n\n${message}` : message;
     window.location.href = `mailto:${email}?body=${encodeURIComponent(body)}`;
+  };
+
+  const handleInstagram = () => {
+    // Try deep link first (opens DM in app on mobile), fall back to profile URL
+    const username = igHandle.replace("@", "");
+    const deepLink = `instagram://user?username=${username}`;
+    const webUrl = igUrl || `https://instagram.com/${username}`;
+    const start = Date.now();
+    window.location.href = deepLink;
+    setTimeout(() => {
+      if (Date.now() - start < 1500) window.open(webUrl, "_blank");
+    }, 1000);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    fontFamily: FONT, fontWeight: 300, fontSize: "13px",
+    letterSpacing: "0.02em", lineHeight: 1.7,
+    color: "#F0EDE8", background: "rgba(240,237,232,0.04)",
+    border: "1px solid rgba(240,237,232,0.1)",
+    borderRadius: "2px", padding: "10px 16px",
+    outline: "none", width: "100%", boxSizing: "border-box",
+    transition: "border-color 0.18s",
+  };
+
+  const btnBase: React.CSSProperties = {
+    fontFamily: FONT, fontWeight: 300,
+    fontSize: "11px", letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    border: "none", borderRadius: "100px",
+    padding: "10px 24px", cursor: "pointer",
+    transition: "opacity 0.15s",
   };
 
   return (
@@ -38,8 +70,7 @@ export default function ContactModal({ open, onClose, email }: Props) {
           style={{
             position: "fixed", inset: 0, zIndex: 900,
             background: "rgba(10,10,10,0.72)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
+            backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: "20px",
           }}
@@ -55,11 +86,8 @@ export default function ContactModal({ open, onClose, email }: Props) {
               border: "1px solid rgba(240,237,232,0.1)",
               borderRadius: "4px",
               padding: "clamp(28px, 4vh, 48px) clamp(24px, 4vw, 44px)",
-              width: "100%",
-              maxWidth: "480px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px",
+              width: "100%", maxWidth: "480px",
+              display: "flex", flexDirection: "column", gap: "20px",
             }}
           >
             {/* Header */}
@@ -68,9 +96,7 @@ export default function ContactModal({ open, onClose, email }: Props) {
                 fontFamily: FONT, fontWeight: 300,
                 fontSize: "11px", letterSpacing: "0.12em",
                 textTransform: "uppercase", color: "rgba(240,237,232,0.4)",
-              }}>
-                Contact
-              </span>
+              }}>Contact</span>
               <button
                 onClick={onClose}
                 style={{
@@ -81,9 +107,7 @@ export default function ContactModal({ open, onClose, email }: Props) {
                 }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
                 onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.3)")}
-              >
-                ✕
-              </button>
+              >✕</button>
             </div>
 
             {/* To */}
@@ -100,15 +124,7 @@ export default function ContactModal({ open, onClose, email }: Props) {
               value={from}
               onChange={e => setFrom(e.target.value)}
               placeholder="Your email"
-              style={{
-                fontFamily: FONT, fontWeight: 300, fontSize: "13px",
-                letterSpacing: "0.02em", lineHeight: 1.7,
-                color: "#F0EDE8", background: "rgba(240,237,232,0.04)",
-                border: "1px solid rgba(240,237,232,0.1)",
-                borderRadius: "2px", padding: "10px 16px",
-                outline: "none", width: "100%", boxSizing: "border-box",
-                transition: "border-color 0.18s",
-              }}
+              style={inputStyle}
               onFocus={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.3)")}
               onBlur={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.1)")}
             />
@@ -119,38 +135,30 @@ export default function ContactModal({ open, onClose, email }: Props) {
               onChange={e => setMessage(e.target.value)}
               placeholder="메시지를 입력하세요"
               rows={6}
-              style={{
-                fontFamily: FONT, fontWeight: 300, fontSize: "13px",
-                letterSpacing: "0.02em", lineHeight: 1.7,
-                color: "#F0EDE8", background: "rgba(240,237,232,0.04)",
-                border: "1px solid rgba(240,237,232,0.1)",
-                borderRadius: "2px", padding: "14px 16px",
-                resize: "none", outline: "none", width: "100%",
-                boxSizing: "border-box",
-                transition: "border-color 0.18s",
-              }}
+              style={{ ...inputStyle, padding: "14px 16px", resize: "none" }}
               onFocus={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.3)")}
               onBlur={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.1)")}
             />
 
-            {/* Send */}
-            <button
-              onClick={handleSend}
-              style={{
-                fontFamily: FONT, fontWeight: 300,
-                fontSize: "11px", letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "#1A1A1A", background: "#F0EDE8",
-                border: "none", borderRadius: "100px",
-                padding: "10px 24px", cursor: "pointer",
-                alignSelf: "flex-start",
-                transition: "opacity 0.15s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = "0.8")}
-              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-            >
-              Send via Mail App
-            </button>
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <button
+                onClick={handleMailSend}
+                style={{ ...btnBase, color: "#1A1A1A", background: "#F0EDE8" }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "0.8")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+              >
+                Send via Mail
+              </button>
+              <button
+                onClick={handleInstagram}
+                style={{ ...btnBase, color: "#F0EDE8", background: "transparent", border: "1px solid rgba(240,237,232,0.2)" }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.6)")}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.2)")}
+              >
+                DM {igHandle}
+              </button>
+            </div>
           </motion.div>
         </motion.div>
       )}

@@ -214,6 +214,8 @@ export default function Page() {
         open={contactOpen}
         onClose={() => setContactOpen(false)}
         email={siteData?.footerEmail ?? ""}
+        igHandle={siteData?.footerInstagramHandle ?? ""}
+        igUrl={siteData?.footerInstagramUrl ?? ""}
       />
     </div>
   );
