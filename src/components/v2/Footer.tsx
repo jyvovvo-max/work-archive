@@ -106,7 +106,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
                 onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
                 onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
               >
-                → {email}
+                {email}
               </a>
               <a
                 href={igUrl}
@@ -116,7 +116,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
                 onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
                 onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
               >
-                ↗ {igHandle}
+                {igHandle}
               </a>
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
             >
-              → {email}
+              {email}
             </a>
           </BlurIn>
           <BlurIn delay={0.18}>
@@ -148,7 +148,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
             >
-              ↗ {igHandle}
+              {igHandle}
             </a>
           </BlurIn>
         </div>
