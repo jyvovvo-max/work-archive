@@ -245,19 +245,6 @@ export default function ProjectDetailV2({
   const [isMobile, setIsMobile] = useState(false);
   const [prevHover, setPrevHover] = useState(false);
   const [nextHover, setNextHover] = useState(false);
-  const atBottom = useRef(false);
-  const atTop = useRef(true);
-  const cooldown = useRef(false);
-  const touchStartY = useRef(0);
-  const overBottom = useRef(0);
-  const overTop = useRef(0);
-  const OVER_THRESH = 1600;
-
-  const onNextRef = useRef(onNext);
-  const onPrevRef = useRef(onPrev);
-  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
-  useEffect(() => { onPrevRef.current = onPrev; }, [onPrev]);
-
   const colors = useExtractedColor(project.img);
 
   useEffect(() => {
@@ -267,65 +254,8 @@ export default function ProjectDetailV2({
   }, []);
 
   useEffect(() => {
-    cooldown.current = true;
-    atBottom.current = false;
-    overBottom.current = 0;
-    overTop.current = 0;
     if (containerRef.current) containerRef.current.scrollTop = 0;
-    setTimeout(() => { cooldown.current = false; }, 400);
   }, [project.id]);
-
-  const handleScroll = () => {
-    const el = containerRef.current;
-    if (!el) return;
-    atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
-    atTop.current = el.scrollTop < 20;
-  };
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const handler = (e: WheelEvent) => {
-      if (cooldown.current) { e.preventDefault(); return; }
-      if (atBottom.current && e.deltaY > 0) {
-        e.preventDefault();
-        overBottom.current += Math.abs(e.deltaY);
-        if (overBottom.current >= OVER_THRESH) {
-          overBottom.current = 0;
-          cooldown.current = true;
-          onNextRef.current();
-        }
-      } else if (atTop.current && e.deltaY < 0) {
-        e.preventDefault();
-        overTop.current += Math.abs(e.deltaY);
-        if (overTop.current >= OVER_THRESH) {
-          overTop.current = 0;
-          cooldown.current = true;
-          onPrevRef.current();
-        }
-      } else {
-        overBottom.current = 0;
-        overTop.current = 0;
-      }
-    };
-    el.addEventListener("wheel", handler, { passive: false });
-    return () => el.removeEventListener("wheel", handler);
-  }, []);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onStart = (e: TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
-    const onEnd = (e: TouchEvent) => {
-      if (cooldown.current) return;
-      const dy = touchStartY.current - e.changedTouches[0].clientY;
-      if (atBottom.current && dy > 40) { cooldown.current = true; onNextRef.current(); }
-      else if (atTop.current && dy < -40) { cooldown.current = true; onPrevRef.current(); }
-    };
-    el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("touchend", onEnd, { passive: true });
-    return () => { el.removeEventListener("touchstart", onStart); el.removeEventListener("touchend", onEnd); };
-  }, []);
 
   const allImages = [project.img, ...(project.images ?? [])];
   const galleryImages = project.images ?? [];
@@ -339,7 +269,6 @@ export default function ProjectDetailV2({
   return (
     <motion.div
       ref={containerRef}
-      onScroll={handleScroll}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
