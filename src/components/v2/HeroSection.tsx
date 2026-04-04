@@ -459,7 +459,9 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
 
   const title    = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
-  const desc = siteData?.landingDescriptionEn || siteData?.landingDescription || "";
+  const desc = lang === "en"
+    ? (siteData?.landingDescriptionEn || siteData?.landingDescription || "")
+    : (siteData?.landingDescription || "");
   const heroProjects = projects.slice(0, 8);
 
   return (
@@ -534,7 +536,9 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
             animate={titleControls}
             style={{
               fontFamily: FONT, fontWeight: 300,
-              fontSize: "clamp(13px, 3.70vw, 19px)",
+              fontSize: lang === "ko"
+                ? "clamp(10px, 2.96vw, 15px)"
+                : "clamp(13px, 3.70vw, 19px)",
               color: "rgba(255,255,255,0.75)",
               lineHeight: 1.4, margin: 0,
             }}
@@ -547,7 +551,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
   );
 }
 
-function DescriptionText({ text, y }: { text: string; y: MotionValue<number> }) {
+function DescriptionText({ text, y, lang = "ko" }: { text: string; y: MotionValue<number>; lang?: Lang }) {
   const controls = useAnimationControls();
 
   useEffect(() => {
@@ -578,7 +582,7 @@ function DescriptionText({ text, y }: { text: string; y: MotionValue<number> }) 
         style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(10px, 2.5vw, 40px)",
+          fontSize: lang === "ko" ? "clamp(8px, 2vw, 32px)" : "clamp(10px, 2.5vw, 40px)",
           color: "#FFFFFF",
           lineHeight: 1.36,
           margin: 0,
@@ -688,7 +692,9 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
 
   const title = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
-  const desc = siteData?.landingDescriptionEn || siteData?.landingDescription || "";
+  const desc = lang === "en"
+    ? (siteData?.landingDescriptionEn || siteData?.landingDescription || "")
+    : (siteData?.landingDescription || "");
   const heroProjects = projects.slice(0, 10);
   const scatterLen = Math.max(scatter.length, 1);
 
@@ -789,7 +795,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
 
       {/* ── Description — zIndex 5, above images ── */}
       {desc && (
-        <DescriptionText text={desc} y={descY} />
+        <DescriptionText text={desc} y={descY} lang={lang} />
       )}
     </section>
   );
