@@ -352,7 +352,6 @@ export default function ProjectDetailV2({
         transition: "background-color 0.8s ease",
         overflowY: "auto",
         overflowX: "hidden",
-        scrollbarWidth: "none",
         color: "#F0EDE8",
       }}
     >
