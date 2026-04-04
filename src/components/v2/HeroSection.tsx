@@ -537,7 +537,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
             style={{
               fontFamily: FONT, fontWeight: 300,
               fontSize: lang === "ko"
-                ? "clamp(10px, 2.96vw, 15px)"
+                ? "clamp(8px, 2.37vw, 12px)"
                 : "clamp(13px, 3.70vw, 19px)",
               color: "rgba(255,255,255,0.75)",
               lineHeight: 1.4, margin: 0,
@@ -582,7 +582,7 @@ function DescriptionText({ text, y, lang = "ko" }: { text: string; y: MotionValu
         style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: lang === "ko" ? "clamp(8px, 2vw, 32px)" : "clamp(10px, 2.5vw, 40px)",
+          fontSize: lang === "ko" ? "clamp(6px, 1.6vw, 26px)" : "clamp(10px, 2.5vw, 40px)",
           color: "#FFFFFF",
           lineHeight: 1.36,
           margin: 0,
