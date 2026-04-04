@@ -210,7 +210,7 @@ export default function GridViewOverlay({
         position: "fixed", inset: 0, zIndex: 550,
         background: "#F0F0F0",
         overflowY: "auto", overflowX: "hidden",
-        scrollbarWidth: "none", color: "#0A0A0A",
+        color: "#0A0A0A",
         paddingTop: "52px",
       }}
     >
