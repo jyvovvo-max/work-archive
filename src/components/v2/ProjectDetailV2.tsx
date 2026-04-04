@@ -93,6 +93,7 @@ function GalleryImage({ src, alt, index, onLightbox }: {
   src: string; alt: string; index: number; onLightbox: () => void;
 }) {
   const [isImg, setIsImg] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [muted, setMuted] = useState(true);
   const [hovered, setHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -140,11 +141,12 @@ function GalleryImage({ src, alt, index, onLightbox }: {
             loop
             playsInline
             src={videoSrc}
+            onCanPlay={() => setVideoReady(true)}
             onError={() => setIsImg(true)}
             style={{ width: "100%", height: "auto", display: "block" }}
           />
-          {/* Speaker icon — hover on desktop, always visible on mobile */}
-          {(hovered || isMobile) && (
+          {/* Speaker icon — only after video ready; hover on desktop, always on mobile */}
+          {videoReady && (hovered || isMobile) && (
             <div
               onClick={e => { e.stopPropagation(); toggleMute(); }}
               style={{
