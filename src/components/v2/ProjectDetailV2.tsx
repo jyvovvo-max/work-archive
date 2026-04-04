@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Project, SiteData, Lang } from "./types";
 import Footer from "./Footer";
+import { RetryImg } from "./RetryImg";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
@@ -131,7 +132,7 @@ function GalleryImage({ src, alt, index, onLightbox }: {
       style={{ cursor: isImg ? "zoom-in" : "default", position: "relative" }}
     >
       {isImg ? (
-        <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+        <RetryImg src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} placeholderStyle={{ aspectRatio: "16/9" }} />
       ) : (
         <>
           <video
@@ -254,6 +255,11 @@ export default function ProjectDetailV2({
   }, []);
 
   useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  useEffect(() => {
     if (containerRef.current) containerRef.current.scrollTop = 0;
   }, [project.id]);
 
@@ -291,10 +297,11 @@ export default function ProjectDetailV2({
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         style={{ padding: isMobile ? `52px ${hPad} 0` : `0 ${hPad}` }}
       >
-        <img
+        <RetryImg
           src={project.img}
           alt={project.title}
           style={{ width: "100%", height: "auto", display: "block" }}
+          placeholderStyle={{ aspectRatio: "16/9" }}
         />
       </motion.div>
 
@@ -633,7 +640,7 @@ export default function ProjectDetailV2({
         )}
       </AnimatePresence>
 
-      <Footer siteData={siteData ?? null} />
+      <Footer siteData={siteData ?? null} lang={lang} />
     </motion.div>
   );
 }

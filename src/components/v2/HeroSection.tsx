@@ -11,6 +11,7 @@ import {
   MotionValue,
 } from "framer-motion";
 import { Project, SiteData, Lang } from "./types";
+import { RetryImg } from "./RetryImg";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -283,11 +284,12 @@ function CollageImage({
             boxShadow: "0 4px 18px rgba(0,0,0,0.16)",
           }}
         >
-          <img
+          <RetryImg
             src={project.img}
             alt={project.title}
             draggable={false}
             style={{ width: "100%", height: "auto", display: "block" }}
+            placeholderStyle={{ aspectRatio: "4/3" }}
           />
         </motion.div>
       </motion.div>
@@ -346,7 +348,7 @@ function MobileGrid({
           }}>
             {String(project.id).padStart(3, "0")}
           </span>
-          <img
+          <RetryImg
             src={project.img}
             alt={project.title}
             draggable={false}
@@ -357,6 +359,7 @@ function MobileGrid({
               borderRadius: "2px",
               boxShadow: "0 3px 12px rgba(0,0,0,0.14)",
             }}
+            placeholderStyle={{ aspectRatio: "4/3" }}
           />
         </motion.div>
       ))}

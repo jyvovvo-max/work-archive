@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Project, SiteData, Lang } from "./types";
 import AboutSection from "./AboutSection";
 import Footer from "./Footer";
+import { RetryImg } from "./RetryImg";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -80,6 +81,8 @@ function GridCard({ project, onClose, onOpen, idx }: {
   const [hovered, setHovered] = useState(false);
   const [isCentered, setIsCentered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [imgRetry, setImgRetry] = useState(0);
+  const [imgFailed, setImgFailed] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,13 +116,22 @@ function GridCard({ project, onClose, onOpen, idx }: {
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
       {/* Image — scales on hover / centered mobile */}
-      <motion.img
-        src={project.img}
-        alt={project.title}
-        animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
-      />
+      {imgFailed ? (
+        <div style={{ width: "100%", aspectRatio: "16/9", background: "rgba(120,120,120,0.12)" }} />
+      ) : (
+        <motion.img
+          key={imgRetry}
+          src={project.img}
+          alt={project.title}
+          animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+          onError={() => {
+            if (imgRetry < 2) setTimeout(() => setImgRetry(r => r + 1), 800 * (imgRetry + 1));
+            else setImgFailed(true);
+          }}
+        />
+      )}
 
       {/* White acrylic bar — centered on mobile, hover on desktop */}
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
@@ -173,6 +185,11 @@ export default function GridViewOverlay({
   const [cols, setCols] = useState(3);
   const aboutRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   useEffect(() => {
     if (!aboutExpanded) return;
@@ -268,7 +285,7 @@ export default function GridViewOverlay({
         )}
       </AnimatePresence>
 
-      <Footer siteData={siteData} />
+      <Footer siteData={siteData} lang={lang} />
     </motion.div>
   );
 }
