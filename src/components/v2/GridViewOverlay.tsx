@@ -192,11 +192,16 @@ export default function GridViewOverlay({
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const filtered = activeCategory
+  const filtered = (activeCategory
     ? projects.filter(p =>
         p.category?.split(",").map(c => c.trim()).includes(activeCategory)
       )
-    : projects;
+    : projects
+  ).slice().sort((a, b) => {
+    const ay = parseInt(a.year) || 0, by = parseInt(b.year) || 0;
+    if (by !== ay) return by - ay;
+    return (parseInt(b.month) || 0) - (parseInt(a.month) || 0);
+  });
 
   return (
     <motion.div
