@@ -20,7 +20,7 @@ export default function Page() {
   const [selected, setSelected] = useState<Project | null>(null);
   const [gridOpen, setGridOpen] = useState(false);
   const [detailFromGrid, setDetailFromGrid] = useState(false);
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useState<Lang>("ko");
   const [contactOpen, setContactOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
   const aboutRef = useRef<HTMLElement>(null);
