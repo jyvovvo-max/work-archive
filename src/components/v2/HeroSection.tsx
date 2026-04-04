@@ -422,13 +422,12 @@ function ScatterCard({ project, pos, idx, allImagesIn, scrollTranslateY, onOpen 
 
 // ── Mobile Hero Layout ──
 // Flow order: Title → Subtitle → Description → Scatter images (B+C hybrid scatter)
-function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY, onOpen, lang = "ko" }: {
+function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY, onOpen }: {
   projects: Project[];
   siteData: SiteData | null;
   scrollOpacity: MotionValue<number>;
   scrollTranslateY: MotionValue<number>;
   onOpen: (p: Project) => void;
-  lang?: Lang;
 }) {
   const [positions, setPositions] = useState<MPos[]>([]);
   const [allImagesIn, setAllImagesIn] = useState(false);
@@ -459,9 +458,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
 
   const title    = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
-  const desc = lang === "en"
-    ? (siteData?.landingDescriptionEn || siteData?.landingDescription || "")
-    : (siteData?.landingDescription || "");
+  const desc = siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 8);
 
   return (
@@ -536,9 +533,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
             animate={titleControls}
             style={{
               fontFamily: FONT, fontWeight: 300,
-              fontSize: lang === "ko"
-                ? "clamp(8px, 2.37vw, 12px)"
-                : "clamp(13px, 3.70vw, 19px)",
+              fontSize: "clamp(13px, 3.70vw, 19px)",
               color: "rgba(255,255,255,0.75)",
               lineHeight: 1.4, margin: 0,
             }}
@@ -551,7 +546,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
   );
 }
 
-function DescriptionText({ text, y, lang = "ko" }: { text: string; y: MotionValue<number>; lang?: Lang }) {
+function DescriptionText({ text, y }: { text: string; y: MotionValue<number> }) {
   const controls = useAnimationControls();
 
   useEffect(() => {
@@ -582,7 +577,7 @@ function DescriptionText({ text, y, lang = "ko" }: { text: string; y: MotionValu
         style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: lang === "ko" ? "clamp(6px, 1.6vw, 26px)" : "clamp(10px, 2.5vw, 40px)",
+          fontSize: "clamp(10px, 2.5vw, 40px)",
           color: "#FFFFFF",
           lineHeight: 1.36,
           margin: 0,
@@ -692,9 +687,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
 
   const title = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
-  const desc = lang === "en"
-    ? (siteData?.landingDescriptionEn || siteData?.landingDescription || "")
-    : (siteData?.landingDescription || "");
+  const desc = siteData?.landingDescription || "";
   const heroProjects = projects.slice(0, 10);
   const scatterLen = Math.max(scatter.length, 1);
 
@@ -707,7 +700,6 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
         scrollOpacity={scrollOpacity}
         scrollTranslateY={scrollTranslateY}
         onOpen={onOpen}
-        lang={lang}
       />
     );
   }
@@ -795,7 +787,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
 
       {/* ── Description — zIndex 5, above images ── */}
       {desc && (
-        <DescriptionText text={desc} y={descY} lang={lang} />
+        <DescriptionText text={desc} y={descY} />
       )}
     </section>
   );

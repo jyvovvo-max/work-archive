@@ -78,6 +78,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               fontFamily: FONT, fontWeight: 300,
               fontSize: "clamp(12px, 1.28vw, 16px)",
               letterSpacing: "0.01em", color: "#F0EDE8",
+              whiteSpace: "pre-line",
             }}>
               {headline}
             </span>
