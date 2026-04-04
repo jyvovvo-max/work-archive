@@ -189,7 +189,7 @@ function CollageImage({
   useEffect(() => {
     if (!allImagesIn) return;   // tilt only after images have appeared
     const maxDist = 650;
-    const maxTilt = 8;
+    const maxTilt = 12;
 
     const update = () => {
       const rect = imgRef.current?.getBoundingClientRect();
