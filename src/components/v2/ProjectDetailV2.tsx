@@ -95,10 +95,18 @@ function GalleryImage({ src, alt, index, onLightbox }: {
   const [isImg, setIsImg] = useState(false);
   const [muted, setMuted] = useState(true);
   const [hovered, setHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const inView = useInView(ref, { once: false, margin: "-12% 0px" });
   const videoSrc = toVideoUrl(src);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const toggleMute = () => {
     if (!videoRef.current) return;
@@ -135,8 +143,8 @@ function GalleryImage({ src, alt, index, onLightbox }: {
             onError={() => setIsImg(true)}
             style={{ width: "100%", height: "auto", display: "block" }}
           />
-          {/* Speaker icon — visible on hover */}
-          {hovered && (
+          {/* Speaker icon — hover on desktop, always visible on mobile */}
+          {(hovered || isMobile) && (
             <div
               onClick={e => { e.stopPropagation(); toggleMute(); }}
               style={{
