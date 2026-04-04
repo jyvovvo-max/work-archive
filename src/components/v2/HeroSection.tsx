@@ -187,6 +187,7 @@ function CollageImage({
   const springRotateY = useSpring(localRotateY, { stiffness: 50, damping: 20 });
 
   useEffect(() => {
+    if (!allImagesIn) return;   // tilt only after images have appeared
     const maxDist = 650;
     const maxTilt = 8;
 
@@ -207,7 +208,7 @@ function CollageImage({
     const unsubX = mousePxX.onChange(update);
     const unsubY = mousePxY.onChange(update);
     return () => { unsubX(); unsubY(); };
-  }, [mousePxX, mousePxY, localRotateX, localRotateY]);
+  }, [allImagesIn, mousePxX, mousePxY, localRotateX, localRotateY]);
 
   const blurred = allImagesIn && !hovered;
 
