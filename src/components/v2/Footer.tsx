@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
+import { GUTTER, GRID_GAP } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -68,7 +69,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
     <footer style={{
       background: "#1A1A1A",
       borderTop: "1px solid rgba(240,237,232,0.06)",
-      padding: "clamp(20px, 2.5vh, 35px) clamp(18px, 3.6vw, 50px) clamp(12px, 1.5vh, 20px)",
+      padding: `clamp(20px, 2.5vh, 35px) ${GUTTER} clamp(12px, 1.5vh, 20px)`,
     }}>
       {/* Headline */}
       <BlurIn>
@@ -92,7 +93,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(8, 1fr)",
-            columnGap: "clamp(16px, 2vw, 32px)",
+            columnGap: GRID_GAP,
           }}>
             <div style={{ gridColumn: "1 / 4", display: "flex", flexDirection: "column" }}>
               <div style={valueStyle}>{location}</div>

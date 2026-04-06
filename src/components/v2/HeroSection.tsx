@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { GUTTER } from "./layout";
 import {
   motion,
   useMotionValue,
@@ -566,8 +567,8 @@ function DescriptionText({ text, y }: { text: string; y: MotionValue<number> }) 
       style={{
         position: "absolute",
         top: "74vh",
-        left: "clamp(20px, 4vw, 56px)",
-        right: "clamp(20px, 4vw, 56px)",
+        left: GUTTER,
+        right: GUTTER,
         zIndex: 5,
         pointerEvents: "none",
         mixBlendMode: "difference",
@@ -722,7 +723,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
         style={{
           position: "absolute",
           top: "62px",
-          left: "clamp(20px, 4vw, 56px)",
+          left: GUTTER,
           zIndex: 20,
           pointerEvents: "none",
           mixBlendMode: "difference",
@@ -736,7 +737,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "calc((100vw - clamp(48px, 8vw, 112px)) / 7)",
+              fontSize: "calc((100vw - clamp(40px, 8vw, 112px)) / 7)",
               letterSpacing: "-0.045em",
               lineHeight: 0.88,
               color: "#FFFFFF",

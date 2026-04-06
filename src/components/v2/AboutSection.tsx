@@ -3,6 +3,7 @@ import { forwardRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
+import { GUTTER, GRID_GAP } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -57,7 +58,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
     <section
       ref={ref}
       style={{
-        padding: "clamp(80px, 10vh, 140px) clamp(20px, 4vw, 56px) clamp(80px, 10vh, 140px)",
+        padding: `clamp(80px, 10vh, 140px) ${GUTTER} clamp(80px, 10vh, 140px)`,
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.1)",
       }}
@@ -86,7 +87,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         display: "grid",
         gridTemplateColumns: isMobile ? "repeat(8, 1fr)" : "repeat(7, 1fr)",
         rowGap: isMobile ? "clamp(34px, 4.9vh, 62px)" : "clamp(16px, 2vw, 32px)",
-        columnGap: "clamp(16px, 2vw, 32px)",
+        columnGap: GRID_GAP,
         alignItems: "start",
       }}>
         {/* Bio — desktop: 1–3 / mobile: 1–8 (full) */}

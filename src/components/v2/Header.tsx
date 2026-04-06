@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiteData, Lang } from "./types";
+import { GUTTER } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -115,7 +116,7 @@ export default function Header({
             border: `1px solid ${border}`,
             borderTop: "none",
             borderRadius: 0,
-            padding: onBack ? "0" : "0 clamp(20px, 4vw, 56px)",
+            padding: onBack ? "0" : `0 ${GUTTER}`,
           }}
         >
           {/* Left: optional back arrow + site name */}
@@ -166,7 +167,7 @@ export default function Header({
             display: "flex",
             gap: "clamp(16px, 2.8vw, 40px)",
             alignItems: "center",
-            paddingRight: onBack ? "clamp(20px, 4vw, 56px)" : "0",
+            paddingRight: onBack ? GUTTER : "0",
           }}>
             {[
               { label: "View all", action: onViewAll },

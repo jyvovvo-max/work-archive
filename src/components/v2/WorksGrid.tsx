@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Project } from "./types";
+import { GUTTER } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -136,7 +137,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
         height: "52px",
         display: "flex",
         alignItems: "center",
-        padding: "0 clamp(20px, 4vw, 56px)",
+        padding: `0 ${GUTTER}`,
         borderTop: "1px solid rgba(0,0,0,0.15)",
         borderBottom: "1px solid rgba(0,0,0,0.15)",
       }}>
