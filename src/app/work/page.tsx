@@ -1,24 +1,295 @@
-export default function WorkPage() {
+"use client";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { Project, SiteData, Lang } from "@/components/v2/types";
+import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
+import Header from "@/components/v2/Header";
+import Footer from "@/components/v2/Footer";
+import { RetryImg } from "@/components/v2/RetryImg";
+
+const ProjectDetailV2 = dynamic(() => import("@/components/v2/ProjectDetailV2"), { ssr: false });
+
+const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const fmtDate = (month: string, year: string) =>
+  `${MONTHS[Math.max(0, parseInt(month, 10) - 1)]}, ${year}`;
+
+// ── Category filter bar ─────────────────────────────────────────
+function CategoryBar({ categories, active, onChange }: {
+  categories: string[];
+  active: string | null;
+  onChange: (c: string | null) => void;
+}) {
+  if (categories.length === 0) return null;
   return (
-    <main className="min-h-screen pt-32 px-8 bg-white dark:bg-black text-black dark:text-white pb-24">
-      <h1 className="text-7xl md:text-9xl font-black tracking-tighter uppercase mb-16">
-        Selected<br/>Works
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Placeholder for works */}
-        <div className="aspect-[4/3] bg-zinc-200 dark:bg-zinc-900 rounded-lg flex items-center justify-center">
-          <span className="font-bold text-zinc-400">Project 01</span>
-        </div>
-        <div className="aspect-[4/3] bg-zinc-200 dark:bg-zinc-900 rounded-lg flex items-center justify-center">
-          <span className="font-bold text-zinc-400">Project 02</span>
-        </div>
-        <div className="aspect-[4/3] bg-zinc-200 dark:bg-zinc-900 rounded-lg flex items-center justify-center">
-          <span className="font-bold text-zinc-400">Project 03</span>
-        </div>
-        <div className="aspect-[4/3] bg-zinc-200 dark:bg-zinc-900 rounded-lg flex items-center justify-center">
-          <span className="font-bold text-zinc-400">Project 04</span>
-        </div>
+    <div style={{
+      padding: "clamp(12px, 1.8vw, 20px) clamp(12px, 2vw, 24px)",
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "8px",
+      background: "rgba(240,240,240,0.88)",
+      backdropFilter: "blur(10px)",
+      WebkitBackdropFilter: "blur(10px)",
+      borderBottom: "1px solid rgba(0,0,0,0.08)",
+      position: "sticky",
+      top: "52px",
+      zIndex: 10,
+    }}>
+      {["All", ...categories].map(cat => {
+        const isAll = cat === "All";
+        const isActive = isAll ? active === null : active === cat;
+        return (
+          <button
+            key={cat}
+            onClick={() => onChange(isAll ? null : cat)}
+            style={{
+              fontFamily: FONT,
+              fontWeight: isActive ? 400 : 300,
+              fontSize: "clamp(11px, 1.4vw, 18px)",
+              letterSpacing: "0.02em",
+              background: isActive ? "#0A0A0A" : "rgba(255,255,255,0.70)",
+              border: `1px solid ${isActive ? "#0A0A0A" : "rgba(0,0,0,0.12)"}`,
+              borderRadius: "100px",
+              padding: "clamp(4px, 0.6vh, 7px) clamp(12px, 1.6vw, 22px)",
+              color: isActive ? "#F0F0F0" : "rgba(0,0,0,0.55)",
+              cursor: "pointer",
+              lineHeight: 1.3,
+              whiteSpace: "nowrap",
+              transition: "background 0.18s, color 0.18s, border-color 0.18s",
+            }}
+            onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.95)"; e.currentTarget.style.color = "#0A0A0A"; } }}
+            onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.70)"; e.currentTarget.style.color = "rgba(0,0,0,0.55)"; } }}
+          >
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Grid card ───────────────────────────────────────────────────
+function GridCard({ project, onOpen, idx }: {
+  project: Project;
+  onOpen: (p: Project) => void;
+  idx: number;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [isCentered, setIsCentered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
+  const [imgRetry, setImgRetry] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsCentered(entry.isIntersecting),
+      { rootMargin: "-42% 0px -42% 0px", threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isMobile]);
+
+  return (
+    <motion.div
+      ref={cardRef}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: idx * 0.02, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      onClick={() => onOpen(project)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
+    >
+      {imgFailed ? (
+        <div style={{ width: "100%", aspectRatio: "16/9", background: "rgba(120,120,120,0.12)" }} />
+      ) : (
+        <RetryImg
+          key={imgRetry}
+          src={project.img}
+          alt={project.title}
+          style={{
+            width: "100%",
+            aspectRatio: "16/9" as React.CSSProperties["aspectRatio"],
+            objectFit: "cover",
+            display: "block",
+            transform: ((!isMobile && hovered) || (isMobile && isCentered)) ? "scale(1.04)" : "scale(1)",
+            transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+          }}
+          onError={() => {
+            if (imgRetry < 2) setTimeout(() => setImgRetry(r => r + 1), 800 * (imgRetry + 1));
+            else setImgFailed(true);
+          }}
+        />
+      )}
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+        <motion.div
+          animate={{ y: isCentered || (!isMobile && hovered) ? "0%" : "-100%" }}
+          initial={{ y: "-100%" }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            position: "absolute", top: 0, left: 0, right: 0,
+            padding: "8px 12px",
+            background: "rgba(255,255,255,0.30)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            borderBottom: "1px solid rgba(0,0,0,0.08)",
+            display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px",
+          }}
+        >
+          <span style={{ fontFamily: FONT, fontWeight: 300, fontSize: "12px", letterSpacing: "-0.01em", color: "#0A0A0A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {project.title}
+          </span>
+          <span style={{ fontFamily: FONT, fontWeight: 300, fontSize: "10px", color: "rgba(0,0,0,0.45)", flexShrink: 0 }}>
+            {fmtDate(project.month, project.year)}
+          </span>
+        </motion.div>
       </div>
-    </main>
+    </motion.div>
+  );
+}
+
+// ── Page ────────────────────────────────────────────────────────
+export default function WorkPage() {
+  const router = useRouter();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
+  const [selected, setSelected] = useState<Project | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [lang, setLang] = useState<Lang>("ko");
+  const [cols, setCols] = useState(3);
+  const [isExiting, setIsExiting] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("portfolio-lang") as Lang | null;
+    if (saved) setLang(saved);
+    fetchProjects().then(setProjects);
+    fetchSiteData().then(setSiteData);
+  }, []);
+
+  useEffect(() => {
+    const update = () => setCols(window.innerWidth >= 1024 ? 3 : window.innerWidth >= 640 ? 2 : 1);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const handleLangToggle = () => {
+    setLang(l => {
+      const next = l === "ko" ? "en" : "ko";
+      localStorage.setItem("portfolio-lang", next);
+      return next;
+    });
+  };
+
+  const handleBack = async () => {
+    setIsExiting(true);
+    await new Promise(r => setTimeout(r, 350));
+    router.back();
+  };
+
+  const categories = useMemo(() => [...new Set(
+    projects.flatMap(p => p.category ? p.category.split(",").map(c => c.trim()).filter(Boolean) : [])
+  )].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })), [projects]);
+
+  const filtered = useMemo(() => (activeCategory
+    ? projects.filter(p => p.category?.split(",").map(c => c.trim()).includes(activeCategory))
+    : projects
+  ).slice().sort((a, b) => {
+    const ay = parseInt(a.year) || 0, by = parseInt(b.year) || 0;
+    if (by !== ay) return by - ay;
+    return (parseInt(b.month) || 0) - (parseInt(a.month) || 0);
+  }), [projects, activeCategory]);
+
+  const detailList = [...projects].sort((a, b) => a.id - b.id);
+  const detailIdx = selected ? detailList.findIndex(p => p.id === selected.id) : -1;
+  const nextProject = detailIdx >= 0 ? detailList[(detailIdx + 1) % detailList.length] : undefined;
+  const prevProject = detailIdx >= 0 ? detailList[(detailIdx - 1 + detailList.length) % detailList.length] : undefined;
+  const handleNext = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx + 1) % detailList.length]); };
+  const handlePrev = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx - 1 + detailList.length) % detailList.length]); };
+
+  return (
+    <div style={{ background: "#F0F0F0", color: "#0A0A0A", minHeight: "100vh" }}>
+      <Header
+        onHome={handleBack}
+        onViewAll={() => {}}
+        onAbout={() => {}}
+        onContact={() => {}}
+        onBack={selected ? () => setSelected(null) : handleBack}
+        zIndex={selected ? 700 : 500}
+        alwaysVisible
+        siteData={siteData}
+        lang={lang}
+        onLangToggle={handleLangToggle}
+      />
+
+      {/* Blur entry / exit wrapper */}
+      <motion.div
+        initial={{ filter: "blur(20px)", opacity: 0 }}
+        animate={isExiting
+          ? { filter: "blur(20px)", opacity: 0 }
+          : { filter: "blur(0px)", opacity: 1 }
+        }
+        transition={{ duration: isExiting ? 0.35 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+        style={{ paddingTop: "52px" }}
+      >
+        <CategoryBar categories={categories} active={activeCategory} onChange={setActiveCategory} />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory ?? "all"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gap: "clamp(3px, 0.4vw, 6px)",
+              padding: "clamp(3px, 0.4vw, 6px)",
+            }}
+          >
+            {filtered.map((project, i) => (
+              <GridCard
+                key={project.id}
+                project={project}
+                onOpen={setSelected}
+                idx={i}
+              />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        <Footer siteData={siteData} lang={lang} />
+      </motion.div>
+
+      <AnimatePresence>
+        {selected && (
+          <ProjectDetailV2
+            key={`detail-${selected.id}`}
+            project={selected}
+            onClose={() => setSelected(null)}
+            onNext={handleNext}
+            onPrev={handlePrev}
+            nextProject={nextProject}
+            prevProject={prevProject}
+            siteData={siteData}
+            lang={lang}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
