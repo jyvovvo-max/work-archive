@@ -84,6 +84,7 @@ function rowToProject(row: Record<string, string>): Project | null {
     pairs: row.pairs || undefined,
     videoUrl: row.videoUrl || undefined,
     selected: row.selected?.toUpperCase() === "TRUE",
+    award: row.Award?.trim() || undefined,
   };
 }
 

@@ -12,6 +12,7 @@ export interface Project {
   pairs?: string;
   videoUrl?: string;
   selected: boolean;
+  award?: string;
 }
 
 export type Lang = "ko" | "en";

@@ -11,6 +11,7 @@ import WorksGrid from "@/components/v2/WorksGrid";
 import AboutSection from "@/components/v2/AboutSection";
 import Footer from "@/components/v2/Footer";
 import ContactModal from "@/components/v2/ContactModal";
+import AwardsSection from "@/components/v2/AwardsSection";
 
 const ProjectDetailV2 = dynamic(() => import("@/components/v2/ProjectDetailV2"), { ssr: false });
 
@@ -175,6 +176,15 @@ export default function Page() {
         borderTop: "1px solid rgba(0,0,0,0.12)",
       }}>
         <WorksGrid projects={shuffledWorks} onOpen={setSelected} />
+      </div>
+
+      {/* Awards */}
+      <div style={{
+        position: "relative",
+        zIndex: 2,
+        background: "#F0F0F0",
+      }}>
+        <AwardsSection projects={projects} onOpen={setSelected} />
       </div>
 
       {/* Layer 3: About + Footer */}
