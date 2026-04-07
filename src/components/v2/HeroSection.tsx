@@ -794,7 +794,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
             style={{
               position: "absolute",
               top: 0,
-              right: `-${RIGHT_OPT_SUBTITLE}px`,
+              right: `${-RIGHT_OPT_SUBTITLE}px`,
               display: "block",
               margin: 0,
               fontFamily: FONT,
