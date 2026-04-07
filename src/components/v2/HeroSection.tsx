@@ -628,9 +628,31 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   const titleY = useMotionValue(0);
   const descY  = useMotionValue(0);
   const titleContainerRef = useRef<HTMLDivElement>(null);
+  const titleH1Ref = useRef<HTMLHeadingElement>(null);
+  const [titleFontSize, setTitleFontSize] = useState("calc((100vw - clamp(40px, 8vw, 112px)) / 7)");
   const [latchScrollY, setLatchScrollY] = useState(1000);
   const latchRef = useRef(1000);
   useEffect(() => { latchRef.current = latchScrollY; }, [latchScrollY]);
+
+  // Fit title font size to container width after fonts load
+  useEffect(() => {
+    const fit = () => {
+      const el = titleH1Ref.current;
+      const container = titleContainerRef.current;
+      if (!el || !container) return;
+      const BASE = 100;
+      const prev = el.style.fontSize;
+      el.style.fontSize = `${BASE}px`;
+      const textW = el.scrollWidth;
+      el.style.fontSize = prev;
+      const containerW = container.offsetWidth;
+      if (textW === 0 || containerW === 0) return;
+      setTitleFontSize(`${(containerW / textW) * BASE}px`);
+    };
+    document.fonts.ready.then(fit);
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [siteData]);
 
   // Latch: scroll Y where title + desc start moving up together.
   // Should fire well before works section (vh + 550) slides over hero.
@@ -733,12 +755,13 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
       >
         <div style={{ position: "relative" }}>
           <motion.h1
+            ref={titleH1Ref}
             initial={{ filter: "blur(28px)", opacity: 0 }}
             animate={titleControls}
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "calc((100vw - clamp(40px, 8vw, 112px)) / 7)",
+              fontSize: titleFontSize,
               letterSpacing: "-0.045em",
               lineHeight: 0.88,
               color: "#FFFFFF",

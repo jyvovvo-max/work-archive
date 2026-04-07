@@ -212,6 +212,7 @@ export default function Header({
                   borderRadius: "100px",
                   cursor: "pointer",
                   padding: "3px 10px",
+                  marginRight: "-1px",
                   transition: "color 0.15s, border-color 0.15s",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.color = navHover; }}
