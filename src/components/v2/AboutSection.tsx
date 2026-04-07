@@ -58,12 +58,31 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
     <section
       ref={ref}
       style={{
-        padding: `clamp(80px, 10vh, 140px) ${GUTTER} clamp(80px, 10vh, 140px)`,
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.1)",
       }}
     >
-      {/* Headline — full width, 80% of previous size */}
+      {/* "About" label bar — same style as Selected Work / Awards */}
+      <div style={{
+        height: "52px",
+        display: "flex",
+        alignItems: "center",
+        padding: `0 ${GUTTER}`,
+        borderBottom: "1px solid rgba(0,0,0,0.15)",
+      }}>
+        <span style={{
+          fontFamily: FONT,
+          fontWeight: 300,
+          fontSize: "clamp(19px, 2.24vw, 30px)",
+          letterSpacing: "-0.02em",
+          color: "#0A0A0A",
+        }}>
+          About
+        </span>
+      </div>
+
+      <div style={{ padding: `clamp(48px, 6vh, 80px) ${GUTTER} clamp(80px, 10vh, 140px)` }}>
+      {/* Headline */}
       <BlurIn>
         <h2 style={{
           fontFamily: FONT,
@@ -166,6 +185,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
           </div>
         </BlurIn>
       )}
+      </div>
     </section>
   );
 });

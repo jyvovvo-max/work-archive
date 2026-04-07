@@ -199,7 +199,7 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(24px, 2.8vw, 38px)",
+          fontSize: "clamp(19px, 2.24vw, 30px)",
           letterSpacing: "-0.02em",
           color: "#0A0A0A",
         }}>
