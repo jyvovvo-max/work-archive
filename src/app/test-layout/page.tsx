@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import WorksGridV3 from "@/components/v2/WorksGridV3";
+import WorksHScroll from "@/components/v2/WorksHScroll";
 import { fetchProjects } from "@/components/v2/dataFetch";
 import { Project } from "@/components/v2/types";
 
@@ -15,8 +15,8 @@ export default function TestLayoutPage() {
   }, []);
 
   return (
-    <main style={{ background: "#F0F0F0", minHeight: "100vh", paddingTop: "60px" }}>
-      <WorksGridV3
+    <main style={{ background: "#F0F0F0", minHeight: "100vh" }}>
+      <WorksHScroll
         projects={projects}
         onOpen={(p) => alert(`Open: ${p.title}`)}
       />
