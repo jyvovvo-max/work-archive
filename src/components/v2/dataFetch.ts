@@ -110,7 +110,7 @@ const FALLBACK_PROJECTS: Project[] = [
 
 // rowToSiteData already reads map.awards below
 export const FALLBACK_SITE: SiteData = {
-  siteName: "Jinyoung Hwang",
+  siteName: "W/A",
   landingTitle: "Work Archive",
   landingSubtitle: "2015–Present",
   landingDescription:
