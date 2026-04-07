@@ -65,9 +65,10 @@ function CategoryBar({ categories, active, onChange }: {
 }
 
 // ── Grid card ───────────────────────────────────────────────────
-function GridCard({ project, onOpen }: {
+function GridCard({ project, onOpen, isExiting }: {
   project: Project;
   onOpen: (p: Project) => void;
+  isExiting?: boolean;
   idx?: number;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -76,8 +77,9 @@ function GridCard({ project, onOpen }: {
   const [imgFailed, setImgFailed] = useState(false);
   const [imgRetry, setImgRetry] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
-  // Random delay per card so images appear blur-to-clean in random order
-  const imgDelay = useRef(Math.random() * 0.75).current;
+  // Separate random delays for entry and exit
+  const imgDelay  = useRef(Math.random() * 0.75).current;
+  const exitDelay = useRef(Math.random() * 0.28).current;
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -112,8 +114,14 @@ function GridCard({ project, onOpen }: {
       <div style={{ width: "100%", aspectRatio: "16/9", position: "relative", background: "rgba(160,160,160,0.10)" }}>
         <motion.div
           initial={{ opacity: 0, filter: "blur(16px)" }}
-          animate={{ opacity: 1, filter: "blur(0px)" }}
-          transition={{ delay: imgDelay, duration: 0.9, ease: [0.55, 0, 1, 0.6] }}
+          animate={isExiting
+            ? { opacity: 0, filter: "blur(16px)" }
+            : { opacity: 1, filter: "blur(0px)" }
+          }
+          transition={isExiting
+            ? { delay: exitDelay, duration: 0.4, ease: [0.55, 0, 1, 0.6] }
+            : { delay: imgDelay,  duration: 0.9, ease: [0.55, 0, 1, 0.6] }
+          }
           style={{ position: "absolute", inset: 0 }}
         >
           {imgFailed ? (
@@ -203,8 +211,15 @@ export default function WorkPage() {
 
   const handleBack = async () => {
     setIsExiting(true);
-    await new Promise(r => setTimeout(r, 350));
+    await new Promise(r => setTimeout(r, 750));
     router.back();
+  };
+
+  const handleAbout = async () => {
+    setIsExiting(true);
+    sessionStorage.setItem("pendingScroll", "about");
+    await new Promise(r => setTimeout(r, 750));
+    router.push("/");
   };
 
   const categories = useMemo(() => [...new Set(
@@ -232,7 +247,7 @@ export default function WorkPage() {
       <Header
         onHome={handleBack}
         onViewAll={() => {}}
-        onAbout={() => {}}
+        onAbout={handleAbout}
         onContact={() => {}}
         onBack={selected ? () => setSelected(null) : handleBack}
         zIndex={selected ? 700 : 500}
@@ -242,14 +257,11 @@ export default function WorkPage() {
         onLangToggle={handleLangToggle}
       />
 
-      {/* Blur entry / exit wrapper */}
+      {/* Blur entry wrapper — exit handled per-card */}
       <motion.div
         initial={{ filter: "blur(20px)", opacity: 0 }}
-        animate={isExiting
-          ? { filter: "blur(20px)", opacity: 0 }
-          : { filter: "blur(0px)", opacity: 1 }
-        }
-        transition={{ duration: isExiting ? 0.35 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+        animate={{ filter: "blur(0px)", opacity: 1 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         style={{ paddingTop: "52px" }}
       >
         <CategoryBar categories={categories} active={activeCategory} onChange={setActiveCategory} />
@@ -273,6 +285,7 @@ export default function WorkPage() {
                 key={project.id}
                 project={project}
                 onOpen={setSelected}
+                isExiting={isExiting}
               />
             ))}
           </motion.div>

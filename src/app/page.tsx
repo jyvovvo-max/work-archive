@@ -33,6 +33,13 @@ export default function Page() {
     const saved = localStorage.getItem("portfolio-lang") as Lang | null;
     if (saved) setLang(saved);
 
+    // About scroll signal from /work page
+    const pendingScroll = sessionStorage.getItem("pendingScroll");
+    if (pendingScroll === "about") {
+      sessionStorage.removeItem("pendingScroll");
+      setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 400);
+    }
+
     const hash = window.location.hash;
     if (hash.startsWith("#/detail/")) {
       const id = parseInt(hash.replace("#/detail/", ""));
