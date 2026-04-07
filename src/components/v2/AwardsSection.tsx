@@ -90,11 +90,7 @@ function AwardRow({
             initial={{ opacity: 1, filter: "blur(16px)" }}
             animate={{ opacity: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, filter: "blur(8px)" }}
-            transition={{
-              duration: 1.0,
-              ease: [0.16, 1, 0.3, 1],
-              exit: { duration: 1.5, ease: [0.4, 0, 1, 1] },
-            }}
+            transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: "fixed",
               left: imgPos.left,
