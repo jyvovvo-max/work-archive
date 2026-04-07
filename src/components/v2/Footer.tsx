@@ -69,7 +69,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
     <footer style={{
       background: "#1A1A1A",
       borderTop: "1px solid rgba(240,237,232,0.06)",
-      padding: `clamp(20px, 2.5vh, 35px) ${GUTTER} clamp(12px, 1.5vh, 20px)`,
+      padding: `clamp(16px, 2vh, 28px) ${GUTTER} clamp(10px, 1.2vh, 16px)`,
     }}>
       {/* Headline */}
       <BlurIn>

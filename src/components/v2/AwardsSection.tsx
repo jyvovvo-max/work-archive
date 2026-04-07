@@ -165,7 +165,7 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
   if (awardProjects.length === 0) return null;
 
   return (
-    <section style={{ background: "#F0F0F0", position: "relative", paddingBottom: "clamp(32px, 4vw, 64px)" }}>
+    <section style={{ background: "#F0F0F0", position: "relative", paddingBottom: "clamp(64px, 8vw, 128px)" }}>
       {isMobile && (
         <span
           ref={measureRef}
@@ -192,7 +192,7 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
         padding: `0 ${GUTTER}`,
         borderTop: "1px solid rgba(0,0,0,0.15)",
         borderBottom: "1px solid rgba(0,0,0,0.15)",
-        marginBottom: isMobile ? "24px" : "clamp(32px, 4vw, 56px)",
+        marginBottom: isMobile ? "16px" : "clamp(22px, 2.8vw, 39px)",
         position: "relative",
         zIndex: 1,
       }}>
