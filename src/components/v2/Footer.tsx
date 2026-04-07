@@ -152,8 +152,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               {igHandle}
             </a>
           </BlurIn>
-          {/* Clock — rightmost column on desktop */}
-          <BlurIn delay={0.24} style={{ gridColumn: "7" }}>
+          {/* Clock — rightmost column on desktop, right-aligned */}
+          <BlurIn delay={0.24} style={{ gridColumn: "7", display: "flex", justifyContent: "flex-end" }}>
             <div style={valueStyle}>KST, {time}</div>
           </BlurIn>
         </div>
