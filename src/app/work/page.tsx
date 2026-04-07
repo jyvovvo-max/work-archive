@@ -29,13 +29,7 @@ function CategoryBar({ categories, active, onChange }: {
       display: "flex",
       flexWrap: "wrap",
       gap: "8px",
-      background: "rgba(240,240,240,0.88)",
-      backdropFilter: "blur(10px)",
-      WebkitBackdropFilter: "blur(10px)",
       borderBottom: "1px solid rgba(0,0,0,0.08)",
-      position: "sticky",
-      top: "52px",
-      zIndex: 10,
     }}>
       {["All", ...categories].map(cat => {
         const isAll = cat === "All";
@@ -242,6 +236,7 @@ export default function WorkPage() {
         onContact={() => {}}
         onBack={selected ? () => setSelected(null) : handleBack}
         zIndex={selected ? 700 : 500}
+        alwaysVisible
         siteData={siteData}
         lang={lang}
         onLangToggle={handleLangToggle}
@@ -283,7 +278,13 @@ export default function WorkPage() {
           </motion.div>
         </AnimatePresence>
 
-        <Footer siteData={siteData} lang={lang} />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Footer siteData={siteData} lang={lang} />
+        </motion.div>
       </motion.div>
 
       <AnimatePresence>
