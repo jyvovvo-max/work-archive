@@ -634,20 +634,17 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   const latchRef = useRef(1000);
   useEffect(() => { latchRef.current = latchScrollY; }, [latchScrollY]);
 
-  // Fit title font size to container width after fonts load
+  // Fit title font size: measure via hidden span to avoid display:block scrollWidth issue
+  const measureSpanRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const fit = () => {
-      const el = titleH1Ref.current;
+      const span = measureSpanRef.current;
       const container = titleContainerRef.current;
-      if (!el || !container) return;
-      const BASE = 100;
-      const prev = el.style.fontSize;
-      el.style.fontSize = `${BASE}px`;
-      const textW = el.scrollWidth;
-      el.style.fontSize = prev;
+      if (!span || !container) return;
+      const textW = span.getBoundingClientRect().width;
       const containerW = container.offsetWidth;
       if (textW === 0 || containerW === 0) return;
-      setTitleFontSize(`${(containerW / textW) * BASE}px`);
+      setTitleFontSize(`${(containerW / textW) * 100}px`);
     };
     document.fonts.ready.then(fit);
     window.addEventListener("resize", fit);
@@ -754,6 +751,23 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
         }}
       >
         <div style={{ position: "relative" }}>
+          {/* Hidden measurement span — same font settings at 100px base */}
+          <span
+            ref={measureSpanRef}
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              visibility: "hidden",
+              whiteSpace: "nowrap",
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: "100px",
+              letterSpacing: "-0.045em",
+              pointerEvents: "none",
+            }}
+          >
+            {title}
+          </span>
           <motion.h1
             ref={titleH1Ref}
             initial={{ filter: "blur(28px)", opacity: 0 }}
