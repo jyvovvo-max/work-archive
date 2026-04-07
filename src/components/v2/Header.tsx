@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiteData, Lang } from "./types";
-import { GUTTER } from "./layout";
+import { GUTTER, GRID_GAP } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -107,9 +107,11 @@ export default function Header({
             top: 0, left: 0, right: 0,
             zIndex,
             height: "52px",
-            display: "flex",
+            display: onBack ? "flex" : "grid",
+            gridTemplateColumns: onBack ? undefined : `repeat(7, 1fr)`,
+            columnGap: onBack ? undefined : GRID_GAP,
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: onBack ? "space-between" : undefined,
             background: bg,
             backdropFilter: "blur(36px) saturate(180%)",
             WebkitBackdropFilter: "blur(36px) saturate(180%)",
@@ -120,7 +122,7 @@ export default function Header({
           }}
         >
           {/* Left: optional back arrow + site name */}
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gridColumn: onBack ? undefined : "1" }}>
             {onBack && (
               <button
                 onClick={onBack}
@@ -162,46 +164,76 @@ export default function Header({
             </span>
           </div>
 
-          {/* Right nav */}
-          <nav style={{
-            display: "flex",
-            gap: "clamp(16px, 2.8vw, 40px)",
-            alignItems: "center",
-            paddingRight: onBack ? GUTTER : "0",
-          }}>
-            {[
-              { label: "View all", action: onViewAll },
-              { label: "About",    action: onAbout   },
-              { label: "Contact",  action: onContact },
-            ].map(({ label, action }) => (
-              <button
-                key={label}
-                onClick={action}
-                style={{
-                  fontFamily: FONT,
-                  fontWeight: 300,
-                  fontSize: "clamp(12px, 1.7vw, 25px)",
-                  letterSpacing: "0.01em",
-                  textTransform: "uppercase",
-                  color: navColor,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px 0",
-                  transition: "color 0.15s",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = navHover)}
-                onMouseLeave={e => (e.currentTarget.style.color = navColor)}
-              >
-                {label}
-              </button>
-            ))}
+          {/* Right nav — grid mode: each item at column start / back mode: flex */}
+          {onBack ? (
+            <nav style={{
+              display: "flex",
+              gap: "clamp(16px, 2.8vw, 40px)",
+              alignItems: "center",
+              paddingRight: GUTTER,
+            }}>
+              {[
+                { label: "View all", action: onViewAll },
+                { label: "About",    action: onAbout   },
+                { label: "Contact",  action: onContact },
+              ].map(({ label, action }) => (
+                <button
+                  key={label}
+                  onClick={action}
+                  style={{
+                    fontFamily: FONT, fontWeight: 300,
+                    fontSize: "clamp(12px, 1.7vw, 25px)",
+                    letterSpacing: "0.01em", textTransform: "uppercase",
+                    color: navColor, background: "none", border: "none",
+                    cursor: "pointer", padding: "4px 0", transition: "color 0.15s",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = navHover)}
+                  onMouseLeave={e => (e.currentTarget.style.color = navColor)}
+                >
+                  {label}
+                </button>
+              ))}
+              {onLangToggle && (
+                <button onClick={onLangToggle} style={{ fontFamily: FONT, fontWeight: 300, fontSize: "clamp(11px, 1.4vw, 20px)", letterSpacing: "0.06em", color: navColor, background: "none", border: `1px solid ${border}`, borderRadius: "100px", cursor: "pointer", padding: "3px 10px", transition: "color 0.15s, border-color 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = navHover; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = navColor; }}
+                >
+                  {lang === "ko" ? "KO" : "EN"}
+                </button>
+              )}
+            </nav>
+          ) : (
+            <>
+              {[
+                { label: "View all", action: onViewAll, col: 4 },
+                { label: "About",    action: onAbout,   col: 5 },
+                { label: "Contact",  action: onContact,  col: 6 },
+              ].map(({ label, action, col }) => (
+                <button
+                  key={label}
+                  onClick={action}
+                  style={{
+                    gridColumn: String(col),
+                    fontFamily: FONT, fontWeight: 300,
+                    fontSize: "clamp(12px, 1.7vw, 25px)",
+                    letterSpacing: "0.01em", textTransform: "uppercase",
+                    color: navColor, background: "none", border: "none",
+                    cursor: "pointer", padding: "4px 0", transition: "color 0.15s",
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = navHover)}
+                  onMouseLeave={e => (e.currentTarget.style.color = navColor)}
+                >
+                  {label}
+                </button>
+              ))}
 
             {/* KO / EN toggle — single pill, shows current language */}
             {onLangToggle && (
               <button
                 onClick={onLangToggle}
                 style={{
+                  gridColumn: "7",
                   fontFamily: FONT,
                   fontWeight: 300,
                   fontSize: "clamp(11px, 1.4vw, 20px)",
@@ -220,7 +252,8 @@ export default function Header({
                 {lang === "ko" ? "KO" : "EN"}
               </button>
             )}
-          </nav>
+          </>
+          )}
         </motion.header>
       )}
     </AnimatePresence>
