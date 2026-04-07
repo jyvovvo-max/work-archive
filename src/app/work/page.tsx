@@ -71,10 +71,10 @@ function CategoryBar({ categories, active, onChange }: {
 }
 
 // ── Grid card ───────────────────────────────────────────────────
-function GridCard({ project, onOpen, idx }: {
+function GridCard({ project, onOpen }: {
   project: Project;
   onOpen: (p: Project) => void;
-  idx: number;
+  idx?: number;
 }) {
   const [hovered, setHovered] = useState(false);
   const [isCentered, setIsCentered] = useState(false);
@@ -82,6 +82,8 @@ function GridCard({ project, onOpen, idx }: {
   const [imgFailed, setImgFailed] = useState(false);
   const [imgRetry, setImgRetry] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
+  // Random delay per card so images appear blur-to-clean in random order
+  const imgDelay = useRef(Math.random() * 0.75).current;
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -102,41 +104,52 @@ function GridCard({ project, onOpen, idx }: {
     return () => observer.disconnect();
   }, [isMobile]);
 
+  const scaled = (!isMobile && hovered) || (isMobile && isCentered);
+
   return (
-    <motion.div
+    <div
       ref={cardRef}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: idx * 0.02, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => onOpen(project)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {imgFailed ? (
-        <div style={{ width: "100%", aspectRatio: "16/9", background: "rgba(120,120,120,0.12)" }} />
-      ) : (
-        <RetryImg
-          key={imgRetry}
-          src={project.img}
-          alt={project.title}
-          style={{
-            width: "100%",
-            aspectRatio: "16/9" as React.CSSProperties["aspectRatio"],
-            objectFit: "cover",
-            display: "block",
-            transform: ((!isMobile && hovered) || (isMobile && isCentered)) ? "scale(1.04)" : "scale(1)",
-            transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
-          }}
-          onError={() => {
-            if (imgRetry < 2) setTimeout(() => setImgRetry(r => r + 1), 800 * (imgRetry + 1));
-            else setImgFailed(true);
-          }}
-        />
-      )}
+      {/* Placeholder — always visible, gives grid its structure */}
+      <div style={{ width: "100%", aspectRatio: "16/9", position: "relative", background: "rgba(160,160,160,0.10)" }}>
+        <motion.div
+          initial={{ opacity: 0, filter: "blur(16px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          transition={{ delay: imgDelay, duration: 0.9, ease: [0.55, 0, 1, 0.6] }}
+          style={{ position: "absolute", inset: 0 }}
+        >
+          {imgFailed ? (
+            <div style={{ width: "100%", height: "100%", background: "rgba(120,120,120,0.12)" }} />
+          ) : (
+            <RetryImg
+              key={imgRetry}
+              src={project.img}
+              alt={project.title}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+                transform: scaled ? "scale(1.04)" : "scale(1)",
+                transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+              }}
+              onError={() => {
+                if (imgRetry < 2) setTimeout(() => setImgRetry(r => r + 1), 800 * (imgRetry + 1));
+                else setImgFailed(true);
+              }}
+            />
+          )}
+        </motion.div>
+      </div>
+
+      {/* Hover title overlay */}
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
         <motion.div
-          animate={{ y: isCentered || (!isMobile && hovered) ? "0%" : "-100%" }}
+          animate={{ y: scaled ? "0%" : "-100%" }}
           initial={{ y: "-100%" }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           style={{
@@ -157,7 +170,7 @@ function GridCard({ project, onOpen, idx }: {
           </span>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -229,7 +242,6 @@ export default function WorkPage() {
         onContact={() => {}}
         onBack={selected ? () => setSelected(null) : handleBack}
         zIndex={selected ? 700 : 500}
-        alwaysVisible
         siteData={siteData}
         lang={lang}
         onLangToggle={handleLangToggle}
@@ -261,12 +273,11 @@ export default function WorkPage() {
               padding: "clamp(3px, 0.4vw, 6px)",
             }}
           >
-            {filtered.map((project, i) => (
+            {filtered.map((project) => (
               <GridCard
                 key={project.id}
                 project={project}
                 onOpen={setSelected}
-                idx={i}
               />
             ))}
           </motion.div>

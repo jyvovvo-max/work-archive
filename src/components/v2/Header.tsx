@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiteData, Lang } from "./types";
-import { GUTTER } from "./layout";
+import { GUTTER, RIGHT_OPT_PX } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -212,7 +212,7 @@ export default function Header({
                   borderRadius: "100px",
                   cursor: "pointer",
                   padding: "3px 10px",
-                  marginRight: "-1px",
+                  marginRight: `-${RIGHT_OPT_PX}px`,
                   transition: "color 0.15s, border-color 0.15s",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.color = navHover; }}

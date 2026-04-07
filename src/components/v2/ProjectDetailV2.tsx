@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Project, SiteData, Lang } from "./types";
+import { GUTTER } from "./layout";
 import Footer from "./Footer";
 import { RetryImg } from "./RetryImg";
 
@@ -270,7 +271,7 @@ export default function ProjectDetailV2({
   const goLightbox = (dir: 1 | -1) =>
     setLightboxIdx(i => i === null ? null : (i + dir + allImages.length) % allImages.length);
 
-  const hPad = isMobile ? "clamp(16px, 4vw, 32px)" : "clamp(32px, 5vw, 72px)";
+  const hPad = GUTTER;
 
   return (
     <motion.div
@@ -452,9 +453,7 @@ export default function ProjectDetailV2({
           onMouseEnter={() => setPrevHover(true)}
           onMouseLeave={() => setPrevHover(false)}
           style={{
-            padding: isMobile
-              ? `clamp(24px, 4vh, 40px) clamp(16px, 3vw, 32px)`
-              : `clamp(32px, 5vh, 56px) clamp(32px, 5vw, 72px)`,
+            padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
             borderRight: `1px solid ${colors.divider}`,
             background: prevHover ? colors.footerHover : colors.footerBg,
@@ -498,9 +497,7 @@ export default function ProjectDetailV2({
           onMouseEnter={() => setNextHover(true)}
           onMouseLeave={() => setNextHover(false)}
           style={{
-            padding: isMobile
-              ? `clamp(24px, 4vh, 40px) clamp(16px, 3vw, 32px)`
-              : `clamp(32px, 5vh, 56px) clamp(32px, 5vw, 72px)`,
+            padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
             background: nextHover ? colors.footerHover : colors.footerBg,
             transition: "background 0.22s ease",

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { GUTTER } from "./layout";
+import { GUTTER, RIGHT_OPT_PX } from "./layout";
 import {
   motion,
   useMotionValue,
@@ -743,7 +743,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
           position: "absolute",
           top: "62px",
           left: GUTTER,
-          right: GUTTER,
+          right: `calc(${GUTTER} - ${RIGHT_OPT_PX}px)`,
           zIndex: 20,
           pointerEvents: "none",
           mixBlendMode: "difference",
@@ -794,7 +794,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
             style={{
               position: "absolute",
               top: 0,
-              right: 0,
+              right: `-${RIGHT_OPT_PX}px`,
               display: "block",
               margin: 0,
               fontFamily: FONT,
