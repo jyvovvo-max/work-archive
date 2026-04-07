@@ -724,13 +724,14 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
           position: "absolute",
           top: "62px",
           left: GUTTER,
+          right: GUTTER,
           zIndex: 20,
           pointerEvents: "none",
           mixBlendMode: "difference",
           y: titleY,
         }}
       >
-        <div style={{ position: "relative", display: "inline-block" }}>
+        <div style={{ position: "relative" }}>
           <motion.h1
             initial={{ filter: "blur(28px)", opacity: 0 }}
             animate={titleControls}
