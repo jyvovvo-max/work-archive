@@ -7,6 +7,7 @@ import { Project, SiteData, Lang } from "@/components/v2/types";
 import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
 import Header from "@/components/v2/Header";
 import Footer from "@/components/v2/Footer";
+import ContactModal from "@/components/v2/ContactModal";
 import { RetryImg } from "@/components/v2/RetryImg";
 
 const ProjectDetailV2 = dynamic(() => import("@/components/v2/ProjectDetailV2"), { ssr: false });
@@ -186,6 +187,7 @@ export default function WorkPage() {
   const [lang, setLang] = useState<Lang>("ko");
   const [cols, setCols] = useState(3);
   const [isExiting, setIsExiting] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("portfolio-lang") as Lang | null;
@@ -248,7 +250,7 @@ export default function WorkPage() {
         onHome={handleBack}
         onViewAll={() => {}}
         onAbout={handleAbout}
-        onContact={() => {}}
+        onContact={() => setContactOpen(true)}
         onBack={selected ? () => setSelected(null) : handleBack}
         zIndex={selected ? 700 : 500}
         alwaysVisible
@@ -315,6 +317,14 @@ export default function WorkPage() {
           />
         )}
       </AnimatePresence>
+
+      <ContactModal
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        email={siteData?.footerEmail ?? ""}
+        igHandle={siteData?.footerInstagramHandle ?? ""}
+        igUrl={siteData?.footerInstagramUrl ?? ""}
+      />
     </div>
   );
 }

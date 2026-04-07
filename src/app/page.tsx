@@ -22,6 +22,7 @@ export default function Page() {
   const [lang, setLang] = useState<Lang>("ko");
   const [contactOpen, setContactOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
+  const [pendingAboutScroll, setPendingAboutScroll] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const aboutRef = useRef<HTMLElement>(null);
 
@@ -33,11 +34,10 @@ export default function Page() {
     const saved = localStorage.getItem("portfolio-lang") as Lang | null;
     if (saved) setLang(saved);
 
-    // About scroll signal from /work page
-    const pendingScroll = sessionStorage.getItem("pendingScroll");
-    if (pendingScroll === "about") {
+    // About scroll signal from /work page — flag only; actual scroll fires after projects load
+    if (sessionStorage.getItem("pendingScroll") === "about") {
       sessionStorage.removeItem("pendingScroll");
-      setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 400);
+      setPendingAboutScroll(true);
     }
 
     const hash = window.location.hash;
@@ -69,6 +69,14 @@ export default function Page() {
       if (project) { setSelected(project); setPendingDetailId(null); }
     }
   }, [pendingDetailId, projects]);
+
+  // Scroll to About after projects + images have settled
+  useEffect(() => {
+    if (!pendingAboutScroll || projects.length === 0) return;
+    setPendingAboutScroll(false);
+    // Wait for WorksGrid images to render and expand the page height
+    setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 800);
+  }, [pendingAboutScroll, projects]);
 
   const selectedWorks = useMemo(() => {
     const sel = projects.filter(p => p.selected);
