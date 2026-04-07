@@ -178,16 +178,7 @@ export default function Page() {
         <WorksGrid projects={shuffledWorks} onOpen={setSelected} />
       </div>
 
-      {/* Awards */}
-      <div style={{
-        position: "relative",
-        zIndex: 2,
-        background: "#F0F0F0",
-      }}>
-        <AwardsSection projects={projects} onOpen={setSelected} />
-      </div>
-
-      {/* Layer 3: About + Footer */}
+      {/* Layer 3: About + Awards + Footer */}
       <div style={{
         position: "relative",
         zIndex: 3,
@@ -195,6 +186,7 @@ export default function Page() {
         borderTop: "1px solid rgba(0,0,0,0.08)",
       }}>
         <AboutSection ref={aboutRef} siteData={siteData} lang={lang} />
+        <AwardsSection projects={projects} onOpen={setSelected} />
         <Footer siteData={siteData} lang={lang} />
       </div>
 
