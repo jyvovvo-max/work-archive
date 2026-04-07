@@ -117,11 +117,16 @@ export default function Page() {
   const headerOnBack = selected ? handleCloseDetail : undefined;
 
   return (
-    <motion.div
-      style={{ color: "#0A0A0A", background: "#F0F0F0" }}
-      animate={isExiting ? { filter: "blur(20px)", opacity: 0 } : { filter: "blur(0px)", opacity: 1 }}
-      transition={{ duration: 0.35 }}
-    >
+    <div style={{ color: "#0A0A0A", background: "#F0F0F0" }}>
+      {/* Exit overlay — opacity fade only, avoids breaking position:fixed Hero */}
+      {isExiting && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.35 }}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#F0F0F0" }}
+        />
+      )}
       <Header
         onHome={scrollToTop}
         onViewAll={handleViewAll}
@@ -191,6 +196,6 @@ export default function Page() {
         igHandle={siteData?.footerInstagramHandle ?? ""}
         igUrl={siteData?.footerInstagramUrl ?? ""}
       />
-    </motion.div>
+    </div>
   );
 }
