@@ -3,7 +3,8 @@ export const GUTTER = "clamp(20px, 4vw, 56px)";
 export const GRID_GAP = "clamp(16px, 2vw, 32px)";
 export const GRID_COLS = 7;
 
-// Optical right-edge correction (px): KOR pill, landing subtitle, and landing title
-// all share this single offset so their right edges stay pixel-perfectly aligned.
-// Increase to shift all three further right; decrease to pull them back.
-export const RIGHT_OPT_PX = 1;
+// Optical right-edge correction (px) — tune each independently.
+// Positive = element shifts further right past the GUTTER baseline.
+export const RIGHT_OPT_PILL     = 1;  // KOR pill (Header)
+export const RIGHT_OPT_SUBTITLE = 1;  // 랜딩 서브타이틀 (HeroSection)
+export const RIGHT_OPT_TITLE    = 1;  // 랜딩 타이틀 컨테이너 (HeroSection)
