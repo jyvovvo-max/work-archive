@@ -276,7 +276,7 @@ export default function ProjectDetailV2({
         background: colors.bg,
         transition: "background-color 0.8s ease",
         overflowX: "hidden",
-        color: "#F0EDE8",
+        color: "#F0F0F0",
         minHeight: "100vh",
       }}
     >
@@ -319,7 +319,7 @@ export default function ProjectDetailV2({
               fontSize: isMobile ? "clamp(27px, 8.76vw, 49px)" : "clamp(34px, 4.2vw, 61px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
-              color: "#F0EDE8",
+              color: "#F0F0F0",
               margin: "0 0 12px",
               wordBreak: "keep-all",
             }}
@@ -335,7 +335,7 @@ export default function ProjectDetailV2({
               fontWeight: 300,
               fontSize: "clamp(20px, 1.8vw, 25px)",
               letterSpacing: "0.02em",
-              color: "rgba(240,237,232,0.28)",
+              color: "rgba(240,240,240,0.28)",
             }}
           >
             {String(project.id).padStart(3, "0")}-{MONTHS[Math.max(0, parseInt(project.month, 10) - 1)]}-{project.year}
@@ -355,7 +355,7 @@ export default function ProjectDetailV2({
               fontWeight: 300,
               fontSize: isMobile ? "15.5px" : "clamp(16px, 1.32vw, 20px)",
               lineHeight: 1.75,
-              color: "rgba(240,237,232,0.75)",
+              color: "rgba(240,240,240,0.75)",
               margin: "0 0 28px",
               wordBreak: lang === "ko" ? "keep-all" : "normal",
             }}
@@ -378,10 +378,10 @@ export default function ProjectDetailV2({
                   fontSize: isMobile ? "11px" : "12px",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
-                  background: "rgba(240,237,232,0.06)",
+                  background: "rgba(240,240,240,0.06)",
                   borderRadius: "100px",
                   padding: "4px 10px",
-                  color: "rgba(240,237,232,0.5)",
+                  color: "rgba(240,240,240,0.5)",
                 }}>
                   {c}
                 </span>
@@ -457,8 +457,8 @@ export default function ProjectDetailV2({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-              <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="2" y1="8" x2="8" y2="14" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="8" x2="8" y2="14" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <span style={{
               fontFamily: FONT,
@@ -466,7 +466,7 @@ export default function ProjectDetailV2({
               fontSize: "10px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "rgba(240,237,232,0.22)",
+              color: "rgba(240,240,240,0.22)",
             }}>
               Previous
             </span>
@@ -476,7 +476,7 @@ export default function ProjectDetailV2({
             fontWeight: 300,
             fontSize: isMobile ? "17px" : "clamp(17px, 2vw, 24px)",
             letterSpacing: "-0.01em",
-            color: prevProject ? "#F0EDE8" : "rgba(240,237,232,0.2)",
+            color: prevProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
             wordBreak: "keep-all",
           }}>
             {prevProject?.title || "—"}
@@ -506,13 +506,13 @@ export default function ProjectDetailV2({
               fontSize: "10px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "rgba(240,237,232,0.22)",
+              color: "rgba(240,240,240,0.22)",
             }}>
               Next
             </span>
             <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-              <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="8" y1="8" x2="2" y2="14" stroke="rgba(240,237,232,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="8" y1="8" x2="2" y2="14" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
           <span style={{
@@ -520,7 +520,7 @@ export default function ProjectDetailV2({
             fontWeight: 300,
             fontSize: isMobile ? "17px" : "clamp(17px, 2vw, 24px)",
             letterSpacing: "-0.01em",
-            color: nextProject ? "#F0EDE8" : "rgba(240,237,232,0.2)",
+            color: nextProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
             textAlign: "right",
             wordBreak: "keep-all",
           }}>
@@ -576,11 +576,11 @@ export default function ProjectDetailV2({
               style={{
                 position: "absolute", left: "24px", top: "50%", transform: "translateY(-50%)",
                 background: "none", border: "none", cursor: "pointer",
-                color: "rgba(240,237,232,0.4)", zIndex: 810, padding: "8px",
+                color: "rgba(240,240,240,0.4)", zIndex: 810, padding: "8px",
                 transition: "color 0.18s",
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.4)")}
+              onMouseEnter={e => (e.currentTarget.style.color = "#F0F0F0")}
+              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,240,240,0.4)")}
             >
               <svg width="26" height="40" viewBox="0 0 26 40" fill="none">
                 <polyline points="20,4 6,20 20,36" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -592,11 +592,11 @@ export default function ProjectDetailV2({
               style={{
                 position: "absolute", right: "24px", top: "50%", transform: "translateY(-50%)",
                 background: "none", border: "none", cursor: "pointer",
-                color: "rgba(240,237,232,0.4)", zIndex: 810, padding: "8px",
+                color: "rgba(240,240,240,0.4)", zIndex: 810, padding: "8px",
                 transition: "color 0.18s",
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.4)")}
+              onMouseEnter={e => (e.currentTarget.style.color = "#F0F0F0")}
+              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,240,240,0.4)")}
             >
               <svg width="26" height="40" viewBox="0 0 26 40" fill="none">
                 <polyline points="6,4 20,20 6,36" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -606,7 +606,7 @@ export default function ProjectDetailV2({
             <div style={{
               position: "absolute", bottom: "24px", left: "50%", transform: "translateX(-50%)",
               fontFamily: FONT, fontSize: "10px", letterSpacing: "0.06em",
-              color: "rgba(240,237,232,0.28)",
+              color: "rgba(240,240,240,0.28)",
             }}>
               {lightboxIdx + 1} / {allImages.length}
             </div>
@@ -616,12 +616,12 @@ export default function ProjectDetailV2({
               style={{
                 position: "absolute", top: "20px", right: "28px",
                 background: "none", border: "none", cursor: "pointer",
-                color: "rgba(240,237,232,0.3)", zIndex: 810,
+                color: "rgba(240,240,240,0.3)", zIndex: 810,
                 fontSize: "18px", fontFamily: FONT, fontWeight: 200,
                 transition: "color 0.18s",
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.3)")}
+              onMouseEnter={e => (e.currentTarget.style.color = "#F0F0F0")}
+              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,240,240,0.3)")}
             >
               ✕
             </button>
@@ -629,7 +629,7 @@ export default function ProjectDetailV2({
         )}
       </AnimatePresence>
 
-      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: "rgba(240,237,232,0.55)", textHover: "#F0EDE8", border: colors.divider }} />
+      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: "rgba(240,240,240,0.55)", textHover: "#F0F0F0", border: colors.divider }} />
     </motion.div>
   );
 }
