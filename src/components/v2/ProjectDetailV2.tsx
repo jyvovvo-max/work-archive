@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
-import { Project, SiteData, Lang } from "./types";
+import { Project, SiteData, Lang, getTitle } from "./types";
 import { GUTTER, GRID_GAP } from "./layout";
 import Footer from "./Footer";
 import { RetryImg } from "./RetryImg";
@@ -257,6 +257,7 @@ export default function ProjectDetailV2({
     window.scrollTo(0, 0);
   }, [project.id]);
 
+  const title = getTitle(project, lang);
   const allImages = [project.img, ...(project.images ?? [])];
   const galleryImages = project.images ?? [];
   const rows = buildRows(galleryImages.length > 0 ? galleryImages : [project.img], project.pairs);
@@ -289,7 +290,7 @@ export default function ProjectDetailV2({
       >
         <RetryImg
           src={project.img}
-          alt={project.title}
+          alt={title}
           style={{ width: "100%", height: "auto", display: "block" }}
           placeholderStyle={{ aspectRatio: "16/9" }}
         />
@@ -324,7 +325,7 @@ export default function ProjectDetailV2({
               wordBreak: "keep-all",
             }}
           >
-            {project.title}
+            {title}
           </motion.h1>
           <motion.div
             initial={{ opacity: 0 }}
@@ -417,7 +418,7 @@ export default function ProjectDetailV2({
             <GalleryImage
               key={ri}
               src={row[0]}
-              alt={`${project.title} — ${ri + 1}`}
+              alt={`${title} — ${ri + 1}`}
               index={ri}
               onLightbox={() => setLightboxIdx(allImages.indexOf(row[0]))}
             />
@@ -479,7 +480,7 @@ export default function ProjectDetailV2({
             color: prevProject ? "#F0EDE8" : "rgba(240,237,232,0.2)",
             wordBreak: "keep-all",
           }}>
-            {prevProject?.title || "—"}
+            {prevProject ? getTitle(prevProject, lang) : "—"}
           </span>
         </div>
 
@@ -524,7 +525,7 @@ export default function ProjectDetailV2({
             textAlign: "right",
             wordBreak: "keep-all",
           }}>
-            {nextProject?.title || "—"}
+            {nextProject ? getTitle(nextProject, lang) : "—"}
           </span>
         </div>
       </div>
