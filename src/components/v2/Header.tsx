@@ -116,7 +116,7 @@ export default function Header({
             border: `1px solid ${border}`,
             borderTop: "none",
             borderRadius: 0,
-            padding: onBack ? "0" : `0 ${GUTTER}`,
+            padding: `0 ${GUTTER}`,
           }}
         >
           {/* Left: optional back arrow + site name */}
@@ -155,7 +155,7 @@ export default function Header({
                 color: nameColor,
                 userSelect: "none",
                 cursor: "pointer",
-                paddingLeft: onBack ? "clamp(16px, 2vw, 28px)" : "0",
+                paddingLeft: onBack ? "12px" : "0",
               }}
             >
               {siteName}
@@ -167,7 +167,7 @@ export default function Header({
             display: "flex",
             gap: "clamp(16px, 2.8vw, 40px)",
             alignItems: "center",
-            paddingRight: onBack ? GUTTER : "0",
+            paddingRight: "0",
           }}>
             {[
               { label: "View all", action: onViewAll },
