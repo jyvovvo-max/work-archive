@@ -442,7 +442,7 @@ export default function ProjectDetailV2({
       {/* ── Bottom navigation ── */}
       {(() => {
         const mx = (a: number, b: number) => Math.round(a * 0.7 + b * 0.3);
-        const dk = (v: number) => Math.round(v * 0.5);
+        const dk = (v: number) => Math.round(v * 0.7);
         const [cr, cg, cb] = colors.avg;
         const [pr, pg, pb] = prevColors.avg;
         const [nr, ng, nb] = nextColors.avg;
