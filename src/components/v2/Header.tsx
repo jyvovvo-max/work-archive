@@ -218,7 +218,7 @@ export default function Header({
                 onMouseEnter={e => { e.currentTarget.style.color = navHover; }}
                 onMouseLeave={e => { e.currentTarget.style.color = navColor; }}
               >
-                {lang === "ko" ? "KOR" : "ENG"}
+                {lang === "ko" ? "KO" : "EN"}
               </button>
             )}
           </nav>

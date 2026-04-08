@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Project } from "./types";
-import { GUTTER, GRID_COLS } from "./layout";
+import { GUTTER, GRID_COLS, SPACE_A, SPACE_B } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -165,7 +165,7 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
   if (awardProjects.length === 0) return null;
 
   return (
-    <section style={{ background: "#F0F0F0", position: "relative", paddingBottom: "clamp(64px, 8vw, 128px)" }}>
+    <section style={{ background: "#F0F0F0", position: "relative", paddingBottom: SPACE_B }}>
       {isMobile && (
         <span
           ref={measureRef}
@@ -192,7 +192,7 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
         padding: `0 ${GUTTER}`,
         borderTop: "1px solid rgba(0,0,0,0.15)",
         borderBottom: "1px solid rgba(0,0,0,0.15)",
-        marginBottom: isMobile ? "16px" : "clamp(22px, 2.8vw, 39px)",
+        marginBottom: SPACE_A,
         position: "relative",
         zIndex: 1,
       }}>

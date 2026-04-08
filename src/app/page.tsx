@@ -185,8 +185,8 @@ export default function Page() {
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.08)",
       }}>
-        <AboutSection ref={aboutRef} siteData={siteData} lang={lang} />
         <AwardsSection projects={projects} onOpen={setSelected} />
+        <AboutSection ref={aboutRef} siteData={siteData} lang={lang} />
         <Footer siteData={siteData} lang={lang} />
       </div>
 

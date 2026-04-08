@@ -3,7 +3,7 @@ import { forwardRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_A, SPACE_B } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -45,7 +45,6 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
     : siteData?.aboutBio ?? [];
   const services = siteData?.services ?? [];
   const experience = siteData?.experience ?? [];
-  const awards = siteData?.awards ?? [];
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -81,7 +80,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         </span>
       </div>
 
-      <div style={{ padding: `clamp(48px, 6vh, 80px) ${GUTTER} clamp(80px, 10vh, 140px)` }}>
+      <div style={{ padding: `${SPACE_A} ${GUTTER} ${SPACE_B}` }}>
       {/* Headline */}
       <BlurIn>
         <h2 style={{
@@ -91,7 +90,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
           letterSpacing: "-0.02em",
           lineHeight: 1.2,
           color: "#0A0A0A",
-          margin: isMobile ? "0 0 clamp(34px, 4.9vh, 62px) 0" : "0 0 clamp(48px, 7vh, 88px) 0",
+          margin: `0 0 ${SPACE_A} 0`,
           wordBreak: "keep-all",
         }}>
           {(siteData?.aboutHeadline ?? "Brand Designer at\nSHINSEGAE.").split("\n").map((line, i, arr) => (
@@ -163,28 +162,6 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         </BlurIn>
       </div>
 
-      {/* Awards — below grid, shown only when data exists */}
-      {awards.length > 0 && (
-        <BlurIn delay={0.06}>
-          <div style={{
-            marginTop: "clamp(48px, 7vh, 88px)",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0 clamp(24px, 4vw, 60px)",
-          }}>
-            {awards.map(a => (
-              <div key={a} style={{
-                fontFamily: FONT,
-                fontWeight: 300,
-                fontSize: "clamp(13px, 1.05vw, 16px)",
-                letterSpacing: "0.02em",
-                color: "rgba(0,0,0,0.55)",
-                lineHeight: 2.0,
-              }}>{a}</div>
-            ))}
-          </div>
-        </BlurIn>
-      )}
       </div>
     </section>
   );

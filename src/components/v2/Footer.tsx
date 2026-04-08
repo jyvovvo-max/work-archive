@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_C, SPACE_D } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -69,11 +69,11 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
     <footer style={{
       background: "#1A1A1A",
       borderTop: "1px solid rgba(240,237,232,0.06)",
-      padding: `clamp(16px, 2vh, 28px) ${GUTTER} clamp(10px, 1.2vh, 16px)`,
+      padding: `${isMobile ? "clamp(16px, 2vh, 28px)" : "clamp(8px, 1vh, 14px)"} ${GUTTER} ${isMobile ? "clamp(10px, 1.2vh, 16px)" : "clamp(5px, 0.6vh, 8px)"}`,
     }}>
       {/* Headline */}
       <BlurIn>
-        <div style={{ marginBottom: "clamp(38px, 5.6vh, 64px)" }}>
+        <div style={{ marginBottom: SPACE_C }}>
           <span style={{ display: "inline-flex", alignItems: "center" }}>
             <span style={{
               fontFamily: FONT, fontWeight: 300,
@@ -89,7 +89,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
 
       {/* Info */}
       {isMobile ? (
-        <BlurIn delay={0.06} style={{ marginBottom: "clamp(38px, 5.6vh, 64px)" }}>
+        <BlurIn delay={0.06} style={{ marginBottom: SPACE_D }}>
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(8, 1fr)",
@@ -125,7 +125,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
           columnGap: "clamp(16px, 2vw, 32px)",
-          marginBottom: "clamp(38px, 5.6vh, 64px)",
+          marginBottom: SPACE_D,
         }}>
           <BlurIn delay={0.06} style={{ gridColumn: "1" }}>
             <div style={valueStyle}>{location}</div>
