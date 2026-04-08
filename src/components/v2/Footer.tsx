@@ -26,8 +26,7 @@ function BlurIn({ children, delay = 0, style }: { children: React.ReactNode; del
 interface OverrideColors { bg: string; text: string; textHover: string; border: string; }
 
 export default function Footer({ siteData, lang = "ko", overrideColors }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors }) {
-  const headlineKo = siteData?.footerHeadline ?? "";
-  const headlineEn = siteData?.footerHeadlineEn ?? "I would love to hear from you!";
+  const headline = siteData?.footerHeadline ?? "A record of work. If something reached you, I'm here.";
   const location = siteData?.footerLocation ?? "Korea";
   const email = siteData?.footerEmail ?? "";
   const igHandle = siteData?.footerInstagramHandle ?? "";
@@ -76,27 +75,15 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
     }}>
       {/* Headline */}
       <BlurIn>
-        <div style={{ marginBottom: SPACE_C, display: "flex", flexDirection: "column", gap: "8px" }}>
-          {headlineKo && (
-            <span style={{
-              fontFamily: FONT, fontWeight: 300,
-              fontSize: "clamp(12px, 1.28vw, 16px)",
-              letterSpacing: "0.01em", color: overrideColors ? "#F0F0F0" : "#0A0A0A",
-              whiteSpace: "pre-line",
-            }}>
-              {headlineKo}
-            </span>
-          )}
-          {headlineEn && (
-            <span style={{
-              fontFamily: FONT, fontWeight: 300,
-              fontSize: "clamp(12px, 1.28vw, 16px)",
-              letterSpacing: "0.01em", color: overrideColors ? "#F0F0F0" : "#0A0A0A",
-              whiteSpace: "pre-line",
-            }}>
-              {headlineEn}
-            </span>
-          )}
+        <div style={{ marginBottom: SPACE_C }}>
+          <span style={{
+            fontFamily: FONT, fontWeight: 300,
+            fontSize: "clamp(12px, 1.28vw, 16px)",
+            letterSpacing: "0.01em", color: overrideColors ? "#F0F0F0" : "#0A0A0A",
+            whiteSpace: "pre-line",
+          }}>
+            {headline}
+          </span>
         </div>
       </BlurIn>
 
