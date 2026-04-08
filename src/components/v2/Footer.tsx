@@ -165,8 +165,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
 
       {/* Bottom bar — always visible */}
       <div style={{
-        borderTop: `1px solid ${overrideColors?.border ?? "rgba(0,0,0,0.08)"}`,
-        paddingTop: SPACE_C,
+        marginTop: SPACE_D,
         paddingBottom: SPACE_C,
       }}>
         <span style={{
