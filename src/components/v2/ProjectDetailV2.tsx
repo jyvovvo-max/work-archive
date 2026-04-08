@@ -335,7 +335,7 @@ export default function ProjectDetailV2({
               fontWeight: 300,
               fontSize: "clamp(20px, 1.8vw, 25px)",
               letterSpacing: "0.02em",
-              color: "rgba(240,240,240,0.28)",
+              color: "rgba(240,240,240,0.42)",
             }}
           >
             {String(project.id).padStart(3, "0")}-{MONTHS[Math.max(0, parseInt(project.month, 10) - 1)]}-{project.year}
@@ -355,7 +355,7 @@ export default function ProjectDetailV2({
               fontWeight: 300,
               fontSize: isMobile ? "16.3px" : "clamp(17px, 1.39vw, 21px)",
               lineHeight: 1.75,
-              color: "rgba(240,240,240,0.75)",
+              color: "#F0F0F0",
               margin: "0 0 28px",
               wordBreak: lang === "ko" ? "keep-all" : "normal",
             }}
@@ -379,10 +379,10 @@ export default function ProjectDetailV2({
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   background: "transparent",
-                  border: "1px solid rgba(240,240,240,0.2)",
+                  border: "1px solid rgba(240,240,240,0.35)",
                   borderRadius: "100px",
                   padding: "4px 10px",
-                  color: "rgba(240,240,240,0.5)",
+                  color: "rgba(240,240,240,0.75)",
                 }}>
                   {c}
                 </span>
