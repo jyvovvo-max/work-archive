@@ -65,7 +65,7 @@ function useExtractedColor(imgSrc: string) {
   const mix = (c: number, target: number, amount: number) => Math.round(c * amount + target * (1 - amount));
   const [r, g, b] = avg;
   const bg   = [r, g, b];
-  const foot = [mix(r, 10, 0.12), mix(g, 10, 0.12), mix(b, 12, 0.12)];
+  const foot = [mix(r, 0, 0.90), mix(g, 0, 0.90), mix(b, 0, 0.90)];
   const hover = [mix(r, 40, 0.28), mix(g, 40, 0.28), mix(b, 44, 0.28)];
   const div  = [mix(r, 55, 0.22), mix(g, 55, 0.22), mix(b, 60, 0.22)];
 
@@ -449,7 +449,7 @@ export default function ProjectDetailV2({
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
             borderRight: `1px solid ${colors.divider}`,
-            background: prevHover ? prevColors.footerHover : prevColors.footerBg,
+            background: prevHover ? prevColors.footerHover : prevColors.bg,
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
@@ -492,7 +492,7 @@ export default function ProjectDetailV2({
           style={{
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
-            background: nextHover ? nextColors.footerHover : nextColors.footerBg,
+            background: nextHover ? nextColors.footerHover : nextColors.bg,
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
