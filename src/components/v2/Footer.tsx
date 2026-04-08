@@ -71,7 +71,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
 
   return (
     <footer style={{
-      background: overrideColors?.bg ?? "#E8E4DF",
+      background: overrideColors?.bg ?? "#F0F0F0",
       borderTop: `1px solid ${overrideColors?.border ?? "rgba(0,0,0,0.08)"}`,
       padding: `${isMobile ? "clamp(16px, 2vh, 28px)" : "clamp(8px, 1vh, 14px)"} ${GUTTER} ${isMobile ? "clamp(10px, 1.2vh, 16px)" : "clamp(5px, 0.6vh, 8px)"}`,
     }}>
