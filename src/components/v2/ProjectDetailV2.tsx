@@ -458,16 +458,16 @@ export default function ProjectDetailV2({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-              <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="2" y1="8" x2="8" y2="14" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="8" x2="8" y2="14" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <span style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "10px",
+              fontSize: "12px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "rgba(240,240,240,0.22)",
+              color: "rgba(240,240,240,0.4)",
             }}>
               Previous
             </span>
@@ -475,7 +475,7 @@ export default function ProjectDetailV2({
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "17px" : "clamp(17px, 2vw, 24px)",
+            fontSize: isMobile ? "26px" : "clamp(26px, 3vw, 36px)",
             letterSpacing: "-0.01em",
             color: prevProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
             wordBreak: "keep-all",
@@ -504,22 +504,22 @@ export default function ProjectDetailV2({
             <span style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "10px",
+              fontSize: "12px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "rgba(240,240,240,0.22)",
+              color: "rgba(240,240,240,0.4)",
             }}>
               Next
             </span>
             <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-              <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="8" y1="8" x2="2" y2="14" stroke="rgba(240,240,240,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="8" y1="8" x2="2" y2="14" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "17px" : "clamp(17px, 2vw, 24px)",
+            fontSize: isMobile ? "26px" : "clamp(26px, 3vw, 36px)",
             letterSpacing: "-0.01em",
             color: nextProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
             textAlign: "right",
