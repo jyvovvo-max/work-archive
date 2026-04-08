@@ -353,7 +353,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT_KR,
               fontWeight: 300,
-              fontSize: isMobile ? "15.5px" : "clamp(16px, 1.32vw, 20px)",
+              fontSize: isMobile ? "16.3px" : "clamp(17px, 1.39vw, 21px)",
               lineHeight: 1.75,
               color: "rgba(240,240,240,0.75)",
               margin: "0 0 28px",
@@ -375,10 +375,11 @@ export default function ProjectDetailV2({
                 <span key={c} style={{
                   fontFamily: "'Noto Sans KR', 'Noto Sans', sans-serif",
                   fontWeight: 300,
-                  fontSize: isMobile ? "11px" : "12px",
+                  fontSize: isMobile ? "12px" : "13px",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
-                  background: "rgba(240,240,240,0.06)",
+                  background: "transparent",
+                  border: "1px solid rgba(240,240,240,0.2)",
                   borderRadius: "100px",
                   padding: "4px 10px",
                   color: "rgba(240,240,240,0.5)",
