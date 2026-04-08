@@ -23,7 +23,9 @@ function BlurIn({ children, delay = 0, style }: { children: React.ReactNode; del
   );
 }
 
-export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData | null; lang?: Lang }) {
+interface OverrideColors { bg: string; text: string; textHover: string; border: string; }
+
+export default function Footer({ siteData, lang = "ko", overrideColors }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors }) {
   const headline = (lang === "en" && siteData?.footerHeadlineEn)
     ? siteData.footerHeadlineEn
     : siteData?.footerHeadline ?? "I would love to hear from you!";
@@ -54,8 +56,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
     return () => clearInterval(id);
   }, []);
 
-  const textColor = "rgba(0,0,0,0.5)";
-  const textHover = "#0A0A0A";
+  const textColor = overrideColors?.text ?? "rgba(0,0,0,0.5)";
+  const textHover = overrideColors?.textHover ?? "#0A0A0A";
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300,
     fontSize: "13px",
@@ -69,8 +71,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
 
   return (
     <footer style={{
-      background: "#E8E4DF",
-      borderTop: "1px solid rgba(0,0,0,0.08)",
+      background: overrideColors?.bg ?? "#E8E4DF",
+      borderTop: `1px solid ${overrideColors?.border ?? "rgba(0,0,0,0.08)"}`,
       padding: `${isMobile ? "clamp(16px, 2vh, 28px)" : "clamp(8px, 1vh, 14px)"} ${GUTTER} ${isMobile ? "clamp(10px, 1.2vh, 16px)" : "clamp(5px, 0.6vh, 8px)"}`,
     }}>
       {/* Headline */}
@@ -80,7 +82,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
             <span style={{
               fontFamily: FONT, fontWeight: 300,
               fontSize: "clamp(12px, 1.28vw, 16px)",
-              letterSpacing: "0.01em", color: "#0A0A0A",
+              letterSpacing: "0.01em", color: overrideColors ? "#F0EDE8" : "#0A0A0A",
               whiteSpace: "pre-line",
             }}>
               {headline}
@@ -163,13 +165,13 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
 
       {/* Bottom bar — always visible */}
       <div style={{
-        borderTop: "1px solid rgba(0,0,0,0.08)",
+        borderTop: `1px solid ${overrideColors?.border ?? "rgba(0,0,0,0.08)"}`,
         paddingTop: SPACE_C,
       }}>
         <span style={{
           fontFamily: FONT, fontWeight: 300,
           fontSize: "12px",
-          letterSpacing: "0.04em", color: "rgba(0,0,0,0.35)",
+          letterSpacing: "0.04em", color: overrideColors ? "rgba(240,237,232,0.35)" : "rgba(0,0,0,0.35)",
         }}>
           {name}
         </span>
