@@ -167,6 +167,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
       <div style={{
         borderTop: `1px solid ${overrideColors?.border ?? "rgba(0,0,0,0.08)"}`,
         paddingTop: SPACE_C,
+        paddingBottom: SPACE_C,
       }}>
         <span style={{
           fontFamily: FONT, fontWeight: 300,
