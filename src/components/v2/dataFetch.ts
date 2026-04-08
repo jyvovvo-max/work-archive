@@ -131,7 +131,7 @@ export const FALLBACK_SITE: SiteData = {
     "Culture & Arts", "Corporate Identity",
   ],
   awards: [],
-  footerHeadline: "I would love to hear from you!",
+  footerHeadline: "",
   footerLocation: "Korea",
   footerEmail: "jyvovvo@gmail.com",
   footerInstagramHandle: "@jyvovvo",

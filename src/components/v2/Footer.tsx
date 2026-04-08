@@ -26,7 +26,7 @@ function BlurIn({ children, delay = 0, style }: { children: React.ReactNode; del
 interface OverrideColors { bg: string; text: string; textHover: string; border: string; }
 
 export default function Footer({ siteData, lang = "ko", overrideColors }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors }) {
-  const headline = siteData?.footerHeadline ?? "A record of work. If something reached you, I'm here.";
+  const headline = siteData?.footerHeadline ?? "";
   const location = siteData?.footerLocation ?? "Korea";
   const email = siteData?.footerEmail ?? "";
   const igHandle = siteData?.footerInstagramHandle ?? "";
