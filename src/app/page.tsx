@@ -11,6 +11,7 @@ import AboutSection from "@/components/v2/AboutSection";
 import Footer from "@/components/v2/Footer";
 import ContactModal from "@/components/v2/ContactModal";
 import AwardsSection from "@/components/v2/AwardsSection";
+import { SPACE_B } from "@/components/v2/layout";
 
 export default function Page() {
   const router = useRouter();
@@ -140,6 +141,7 @@ export default function Page() {
         borderTop: "1px solid rgba(0,0,0,0.12)",
       }}>
         <WorksGrid projects={shuffledWorks} onOpen={openProject} />
+        <div style={{ height: SPACE_B }} />
       </div>
 
       {/* Layer 3: About + Awards + Footer */}
