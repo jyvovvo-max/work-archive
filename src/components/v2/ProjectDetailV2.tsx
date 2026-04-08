@@ -354,7 +354,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT_KR,
               fontWeight: 300,
-              fontSize: isMobile ? "16.3px" : "clamp(17px, 1.39vw, 21px)",
+              fontSize: isMobile ? "13.9px" : "clamp(14px, 1.18vw, 18px)",
               lineHeight: 1.75,
               color: "#F0F0F0",
               margin: "0 0 28px",
