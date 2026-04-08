@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Project, SiteData, Lang } from "./types";
-import { GUTTER } from "./layout";
+import { GUTTER, GRID_GAP } from "./layout";
 import Footer from "./Footer";
 import { RetryImg } from "./RetryImg";
 
@@ -312,12 +312,13 @@ export default function ProjectDetailV2({
           ? `calc(52px + clamp(32px, 5vh, 56px)) ${hPad} clamp(32px, 5vh, 56px)`
           : `clamp(48px, 7vh, 80px) ${hPad}`,
         display: "grid",
-        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-        gap: isMobile ? "20px" : "clamp(24px, 4vw, 60px)",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(7, 1fr)",
+        columnGap: isMobile ? "0" : GRID_GAP,
+        rowGap: isMobile ? "20px" : "0",
         alignItems: "start",
       }}>
-        {/* Left: title + date + category */}
-        <div>
+        {/* Col 1–2: title + date */}
+        <div style={{ gridColumn: isMobile ? "1" : "1 / 3" }}>
           <motion.h1
             initial={{ filter: "blur(16px)", opacity: 0 }}
             animate={{ filter: "blur(0px)", opacity: 1 }}
@@ -351,8 +352,10 @@ export default function ProjectDetailV2({
           </motion.div>
         </div>
 
-        {/* Right: description + credits */}
-        <div>
+        {/* Col 3: intentional gap */}
+
+        {/* Col 4–7: description + credits */}
+        <div style={{ gridColumn: isMobile ? "1" : "4 / 8" }}>
           <motion.p
             initial={{ filter: "blur(10px)", opacity: 0, y: 12 }}
             animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
@@ -382,7 +385,7 @@ export default function ProjectDetailV2({
                 <span key={c} style={{
                   fontFamily: "'Noto Sans KR', 'Noto Sans', sans-serif",
                   fontWeight: 300,
-                  fontSize: isMobile ? "10px" : "11px",
+                  fontSize: isMobile ? "11px" : "12px",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   background: "rgba(240,237,232,0.06)",
