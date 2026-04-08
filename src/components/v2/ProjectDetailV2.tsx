@@ -316,7 +316,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: isMobile ? "clamp(27px, 8.76vw, 49px)" : "clamp(34px, 4.2vw, 61px)",
+              fontSize: isMobile ? "clamp(24px, 7.88vw, 44px)" : "clamp(31px, 3.78vw, 55px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
               color: "#F0F0F0",
