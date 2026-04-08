@@ -501,7 +501,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
       <div style={{
         position: "absolute",
         top: 0, left: 0, right: 0,
-        padding: "67px 20px 20px",
+        padding: "62px 20px 20px",
         zIndex: 20,
         pointerEvents: "none",
         mixBlendMode: "difference",
