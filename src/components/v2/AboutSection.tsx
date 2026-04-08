@@ -40,9 +40,8 @@ interface AboutProps {
 }
 
 const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko" }, ref) => {
-  const bio = (lang === "en" && siteData?.aboutBioEn?.length)
-    ? siteData.aboutBioEn
-    : siteData?.aboutBio ?? [];
+  const bioKo = siteData?.aboutBio ?? [];
+  const bioEn = siteData?.aboutBioEn ?? [];
   const services = siteData?.services ?? [];
   const experience = siteData?.experience ?? [];
   const [isMobile, setIsMobile] = useState(false);
@@ -109,10 +108,10 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         columnGap: GRID_GAP,
         alignItems: "start",
       }}>
-        {/* Bio — desktop: 1–4 / mobile: 1–8 (full) */}
+        {/* Bio — desktop: 1–4 / mobile: 1–8 (full), KO + EN */}
         <div style={{ gridColumn: isMobile ? "1 / 9" : "1 / 5", display: "flex", flexDirection: "column", gap: "20px" }}>
-          {bio.map((p, i) => (
-            <BlurIn key={i} delay={i * 0.06}>
+          {bioKo.map((p, i) => (
+            <BlurIn key={`ko-${i}`} delay={i * 0.06}>
               <p style={{
                 fontFamily: FONT,
                 fontWeight: 300,
@@ -121,6 +120,20 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
                 color: "rgba(0,0,0,0.6)",
                 margin: 0,
                 wordBreak: "keep-all",
+              }}>
+                {p}
+              </p>
+            </BlurIn>
+          ))}
+          {bioEn.map((p, i) => (
+            <BlurIn key={`en-${i}`} delay={(bioKo.length + i) * 0.06}>
+              <p style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: "clamp(16px, 1.37vw, 20px)",
+                lineHeight: 1.8,
+                color: "rgba(0,0,0,0.6)",
+                margin: 0,
               }}>
                 {p}
               </p>

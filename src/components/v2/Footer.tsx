@@ -26,9 +26,8 @@ function BlurIn({ children, delay = 0, style }: { children: React.ReactNode; del
 interface OverrideColors { bg: string; text: string; textHover: string; border: string; }
 
 export default function Footer({ siteData, lang = "ko", overrideColors }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors }) {
-  const headline = (lang === "en" && siteData?.footerHeadlineEn)
-    ? siteData.footerHeadlineEn
-    : siteData?.footerHeadline ?? "I would love to hear from you!";
+  const headlineKo = siteData?.footerHeadline ?? "";
+  const headlineEn = siteData?.footerHeadlineEn ?? "I would love to hear from you!";
   const location = siteData?.footerLocation ?? "Korea";
   const email = siteData?.footerEmail ?? "";
   const igHandle = siteData?.footerInstagramHandle ?? "";
@@ -77,17 +76,27 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
     }}>
       {/* Headline */}
       <BlurIn>
-        <div style={{ marginBottom: SPACE_C }}>
-          <span style={{ display: "inline-flex", alignItems: "center" }}>
+        <div style={{ marginBottom: SPACE_C, display: "flex", flexDirection: "column", gap: "8px" }}>
+          {headlineKo && (
             <span style={{
               fontFamily: FONT, fontWeight: 300,
               fontSize: "clamp(12px, 1.28vw, 16px)",
-              letterSpacing: "0.01em", color: overrideColors ? "#F0EDE8" : "#0A0A0A",
+              letterSpacing: "0.01em", color: overrideColors ? "#F0F0F0" : "#0A0A0A",
               whiteSpace: "pre-line",
             }}>
-              {headline}
+              {headlineKo}
             </span>
-          </span>
+          )}
+          {headlineEn && (
+            <span style={{
+              fontFamily: FONT, fontWeight: 300,
+              fontSize: "clamp(12px, 1.28vw, 16px)",
+              letterSpacing: "0.01em", color: overrideColors ? "#F0F0F0" : "#0A0A0A",
+              whiteSpace: "pre-line",
+            }}>
+              {headlineEn}
+            </span>
+          )}
         </div>
       </BlurIn>
 

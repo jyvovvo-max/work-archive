@@ -74,13 +74,6 @@ export default function Page() {
     router.push("/work");
   };
 
-  const handleLangToggle = () => {
-    setLang(l => {
-      const next = l === "ko" ? "en" : "ko";
-      localStorage.setItem("portfolio-lang", next);
-      return next;
-    });
-  };
 
   return (
     <div style={{ color: "#0A0A0A", background: "#F0F0F0" }}>
@@ -101,7 +94,6 @@ export default function Page() {
         zIndex={500}
         siteData={siteData}
         lang={lang}
-        onLangToggle={handleLangToggle}
       />
 
       {/* Layer 1: Hero — fixed behind */}

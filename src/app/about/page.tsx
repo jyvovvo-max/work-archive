@@ -25,14 +25,6 @@ export default function AboutPage() {
     fetchSiteData().then(setSiteData);
   }, []);
 
-  const handleLangToggle = () => {
-    setLang(l => {
-      const next = l === "ko" ? "en" : "ko";
-      localStorage.setItem("portfolio-lang", next);
-      return next;
-    });
-  };
-
   const handleBack = async () => {
     setIsExiting(true);
     await new Promise(r => setTimeout(r, 350));
@@ -62,7 +54,6 @@ export default function AboutPage() {
         alwaysVisible
         siteData={siteData}
         lang={lang}
-        onLangToggle={handleLangToggle}
       />
 
       <motion.div

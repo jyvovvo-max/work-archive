@@ -45,14 +45,6 @@ export default function ProjectPage() {
   };
   const handleClose = () => router.back();
 
-  const handleLangToggle = () => {
-    setLang(l => {
-      const next = l === "ko" ? "en" : "ko";
-      localStorage.setItem("portfolio-lang", next);
-      return next;
-    });
-  };
-
   if (!project) {
     return (
       <div style={{ background: "#F0F0F0", minHeight: "100vh" }}>
@@ -66,7 +58,6 @@ export default function ProjectPage() {
           alwaysVisible
           siteData={siteData}
           lang={lang}
-          onLangToggle={handleLangToggle}
         />
       </div>
     );
@@ -88,7 +79,6 @@ export default function ProjectPage() {
         zIndex={700}
         siteData={siteData}
         lang={lang}
-        onLangToggle={handleLangToggle}
       />
 
       <ProjectDetailV2

@@ -199,14 +199,6 @@ export default function WorkPage() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const handleLangToggle = () => {
-    setLang(l => {
-      const next = l === "ko" ? "en" : "ko";
-      localStorage.setItem("portfolio-lang", next);
-      return next;
-    });
-  };
-
   const handleBack = async () => {
     setIsExiting(true);
     await new Promise(r => setTimeout(r, 750));
@@ -246,7 +238,6 @@ export default function WorkPage() {
         alwaysVisible
         siteData={siteData}
         lang={lang}
-        onLangToggle={handleLangToggle}
       />
 
       {/* Blur entry wrapper — exit handled per-card */}

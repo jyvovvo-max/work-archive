@@ -357,12 +357,17 @@ export default function ProjectDetailV2({
               lineHeight: 1.75,
               color: "#F0F0F0",
               margin: "0 0 28px",
-              wordBreak: lang === "ko" ? "keep-all" : "normal",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
             }}
           >
-            {lang === "en" && project.descriptionEn
-              ? project.descriptionEn
-              : project.description}
+            {project.description && (
+              <span style={{ wordBreak: "keep-all" }}>{project.description}</span>
+            )}
+            {project.descriptionEn && (
+              <span>{project.descriptionEn}</span>
+            )}
           </motion.p>
           {project.coworkers.length > 0 && (
             <motion.div
