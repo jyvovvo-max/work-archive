@@ -86,7 +86,6 @@ export default function ProjectPage() {
         onContact={() => setContactOpen(true)}
         onBack={handleClose}
         zIndex={700}
-        alwaysVisible
         siteData={siteData}
         lang={lang}
         onLangToggle={handleLangToggle}
