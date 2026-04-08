@@ -215,9 +215,8 @@ export default function WorkPage() {
 
   const handleAbout = async () => {
     setIsExiting(true);
-    sessionStorage.setItem("pendingScroll", "about");
     await new Promise(r => setTimeout(r, 750));
-    router.push("/");
+    router.push("/about");
   };
 
   const categories = useMemo(() => [...new Set(

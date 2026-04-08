@@ -7,10 +7,8 @@ import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dat
 import Header from "@/components/v2/Header";
 import HeroSection from "@/components/v2/HeroSection";
 import WorksGrid from "@/components/v2/WorksGrid";
-import AboutSection from "@/components/v2/AboutSection";
 import Footer from "@/components/v2/Footer";
 import ContactModal from "@/components/v2/ContactModal";
-import AwardsSection from "@/components/v2/AwardsSection";
 import { SPACE_B } from "@/components/v2/layout";
 
 export default function Page() {
@@ -19,9 +17,7 @@ export default function Page() {
   const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
   const [lang, setLang] = useState<Lang>("ko");
   const [contactOpen, setContactOpen] = useState(false);
-  const [pendingAboutScroll, setPendingAboutScroll] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const aboutRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (typeof history !== "undefined") {
@@ -30,12 +26,6 @@ export default function Page() {
     }
     const saved = localStorage.getItem("portfolio-lang") as Lang | null;
     if (saved) setLang(saved);
-
-    // About scroll signal from /work page — flag only; actual scroll fires after projects load
-    if (sessionStorage.getItem("pendingScroll") === "about") {
-      sessionStorage.removeItem("pendingScroll");
-      setPendingAboutScroll(true);
-    }
 
     // Legacy hash redirect → /project/{id}
     const hash = window.location.hash;
@@ -51,14 +41,6 @@ export default function Page() {
     }, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  // Scroll to About after projects + images have settled
-  useEffect(() => {
-    if (!pendingAboutScroll || projects.length === 0) return;
-    setPendingAboutScroll(false);
-    // Wait for WorksGrid images to render and expand the page height
-    setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 800);
-  }, [pendingAboutScroll, projects]);
 
   const selectedWorks = useMemo(() => {
     const sel = projects.filter(p => p.selected);
@@ -80,8 +62,10 @@ export default function Page() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleAbout = () => {
-    setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  const handleAbout = async () => {
+    setIsExiting(true);
+    await new Promise(r => setTimeout(r, 350));
+    router.push("/about");
   };
 
   const handleViewAll = async () => {
@@ -144,15 +128,13 @@ export default function Page() {
         <div style={{ height: SPACE_B }} />
       </div>
 
-      {/* Layer 3: About + Awards + Footer */}
+      {/* Layer 3: Footer */}
       <div style={{
         position: "relative",
         zIndex: 3,
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.08)",
       }}>
-        <AboutSection ref={aboutRef} siteData={siteData} lang={lang} />
-        <AwardsSection projects={projects} onOpen={openProject} />
         <Footer siteData={siteData} lang={lang} />
       </div>
 

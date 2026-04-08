@@ -59,7 +59,7 @@ export default function ProjectPage() {
         <Header
           onHome={() => router.push("/")}
           onViewAll={() => router.push("/work")}
-          onAbout={() => router.push("/")}
+          onAbout={() => router.push("/about")}
           onContact={() => setContactOpen(true)}
           onBack={handleClose}
           zIndex={700}
@@ -82,7 +82,7 @@ export default function ProjectPage() {
       <Header
         onHome={() => router.push("/")}
         onViewAll={() => router.push("/work")}
-        onAbout={() => router.push("/")}
+        onAbout={() => router.push("/about")}
         onContact={() => setContactOpen(true)}
         onBack={handleClose}
         zIndex={700}
