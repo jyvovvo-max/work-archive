@@ -45,11 +45,10 @@ function AwardRow({
     <div style={{ padding: `0 ${GUTTER}`, position: "relative" }}>
       <div
         style={{
-          display: "flex",
-          alignItems: "baseline",
           cursor: "pointer",
           position: "relative",
           zIndex: 1,
+          lineHeight: 1.6,
         }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setHovered(false)}
@@ -67,7 +66,6 @@ function AwardRow({
         }}>
           {project.title}
         </span>
-
         <sup data-code style={{
           fontFamily: FONT,
           fontWeight: 400,
@@ -75,10 +73,8 @@ function AwardRow({
           letterSpacing: "0.06em",
           color: "rgba(10,10,10,0.3)",
           marginLeft: "4px",
-          position: "relative",
-          top: isMobile ? "-0.6em" : "-14px",
+          verticalAlign: "super",
           whiteSpace: "nowrap",
-          flexShrink: 0,
         }}>
           {project.award}
         </sup>
