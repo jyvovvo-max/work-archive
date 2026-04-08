@@ -440,11 +440,26 @@ export default function ProjectDetailV2({
       </div>
 
       {/* ── Bottom navigation ── */}
+      {(() => {
+        const mx = (a: number, b: number) => Math.round(a * 0.7 + b * 0.3);
+        const dk = (v: number) => Math.round(v * 0.5);
+        const [cr, cg, cb] = colors.avg;
+        const [pr, pg, pb] = prevColors.avg;
+        const [nr, ng, nb] = nextColors.avg;
+        const prevBg = [mx(cr, pr), mx(cg, pg), mx(cb, pb)];
+        const nextBg = [mx(cr, nr), mx(cg, ng), mx(cb, nb)];
+        const prevBorder = `rgb(${dk(prevBg[0])}, ${dk(prevBg[1])}, ${dk(prevBg[2])})`;
+        const nextBorder = `rgb(${dk(nextBg[0])}, ${dk(nextBg[1])}, ${dk(nextBg[2])})`;
+        const prevBgStr = `rgb(${prevBg[0]}, ${prevBg[1]}, ${prevBg[2]})`;
+        const nextBgStr = `rgb(${nextBg[0]}, ${nextBg[1]}, ${nextBg[2]})`;
+        const prevHoverBg = `rgb(${Math.min(prevBg[0] + 20, 255)}, ${Math.min(prevBg[1] + 20, 255)}, ${Math.min(prevBg[2] + 20, 255)})`;
+        const nextHoverBg = `rgb(${Math.min(nextBg[0] + 20, 255)}, ${Math.min(nextBg[1] + 20, 255)}, ${Math.min(nextBg[2] + 20, 255)})`;
+        return (
       <div style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         marginTop: "clamp(64px, 8vh, 120px)",
-        borderTop: `1px solid ${colors.divider}`,
+        borderTop: `1px solid ${prevBorder}`,
       }}>
         {/* Prev */}
         <div
@@ -454,16 +469,8 @@ export default function ProjectDetailV2({
           style={{
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
-            borderRight: `1px solid ${colors.divider}`,
-            background: (() => {
-              const m = (a: number, b: number) => Math.round(a * 0.7 + b * 0.3);
-              const [cr, cg, cb] = colors.avg;
-              const [pr, pg, pb] = prevColors.avg;
-              const base = `rgb(${m(cr, pr)}, ${m(cg, pg)}, ${m(cb, pb)})`;
-              if (!prevHover) return base;
-              const [hr, hg, hb] = [m(cr, pr), m(cg, pg), m(cb, pb)];
-              return `rgb(${Math.min(hr + 20, 255)}, ${Math.min(hg + 20, 255)}, ${Math.min(hb + 20, 255)})`;
-            })(),
+            borderRight: `1px solid ${prevBorder}`,
+            background: prevHover ? prevHoverBg : prevBgStr,
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
@@ -489,7 +496,7 @@ export default function ProjectDetailV2({
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "26px" : "clamp(26px, 3vw, 36px)",
+            fontSize: isMobile ? "31px" : "clamp(31px, 3.6vw, 43px)",
             letterSpacing: "-0.01em",
             color: prevProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
             wordBreak: "keep-all",
@@ -506,15 +513,7 @@ export default function ProjectDetailV2({
           style={{
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
-            background: (() => {
-              const m = (a: number, b: number) => Math.round(a * 0.7 + b * 0.3);
-              const [cr, cg, cb] = colors.avg;
-              const [nr, ng, nb] = nextColors.avg;
-              const base = `rgb(${m(cr, nr)}, ${m(cg, ng)}, ${m(cb, nb)})`;
-              if (!nextHover) return base;
-              const [hr, hg, hb] = [m(cr, nr), m(cg, ng), m(cb, nb)];
-              return `rgb(${Math.min(hr + 20, 255)}, ${Math.min(hg + 20, 255)}, ${Math.min(hb + 20, 255)})`;
-            })(),
+            background: nextHover ? nextHoverBg : nextBgStr,
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
@@ -541,7 +540,7 @@ export default function ProjectDetailV2({
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "26px" : "clamp(26px, 3vw, 36px)",
+            fontSize: isMobile ? "31px" : "clamp(31px, 3.6vw, 43px)",
             letterSpacing: "-0.01em",
             color: nextProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
             textAlign: "right",
@@ -551,6 +550,7 @@ export default function ProjectDetailV2({
           </span>
         </div>
       </div>
+        ); })()}
 
       {/* ── Lightbox ── */}
       <AnimatePresence>
