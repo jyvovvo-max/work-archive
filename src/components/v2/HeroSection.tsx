@@ -501,7 +501,7 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
       <div style={{
         position: "absolute",
         top: 0, left: 0, right: 0,
-        padding: "62px 20px 20px",
+        padding: "67px 20px 20px",
         zIndex: 20,
         pointerEvents: "none",
         mixBlendMode: "difference",
@@ -741,7 +741,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
         ref={titleContainerRef}
         style={{
           position: "absolute",
-          top: "62px",
+          top: "67px",
           left: GUTTER,
           right: `calc(${GUTTER} - ${RIGHT_OPT_TITLE}px)`,
           zIndex: 20,
