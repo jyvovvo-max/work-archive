@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --gutter: clamp(40px, 8vw, 112px);
+  --gutter: clamp(60px, 12vw, 168px);
   --background: #000000;
   --foreground: #ffffff;
   /* Monument Grotesk Variable placeholder — swap src to your @font-face when licensed */
