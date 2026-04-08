@@ -70,6 +70,7 @@ function useExtractedColor(imgSrc: string) {
   const div  = [mix(r, 55, 0.22), mix(g, 55, 0.22), mix(b, 60, 0.22)];
 
   return {
+    avg,
     bg:          `rgb(${bg[0]}, ${bg[1]}, ${bg[2]})`,
     footerBg:    `rgb(${foot[0]}, ${foot[1]}, ${foot[2]})`,
     footerHover: `rgb(${hover[0]}, ${hover[1]}, ${hover[2]})`,
@@ -454,7 +455,15 @@ export default function ProjectDetailV2({
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
             borderRight: `1px solid ${colors.divider}`,
-            background: prevHover ? prevColors.footerHover : prevColors.bg,
+            background: (() => {
+              const m = (a: number, b: number) => Math.round(a * 0.7 + b * 0.3);
+              const [cr, cg, cb] = colors.avg;
+              const [pr, pg, pb] = prevColors.avg;
+              const base = `rgb(${m(cr, pr)}, ${m(cg, pg)}, ${m(cb, pb)})`;
+              if (!prevHover) return base;
+              const [hr, hg, hb] = [m(cr, pr), m(cg, pg), m(cb, pb)];
+              return `rgb(${Math.min(hr + 20, 255)}, ${Math.min(hg + 20, 255)}, ${Math.min(hb + 20, 255)})`;
+            })(),
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
@@ -497,7 +506,15 @@ export default function ProjectDetailV2({
           style={{
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
-            background: nextHover ? nextColors.footerHover : nextColors.bg,
+            background: (() => {
+              const m = (a: number, b: number) => Math.round(a * 0.7 + b * 0.3);
+              const [cr, cg, cb] = colors.avg;
+              const [nr, ng, nb] = nextColors.avg;
+              const base = `rgb(${m(cr, nr)}, ${m(cg, ng)}, ${m(cb, nb)})`;
+              if (!nextHover) return base;
+              const [hr, hg, hb] = [m(cr, nr), m(cg, ng), m(cb, nb)];
+              return `rgb(${Math.min(hr + 20, 255)}, ${Math.min(hg + 20, 255)}, ${Math.min(hb + 20, 255)})`;
+            })(),
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
