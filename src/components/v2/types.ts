@@ -1,7 +1,6 @@
 export interface Project {
   id: number;
   title: string;
-  titleEn?: string;
   year: string;
   month: string;
   category: string;
@@ -17,9 +16,6 @@ export interface Project {
 }
 
 export type Lang = "ko" | "en";
-
-export const getTitle = (p: { title: string; titleEn?: string }, lang: Lang = "ko") =>
-  (lang === "en" && p.titleEn) ? p.titleEn : p.title;
 
 export interface SiteData {
   siteName: string;

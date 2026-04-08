@@ -66,13 +66,11 @@ function parseCSV(text: string): Record<string, string>[] {
 
 function rowToProject(row: Record<string, string>): Project | null {
   const id = parseInt(row.id);
-  const title = row.title_ko || row.title || "";
-  if (!id || !title || !row.folder) return null;
+  if (!id || !row.title || !row.folder) return null;
   const imageCount  = parseInt(row.imageCount) || 0;
   return {
     id,
-    title,
-    titleEn: row.title_en || undefined,
+    title: row.title,
     year: row.year ?? "",
     month: row.month ?? "1",
     category: row.category ?? "",
