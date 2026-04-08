@@ -137,6 +137,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
         height: "52px",
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         padding: `0 ${GUTTER}`,
         borderTop: "1px solid rgba(0,0,0,0.15)",
         borderBottom: "1px solid rgba(0,0,0,0.15)",

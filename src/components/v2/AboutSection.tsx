@@ -66,6 +66,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         height: "52px",
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         padding: `0 ${GUTTER}`,
         borderBottom: "1px solid rgba(0,0,0,0.15)",
       }}>

@@ -185,6 +185,7 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
         height: "52px",
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         padding: `0 ${GUTTER}`,
         borderTop: "1px solid rgba(0,0,0,0.15)",
         borderBottom: "1px solid rgba(0,0,0,0.15)",
