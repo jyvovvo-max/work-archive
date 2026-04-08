@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Project } from "./types";
-import { GUTTER } from "./layout";
+import { GUTTER, FONT_SECTION_TITLE } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -144,7 +144,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(19px, 2.24vw, 30px)",
+          fontSize: FONT_SECTION_TITLE,
           letterSpacing: "-0.02em",
           color: "#0A0A0A",
         }}>

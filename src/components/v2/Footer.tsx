@@ -54,11 +54,13 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
     return () => clearInterval(id);
   }, []);
 
+  const textColor = "rgba(0,0,0,0.5)";
+  const textHover = "#0A0A0A";
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300,
     fontSize: "13px",
     letterSpacing: "0.03em",
-    color: "rgba(240,237,232,0.55)",
+    color: textColor,
     lineHeight: 2.0,
   };
   const linkStyle: React.CSSProperties = {
@@ -67,8 +69,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
 
   return (
     <footer style={{
-      background: "#1A1A1A",
-      borderTop: "1px solid rgba(240,237,232,0.06)",
+      background: "#E8E4DF",
+      borderTop: "1px solid rgba(0,0,0,0.08)",
       padding: `${isMobile ? "clamp(16px, 2vh, 28px)" : "clamp(8px, 1vh, 14px)"} ${GUTTER} ${isMobile ? "clamp(10px, 1.2vh, 16px)" : "clamp(5px, 0.6vh, 8px)"}`,
     }}>
       {/* Headline */}
@@ -78,7 +80,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
             <span style={{
               fontFamily: FONT, fontWeight: 300,
               fontSize: "clamp(12px, 1.28vw, 16px)",
-              letterSpacing: "0.01em", color: "#F0EDE8",
+              letterSpacing: "0.01em", color: "#0A0A0A",
               whiteSpace: "pre-line",
             }}>
               {headline}
@@ -100,8 +102,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               <a
                 href={`mailto:${email}`}
                 style={linkStyle}
-                onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
               >
                 {email}
               </a>
@@ -110,8 +112,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
                 target="_blank"
                 rel="noreferrer"
                 style={linkStyle}
-                onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
               >
                 {igHandle}
               </a>
@@ -125,7 +127,7 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
           columnGap: "clamp(16px, 2vw, 32px)",
-          marginBottom: SPACE_D,
+          marginBottom: SPACE_C,
         }}>
           <BlurIn delay={0.06} style={{ gridColumn: "1" }}>
             <div style={valueStyle}>{location}</div>
@@ -134,8 +136,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
             <a
               href={`mailto:${email}`}
               style={linkStyle}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
+              onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+              onMouseLeave={e => (e.currentTarget.style.color = textColor)}
             >
               {email}
             </a>
@@ -146,8 +148,8 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               target="_blank"
               rel="noreferrer"
               style={linkStyle}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
+              onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+              onMouseLeave={e => (e.currentTarget.style.color = textColor)}
             >
               {igHandle}
             </a>
@@ -161,13 +163,13 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
 
       {/* Bottom bar — always visible */}
       <div style={{
-        borderTop: "1px solid rgba(240,237,232,0.06)",
-        paddingTop: "20px",
+        borderTop: "1px solid rgba(0,0,0,0.08)",
+        paddingTop: SPACE_C,
       }}>
         <span style={{
           fontFamily: FONT, fontWeight: 300,
           fontSize: "12px",
-          letterSpacing: "0.04em", color: "rgba(240,237,232,0.4)",
+          letterSpacing: "0.04em", color: "rgba(0,0,0,0.35)",
         }}>
           {name}
         </span>

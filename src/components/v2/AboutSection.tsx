@@ -3,7 +3,7 @@ import { forwardRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP, SPACE_A, SPACE_B } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -72,7 +72,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(19px, 2.24vw, 30px)",
+          fontSize: FONT_SECTION_TITLE,
           letterSpacing: "-0.02em",
           color: "#0A0A0A",
         }}>
@@ -86,7 +86,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         <h2 style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(19px, 2.69vw, 37px)",
+          fontSize: FONT_HEADLINE,
           letterSpacing: "-0.02em",
           lineHeight: 1.2,
           color: "#0A0A0A",

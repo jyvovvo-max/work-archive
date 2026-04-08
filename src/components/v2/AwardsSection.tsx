@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Project } from "./types";
-import { GUTTER, GRID_COLS, SPACE_A, SPACE_B } from "./layout";
+import { GUTTER, GRID_COLS, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -58,7 +58,7 @@ function AwardRow({
         <span data-title style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: isMobile ? (mobileFontSize || "clamp(28px, 7vw, 36px)") : "clamp(30px, 2.7vw, 42px)",
+          fontSize: isMobile ? (mobileFontSize || "clamp(28px, 7vw, 36px)") : FONT_HEADLINE,
           letterSpacing: "-0.03em",
           lineHeight: 1.6,
           color: "#0A0A0A",
@@ -199,7 +199,7 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(19px, 2.24vw, 30px)",
+          fontSize: FONT_SECTION_TITLE,
           letterSpacing: "-0.02em",
           color: "#0A0A0A",
         }}>
