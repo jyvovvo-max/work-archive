@@ -239,7 +239,6 @@ interface Props {
 export default function ProjectDetailV2({
   project, onClose, onNext, onPrev, nextProject, prevProject, siteData, lang = "ko",
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [prevHover, setPrevHover] = useState(false);
@@ -255,12 +254,7 @@ export default function ProjectDetailV2({
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
-  useEffect(() => {
-    if (containerRef.current) containerRef.current.scrollTop = 0;
+    window.scrollTo(0, 0);
   }, [project.id]);
 
   const allImages = [project.img, ...(project.images ?? [])];
@@ -274,20 +268,16 @@ export default function ProjectDetailV2({
 
   return (
     <motion.div
-      ref={containerRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 600,
         background: colors.bg,
         transition: "background-color 0.8s ease",
-        overflowY: "auto",
         overflowX: "hidden",
         color: "#F0EDE8",
+        minHeight: "100vh",
       }}
     >
       {/* ── Cover image — mobile: paddingTop 52px to clear fixed header ── */}

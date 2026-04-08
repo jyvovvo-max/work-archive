@@ -2,15 +2,12 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Project, SiteData, Lang } from "@/components/v2/types";
 import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
 import Header from "@/components/v2/Header";
 import Footer from "@/components/v2/Footer";
 import ContactModal from "@/components/v2/ContactModal";
 import { RetryImg } from "@/components/v2/RetryImg";
-
-const ProjectDetailV2 = dynamic(() => import("@/components/v2/ProjectDetailV2"), { ssr: false });
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -182,7 +179,6 @@ export default function WorkPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
-  const [selected, setSelected] = useState<Project | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("ko");
   const [cols, setCols] = useState(3);
@@ -237,12 +233,7 @@ export default function WorkPage() {
     return (parseInt(b.month) || 0) - (parseInt(a.month) || 0);
   }), [projects, activeCategory]);
 
-  const detailList = [...projects].sort((a, b) => a.id - b.id);
-  const detailIdx = selected ? detailList.findIndex(p => p.id === selected.id) : -1;
-  const nextProject = detailIdx >= 0 ? detailList[(detailIdx + 1) % detailList.length] : undefined;
-  const prevProject = detailIdx >= 0 ? detailList[(detailIdx - 1 + detailList.length) % detailList.length] : undefined;
-  const handleNext = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx + 1) % detailList.length]); };
-  const handlePrev = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx - 1 + detailList.length) % detailList.length]); };
+  const openProject = (p: Project) => router.push(`/project/${p.id}`);
 
   return (
     <div style={{ background: "#F0F0F0", color: "#0A0A0A", minHeight: "100vh" }}>
@@ -251,8 +242,8 @@ export default function WorkPage() {
         onViewAll={() => {}}
         onAbout={handleAbout}
         onContact={() => setContactOpen(true)}
-        onBack={selected ? () => setSelected(null) : handleBack}
-        zIndex={selected ? 700 : 500}
+        onBack={handleBack}
+        zIndex={500}
         alwaysVisible
         siteData={siteData}
         lang={lang}
@@ -286,7 +277,7 @@ export default function WorkPage() {
               <GridCard
                 key={project.id}
                 project={project}
-                onOpen={setSelected}
+                onOpen={openProject}
                 isExiting={isExiting}
               />
             ))}
@@ -301,22 +292,6 @@ export default function WorkPage() {
           <Footer siteData={siteData} lang={lang} />
         </motion.div>
       </motion.div>
-
-      <AnimatePresence>
-        {selected && (
-          <ProjectDetailV2
-            key={`detail-${selected.id}`}
-            project={selected}
-            onClose={() => setSelected(null)}
-            onNext={handleNext}
-            onPrev={handlePrev}
-            nextProject={nextProject}
-            prevProject={prevProject}
-            siteData={siteData}
-            lang={lang}
-          />
-        )}
-      </AnimatePresence>
 
       <ContactModal
         open={contactOpen}
