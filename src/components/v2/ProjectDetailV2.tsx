@@ -38,20 +38,8 @@ function getYouTubeId(url: string): string | null {
 }
 
 // ── Color extraction from cover image ──
-function rgbToHue(r: number, g: number, b: number): number {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  if (max === min) return 220;
-  const d = max - min;
-  let h = 0;
-  if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
-  else if (max === g) h = (b - r) / d + 2;
-  else h = (r - g) / d + 4;
-  return Math.round(h / 6 * 360);
-}
-
 function useExtractedColor(imgSrc: string) {
-  const [hue, setHue] = useState(220);
+  const [avg, setAvg] = useState<[number, number, number]>([30, 30, 36]);
   useEffect(() => {
     if (!imgSrc) return;
     const img = new Image();
@@ -67,16 +55,25 @@ function useExtractedColor(imgSrc: string) {
         let r = 0, g = 0, b = 0;
         const n = d.length / 4;
         for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i+1]; b += d[i+2]; }
-        setHue(rgbToHue(r / n, g / n, b / n));
+        setAvg([Math.round(r / n), Math.round(g / n), Math.round(b / n)]);
       } catch { /* keep default */ }
     };
     img.src = imgSrc;
   }, [imgSrc]);
+
+  // Mix average color toward dark for readability (white text)
+  const mix = (c: number, target: number, amount: number) => Math.round(c * amount + target * (1 - amount));
+  const [r, g, b] = avg;
+  const bg   = [mix(r, 18, 0.35), mix(g, 18, 0.35), mix(b, 22, 0.35)];
+  const foot = [mix(r, 28, 0.30), mix(g, 28, 0.30), mix(b, 32, 0.30)];
+  const hover = [mix(r, 40, 0.28), mix(g, 40, 0.28), mix(b, 44, 0.28)];
+  const div  = [mix(r, 55, 0.22), mix(g, 55, 0.22), mix(b, 60, 0.22)];
+
   return {
-    bg:          `hsl(${hue}, 22%, 9%)`,
-    footerBg:    `hsl(${hue}, 18%, 13%)`,
-    footerHover: `hsl(${hue}, 18%, 18%)`,
-    divider:     `hsl(${hue}, 14%, 22%)`,
+    bg:          `rgb(${bg[0]}, ${bg[1]}, ${bg[2]})`,
+    footerBg:    `rgb(${foot[0]}, ${foot[1]}, ${foot[2]})`,
+    footerHover: `rgb(${hover[0]}, ${hover[1]}, ${hover[2]})`,
+    divider:     `rgb(${div[0]}, ${div[1]}, ${div[2]})`,
   };
 }
 
