@@ -245,6 +245,8 @@ export default function ProjectDetailV2({
   const [prevHover, setPrevHover] = useState(false);
   const [nextHover, setNextHover] = useState(false);
   const colors = useExtractedColor(project.img);
+  const prevColors = useExtractedColor(prevProject?.img ?? "");
+  const nextColors = useExtractedColor(nextProject?.img ?? "");
 
   useEffect(() => {
     const u = () => setIsMobile(window.innerWidth < 768);
@@ -453,7 +455,7 @@ export default function ProjectDetailV2({
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
             borderRight: `1px solid ${colors.divider}`,
-            background: prevHover ? colors.footerHover : colors.footerBg,
+            background: prevHover ? prevColors.footerHover : prevColors.footerBg,
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
@@ -496,7 +498,7 @@ export default function ProjectDetailV2({
           style={{
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
-            background: nextHover ? colors.footerHover : colors.footerBg,
+            background: nextHover ? nextColors.footerHover : nextColors.footerBg,
             transition: "background 0.22s ease",
             display: "flex",
             flexDirection: "column",
