@@ -379,7 +379,7 @@ export default function ProjectDetailV2({
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   background: "transparent",
-                  border: "1px solid rgba(240,240,240,0.35)",
+                  border: "1.5px solid rgba(240,240,240,0.35)",
                   borderRadius: "100px",
                   padding: "4px 10px",
                   color: "rgba(240,240,240,0.75)",

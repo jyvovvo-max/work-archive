@@ -116,10 +116,10 @@ export default function Header({
             border: `1px solid ${border}`,
             borderTop: "none",
             borderRadius: 0,
-            padding: `0 ${GUTTER}`,
+            padding: onBack ? "0" : `0 ${GUTTER}`,
           }}
         >
-          {/* Left: optional back arrow + site name */}
+          {/* Left: optional back arrow (outside gutter) + site name */}
           <div style={{ display: "flex", alignItems: "center" }}>
             {onBack && (
               <button
@@ -155,7 +155,7 @@ export default function Header({
                 color: nameColor,
                 userSelect: "none",
                 cursor: "pointer",
-                paddingLeft: onBack ? "12px" : "0",
+                paddingLeft: onBack ? `calc(${GUTTER} - 52px)` : "0",
               }}
             >
               {siteName}
@@ -167,7 +167,7 @@ export default function Header({
             display: "flex",
             gap: "clamp(16px, 2.8vw, 40px)",
             alignItems: "center",
-            paddingRight: "0",
+            paddingRight: onBack ? GUTTER : "0",
           }}>
             {[
               { label: "View all", action: onViewAll },
