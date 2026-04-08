@@ -3,11 +3,11 @@ export const GUTTER = "clamp(20px, 4vw, 56px)";
 export const GRID_GAP = "clamp(16px, 2vw, 32px)";
 export const GRID_COLS = 7;
 
-// Section spacing — A is base unit, B = 2×A, C = A/3, D = B/3
+// Section spacing — A is base unit, B = 2×A, C = A×3/4, D = B×3/4
 export const SPACE_A = "clamp(24px, 3.3vh, 43px)";
 export const SPACE_B = "clamp(48px, 6.6vh, 86px)";
-export const SPACE_C = "clamp(8px, 1.1vh, 14px)";
-export const SPACE_D = "clamp(16px, 2.2vh, 29px)";
+export const SPACE_C = "clamp(18px, 2.48vh, 32px)";
+export const SPACE_D = "clamp(36px, 4.95vh, 65px)";
 
 // Typography — centralized font sizes
 export const FONT_SECTION_TITLE = "clamp(17px, 2.02vw, 27px)";   // section title bars (90% of original)
