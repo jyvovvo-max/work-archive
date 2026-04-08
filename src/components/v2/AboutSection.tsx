@@ -99,8 +99,8 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         </h2>
       </BlurIn>
 
-      {/* 7-column grid: col 1-3 = Bio, col 4-5 = gap, col 6 = Services, col 7 = Experience */}
-      {/* Mobile: Bio full 7 cols, Services col 1-2, Experience col 3-4 (stacked below) */}
+      {/* 7-column grid: col 1-4 = Bio, col 5 = gap, col 6 = Services, col 7 = Experience */}
+      {/* Mobile: Bio full 8 cols, Services col 1-3, Experience col 4-6 (stacked below) */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "repeat(8, 1fr)" : "repeat(7, 1fr)",
@@ -108,8 +108,8 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         columnGap: GRID_GAP,
         alignItems: "start",
       }}>
-        {/* Bio — desktop: 1–3 / mobile: 1–8 (full) */}
-        <div style={{ gridColumn: isMobile ? "1 / 9" : "1 / 4", display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Bio — desktop: 1–4 / mobile: 1–8 (full) */}
+        <div style={{ gridColumn: isMobile ? "1 / 9" : "1 / 5", display: "flex", flexDirection: "column", gap: "20px" }}>
           {bio.map((p, i) => (
             <BlurIn key={i} delay={i * 0.06}>
               <p style={{
