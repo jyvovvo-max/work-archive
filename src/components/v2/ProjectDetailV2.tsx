@@ -362,7 +362,7 @@ export default function ProjectDetailV2({
               fontWeight: 300,
               fontSize: isMobile ? "15.5px" : "clamp(16px, 1.32vw, 20px)",
               lineHeight: 1.75,
-              color: "rgba(240,237,232,0.6)",
+              color: "rgba(240,237,232,0.75)",
               margin: "0 0 28px",
               wordBreak: lang === "ko" ? "keep-all" : "normal",
             }}
