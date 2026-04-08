@@ -56,7 +56,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
     return () => clearInterval(id);
   }, []);
 
-  const textColor = overrideColors?.text ?? "rgba(0,0,0,0.5)";
+  const textColor = overrideColors?.text ?? "rgba(0,0,0,0.6)";
   const textHover = overrideColors?.textHover ?? "#0A0A0A";
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300,
@@ -171,7 +171,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
         <span style={{
           fontFamily: FONT, fontWeight: 300,
           fontSize: "12px",
-          letterSpacing: "0.04em", color: overrideColors ? "rgba(240,237,232,0.35)" : "rgba(0,0,0,0.35)",
+          letterSpacing: "0.04em", color: overrideColors ? "rgba(240,237,232,0.35)" : "rgba(0,0,0,0.45)",
         }}>
           {name}
         </span>
