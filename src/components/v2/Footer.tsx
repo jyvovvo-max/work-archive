@@ -138,7 +138,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
               onMouseEnter={e => (e.currentTarget.style.color = textHover)}
               onMouseLeave={e => (e.currentTarget.style.color = textColor)}
             >
-              {email}
+              {emailHandle}
             </a>
           </BlurIn>
           <BlurIn delay={0.18} style={{ gridColumn: "3" }}>
