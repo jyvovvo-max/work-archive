@@ -69,8 +69,13 @@ function useExtractedColor(imgSrc: string) {
   const hover = [mix(r, 40, 0.28), mix(g, 40, 0.28), mix(b, 44, 0.28)];
   const div  = [mix(r, 55, 0.22), mix(g, 55, 0.22), mix(b, 60, 0.22)];
 
+  // Relative luminance of bg — below threshold → use dark (black) text
+  const lum = (0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2]) / 255;
+  const isDark = lum < 0.45; // dark bg → white text, light bg → black text
+
   return {
     avg,
+    isDark,
     bg:          `rgb(${bg[0]}, ${bg[1]}, ${bg[2]})`,
     footerBg:    `rgb(${foot[0]}, ${foot[1]}, ${foot[2]})`,
     footerHover: `rgb(${hover[0]}, ${hover[1]}, ${hover[2]})`,
@@ -267,6 +272,11 @@ export default function ProjectDetailV2({
 
   const hPad = GUTTER;
 
+  // Adaptive text colors based on background luminance
+  const T = colors.isDark
+    ? { solid: "#F0F0F0", mid: "rgba(240,240,240,0.75)", dim: "rgba(240,240,240,0.42)", faint: "rgba(240,240,240,0.4)", nav: "rgba(240,240,240,0.4)", navHover: "#F0F0F0", footer: "rgba(240,240,240,0.55)", footerFaint: "rgba(240,237,232,0.35)" }
+    : { solid: "#0A0A0A", mid: "rgba(0,0,0,0.65)", dim: "rgba(0,0,0,0.42)", faint: "rgba(0,0,0,0.35)", nav: "rgba(0,0,0,0.35)", navHover: "#0A0A0A", footer: "rgba(0,0,0,0.55)", footerFaint: "rgba(0,0,0,0.35)" };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -277,7 +287,7 @@ export default function ProjectDetailV2({
         background: colors.bg,
         transition: "background-color 0.8s ease",
         overflowX: "hidden",
-        color: "#F0F0F0",
+        color: T.solid,
         minHeight: "100vh",
       }}
     >
@@ -320,7 +330,7 @@ export default function ProjectDetailV2({
               fontSize: isMobile ? "clamp(24px, 7.88vw, 44px)" : "clamp(31px, 3.78vw, 55px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
-              color: "#F0F0F0",
+              color: T.solid,
               margin: "0 0 12px",
               wordBreak: "keep-all",
             }}
@@ -336,7 +346,7 @@ export default function ProjectDetailV2({
               fontWeight: 300,
               fontSize: "clamp(20px, 1.8vw, 25px)",
               letterSpacing: "0.02em",
-              color: "rgba(240,240,240,0.42)",
+              color: T.dim,
             }}
           >
             {String(project.id).padStart(3, "0")}-{MONTHS[Math.max(0, parseInt(project.month, 10) - 1)]}-{project.year}
@@ -356,7 +366,7 @@ export default function ProjectDetailV2({
               fontWeight: 300,
               fontSize: isMobile ? "13.9px" : "clamp(14px, 1.18vw, 18px)",
               lineHeight: 1.75,
-              color: "#F0F0F0",
+              color: T.solid,
               margin: "0 0 28px",
               display: "flex",
               flexDirection: "column",
@@ -385,10 +395,10 @@ export default function ProjectDetailV2({
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   background: "transparent",
-                  border: "1.5px solid rgba(240,240,240,0.35)",
+                  border: `1.5px solid ${T.faint}`,
                   borderRadius: "100px",
                   padding: "4px 10px",
-                  color: "rgba(240,240,240,0.75)",
+                  color: T.mid,
                 }}>
                   {c}
                 </span>
@@ -459,7 +469,7 @@ export default function ProjectDetailV2({
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         marginTop: "clamp(64px, 8vh, 120px)",
-        borderTop: `1px solid ${prevBorder}`,
+        borderTop: "none",
       }}>
         {/* Prev */}
         <div
@@ -469,7 +479,7 @@ export default function ProjectDetailV2({
           style={{
             padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
             cursor: "pointer",
-            borderRight: `1px solid ${prevBorder}`,
+            borderRight: "none",
             background: prevHover ? prevHoverBg : prevBgStr,
             transition: "background 0.22s ease",
             display: "flex",
@@ -479,8 +489,8 @@ export default function ProjectDetailV2({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <svg width="15" height="24" viewBox="0 0 10 16" fill="none">
-              <line x1="8" y1="2" x2="2" y2="8" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="2" y1="8" x2="8" y2="14" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="8" y1="2" x2="2" y2="8" stroke={T.nav} strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="8" x2="8" y2="14" stroke={T.nav} strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <span style={{
               fontFamily: FONT,
@@ -488,7 +498,7 @@ export default function ProjectDetailV2({
               fontSize: "18px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "rgba(240,240,240,0.4)",
+              color: T.nav,
             }}>
               Previous
             </span>
@@ -498,7 +508,7 @@ export default function ProjectDetailV2({
             fontWeight: 300,
             fontSize: isMobile ? "25px" : "clamp(25px, 2.88vw, 34px)",
             letterSpacing: "-0.01em",
-            color: prevProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
+            color: prevProject ? T.solid : T.faint,
             wordBreak: "keep-all",
           }}>
             {prevProject?.title || "—"}
@@ -528,13 +538,13 @@ export default function ProjectDetailV2({
               fontSize: "18px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "rgba(240,240,240,0.4)",
+              color: T.nav,
             }}>
               Next
             </span>
             <svg width="15" height="24" viewBox="0 0 10 16" fill="none">
-              <line x1="2" y1="2" x2="8" y2="8" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
-              <line x1="8" y1="8" x2="2" y2="14" stroke="rgba(240,240,240,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="2" y1="2" x2="8" y2="8" stroke={T.nav} strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="8" y1="8" x2="2" y2="14" stroke={T.nav} strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
           <span style={{
@@ -542,7 +552,7 @@ export default function ProjectDetailV2({
             fontWeight: 300,
             fontSize: isMobile ? "25px" : "clamp(25px, 2.88vw, 34px)",
             letterSpacing: "-0.01em",
-            color: nextProject ? "#F0F0F0" : "rgba(240,240,240,0.2)",
+            color: nextProject ? T.solid : T.faint,
             textAlign: "right",
             wordBreak: "keep-all",
           }}>
@@ -652,7 +662,7 @@ export default function ProjectDetailV2({
         )}
       </AnimatePresence>
 
-      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: "rgba(240,240,240,0.55)", textHover: "#F0F0F0", border: colors.divider }} />
+      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: T.footer, textHover: T.navHover, border: colors.divider }} />
     </motion.div>
   );
 }
