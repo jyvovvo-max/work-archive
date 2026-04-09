@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Project } from "./types";
-import { GUTTER, GRID_COLS, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE } from "./layout";
+import { GUTTER, GRID_COLS, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE, FONT_LABEL } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -65,7 +65,7 @@ function AwardRow({
         <sup data-code style={{
           fontFamily: FONT,
           fontWeight: 400,
-          fontSize: isMobile ? "9px" : "clamp(11px, 0.84vw, 13px)",
+          fontSize: isMobile ? "9px" : FONT_LABEL,
           letterSpacing: "0.06em",
           color: "rgba(10,10,10,0.3)",
           marginLeft: "4px",

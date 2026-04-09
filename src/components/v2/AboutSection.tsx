@@ -3,7 +3,7 @@ import { forwardRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE, FONT_BODY, FONT_LIST, FONT_LABEL } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -119,7 +119,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <p style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(16px, 1.37vw, 20px)",
+                fontSize: FONT_BODY,
                 lineHeight: 1.8,
                 color: "rgba(0,0,0,0.6)",
                 margin: 0,
@@ -134,7 +134,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <p style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(16px, 1.37vw, 20px)",
+                fontSize: FONT_BODY,
                 lineHeight: 1.8,
                 color: "rgba(0,0,0,0.6)",
                 margin: 0,
@@ -153,7 +153,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
             <div style={{
               fontFamily: FONT,
               fontWeight: 400,
-              fontSize: "clamp(11px, 0.84vw, 13px)",
+              fontSize: FONT_LABEL,
               letterSpacing: "0.08em",
               textTransform: "uppercase" as const,
               color: "rgba(0,0,0,0.35)",
@@ -163,7 +163,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <div key={s} style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(13px, 1.05vw, 16px)",
+                fontSize: FONT_LIST,
                 letterSpacing: "0.02em",
                 color: "rgba(0,0,0,0.55)",
                 lineHeight: 2.0,
@@ -178,7 +178,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
             <div style={{
               fontFamily: FONT,
               fontWeight: 400,
-              fontSize: "clamp(11px, 0.84vw, 13px)",
+              fontSize: FONT_LABEL,
               letterSpacing: "0.08em",
               textTransform: "uppercase" as const,
               color: "rgba(0,0,0,0.35)",
@@ -188,7 +188,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               <div key={s} style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(13px, 1.05vw, 16px)",
+                fontSize: FONT_LIST,
                 letterSpacing: "0.02em",
                 color: "rgba(0,0,0,0.55)",
                 lineHeight: 2.0,

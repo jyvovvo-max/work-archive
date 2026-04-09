@@ -5,15 +5,18 @@ export const GUTTER = "var(--gutter)";
 export const GRID_GAP = "clamp(16px, 2vw, 32px)";
 export const GRID_COLS = 7;
 
-// Section spacing — A is base unit, B = 2×A, C = A×3/4, D = B×3/4
-export const SPACE_A = "clamp(24px, 3.3vh, 43px)";
-export const SPACE_B = "clamp(48px, 6.6vh, 86px)";
-export const SPACE_C = "clamp(18px, 2.48vh, 32px)";
-export const SPACE_D = "clamp(36px, 4.95vh, 65px)";
+// Section spacing — A is base unit, B = 2×A, C = A×3/4, D = B×3/4 (+3% applied 2026-04-10)
+export const SPACE_A = "clamp(25px, 3.4vh, 44px)";
+export const SPACE_B = "clamp(49px, 6.8vh, 89px)";
+export const SPACE_C = "clamp(19px, 2.55vh, 33px)";
+export const SPACE_D = "clamp(37px, 5.1vh, 67px)";
 
-// Typography — centralized font sizes
-export const FONT_SECTION_TITLE = "clamp(17px, 2.02vw, 27px)";   // section title bars (90% of original)
-export const FONT_HEADLINE = "clamp(30px, 2.7vw, 42px)";         // Awards project name, About headline
+// Typography — centralized font sizes (×0.95 applied 2026-04-10)
+export const FONT_SECTION_TITLE = "clamp(16px, 1.92vw, 26px)";   // section title bars
+export const FONT_HEADLINE = "clamp(29px, 2.57vw, 40px)";        // Awards project name, About headline
+export const FONT_BODY = "clamp(15px, 1.3vw, 19px)";             // About bio text
+export const FONT_LIST = "clamp(12px, 1.0vw, 15px)";             // Services, Experience items
+export const FONT_LABEL = "clamp(10px, 0.8vw, 12px)";            // Services/Experience/Award caption titles
 
 // Optical right-edge correction (px) — tune each independently.
 // Positive = element shifts further right past the GUTTER baseline.
