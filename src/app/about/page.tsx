@@ -62,8 +62,8 @@ export default function AboutPage() {
       <div style={{ paddingTop: "52px", opacity: ready ? 1 : 0 }}>
       <motion.div
         key={ready ? "ready" : "loading"}
-        initial={ready ? { filter: "blur(16px)" } : false}
-        animate={ready ? { filter: "blur(0px)" } : {}}
+        initial={ready ? { opacity: 0, y: 16 } : false}
+        animate={ready ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
       >
         <AboutSection siteData={siteData} lang={lang} skipAnimation />
