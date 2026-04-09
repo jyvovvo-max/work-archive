@@ -29,14 +29,10 @@ function AwardRow({
     const codeSup = e.currentTarget.querySelector("[data-code]") as HTMLElement;
     if (!codeSup) return;
     const codeRect = codeSup.getBoundingClientRect();
-    const colW = (window.innerWidth - parseFloat(getComputedStyle(document.documentElement).fontSize) * 2) / GRID_COLS;
-    const codeEndX = codeRect.left + codeRect.width;
-    const colIndex = Math.floor(codeEndX / colW);
-    const snappedLeft = colIndex * colW;
 
     setImgPos({
-      left: snappedLeft,
-      top: codeRect.top + codeRect.height,
+      left: codeRect.right + 8,
+      top: codeRect.top + codeRect.height / 2,
     });
     setHovered(true);
   };
