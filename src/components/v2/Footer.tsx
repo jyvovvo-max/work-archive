@@ -28,6 +28,7 @@ interface OverrideColors { bg: string; text: string; textHover: string; border: 
 export default function Footer({ siteData, lang = "ko", overrideColors }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors }) {
   const headline = siteData?.footerHeadline ?? "";
   const location = siteData?.footerLocation ?? "Korea";
+  const emailHandle = siteData?.footerEmailHandle ?? "Mail";
   const email = siteData?.footerEmail ?? "";
   const igHandle = siteData?.footerInstagramHandle ?? "";
   const igUrl = siteData?.footerInstagramUrl ?? "";
@@ -75,7 +76,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
     }}>
       {/* Headline */}
       <BlurIn>
-        <div style={{ marginBottom: SPACE_C }}>
+        <div style={{ marginBottom: "clamp(8px, 1.1vh, 14px)" }}>
           <span style={{
             fontFamily: FONT, fontWeight: 300,
             fontSize: "clamp(12px, 1.28vw, 16px)",
@@ -103,7 +104,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
                 onMouseEnter={e => (e.currentTarget.style.color = textHover)}
                 onMouseLeave={e => (e.currentTarget.style.color = textColor)}
               >
-                {email}
+                {emailHandle}
               </a>
               <a
                 href={igUrl}

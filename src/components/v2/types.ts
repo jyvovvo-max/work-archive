@@ -33,6 +33,7 @@ export interface SiteData {
   footerHeadline: string;
   footerHeadlineEn?: string;
   footerLocation: string;
+  footerEmailHandle: string;
   footerEmail: string;
   footerInstagramHandle: string;
   footerInstagramUrl: string;
