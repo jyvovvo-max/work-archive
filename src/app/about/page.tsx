@@ -59,19 +59,18 @@ export default function AboutPage() {
         lang={lang}
       />
 
+      <div style={{ paddingTop: "52px", opacity: ready ? 1 : 0 }}>
       <motion.div
-        initial={{ opacity: 0, filter: "blur(12px)", y: 14 }}
-        animate={ready
-          ? { opacity: 1, filter: "blur(0px)", y: 0 }
-          : { opacity: 0.3, filter: "blur(12px)", y: 14 }
-        }
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        style={{ paddingTop: "52px" }}
+        key={ready ? "ready" : "loading"}
+        initial={ready ? { filter: "blur(16px)" } : false}
+        animate={ready ? { filter: "blur(0px)" } : {}}
+        transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
       >
         <AboutSection siteData={siteData} lang={lang} skipAnimation />
         <AwardsSection projects={projects} onOpen={openProject} />
         <Footer siteData={siteData} lang={lang} />
       </motion.div>
+      </div>
 
       <ContactModal
         open={contactOpen}
