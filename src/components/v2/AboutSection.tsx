@@ -146,6 +146,15 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         {/* Services — desktop: col 6 / mobile: col 1-3 */}
         <BlurIn delay={0.08} style={{ gridColumn: isMobile ? "1 / 4" : "6" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{
+              fontFamily: FONT,
+              fontWeight: 400,
+              fontSize: "clamp(11px, 0.84vw, 13px)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase" as const,
+              color: "rgba(0,0,0,0.35)",
+              marginBottom: "12px",
+            }}>Services</div>
             {services.map(s => (
               <div key={s} style={{
                 fontFamily: FONT,
@@ -162,6 +171,15 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         {/* Experience — desktop: col 7 / mobile: col 4-6 */}
         <BlurIn delay={0.12} style={{ gridColumn: isMobile ? "4 / 7" : "7" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{
+              fontFamily: FONT,
+              fontWeight: 400,
+              fontSize: "clamp(11px, 0.84vw, 13px)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase" as const,
+              color: "rgba(0,0,0,0.35)",
+              marginBottom: "12px",
+            }}>Experience</div>
             {experience.map(s => (
               <div key={s} style={{
                 fontFamily: FONT,

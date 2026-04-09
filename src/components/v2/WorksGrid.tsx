@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useInView } from "framer-motion";
 import { Project } from "./types";
 import { GUTTER, FONT_SECTION_TITLE } from "./layout";
+import { CLD_VIDEO } from "./dataFetch";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -16,9 +17,22 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   isMobile: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const inView = useInView(ref, { once: true, margin: "-6% 0px" });
   const [hovered, setHovered] = useState(false);
   const [isCentered, setIsCentered] = useState(false);
+
+  // Build video thumbnail URL (first 15s via Cloudinary transformation)
+  // thumbnailVideo: sheet "thumbnail" column (e.g. "01") → {folder}/01
+  const videoSrc = project.thumbnailVideo
+    ? `${CLD_VIDEO}so_0,eo_15/${project.img.split("/portfolio-images/")[1]?.replace("/cover", "")}/${project.thumbnailVideo.padStart(3, "0")}`
+    : null;
+
+  // Loop at 15s mark
+  const handleTimeUpdate = useCallback(() => {
+    const v = videoRef.current;
+    if (v && v.currentTime >= 15) v.currentTime = 0;
+  }, []);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -40,7 +54,7 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {/* Image — blur-to-clean on scroll */}
+      {/* Thumbnail — video or image */}
       <motion.div
         animate={inView
           ? { filter: "blur(0px)", opacity: 1 }
@@ -49,13 +63,32 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
         initial={{ filter: "blur(14px)", opacity: 0 }}
         transition={{ duration: 1.1, delay: colIdx * 0.1, ease: [0.16, 1, 0.3, 1] }}
       >
-        <motion.img
-          src={project.img}
-          alt={project.title}
-          animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
-        />
+        {videoSrc ? (
+          <motion.div
+            animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              autoPlay
+              muted
+              loop
+              playsInline
+              onTimeUpdate={handleTimeUpdate}
+              poster={project.img}
+              style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+            />
+          </motion.div>
+        ) : (
+          <motion.img
+            src={project.img}
+            alt={project.title}
+            animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+          />
+        )}
       </motion.div>
 
       {/* White acrylic bar — centered card on mobile, hover on desktop */}

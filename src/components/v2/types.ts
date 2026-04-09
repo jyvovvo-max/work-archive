@@ -11,6 +11,7 @@ export interface Project {
   images?: string[];
   pairs?: string;
   videoUrl?: string;
+  thumbnailVideo?: string;
   selected: boolean;
   award?: string;
 }
