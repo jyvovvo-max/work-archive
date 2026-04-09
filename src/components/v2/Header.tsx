@@ -95,7 +95,7 @@ export default function Header({
       {show && (
         <motion.header
           key="header"
-          initial={isMobile ? false : { y: -60, opacity: 0 }}
+          initial={isMobile || alwaysVisible ? false : { y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={alwaysVisible ? undefined : { y: -60, opacity: 0 }}
           transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
