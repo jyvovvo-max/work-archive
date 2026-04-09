@@ -7,29 +7,29 @@ import { GUTTER, GRID_GAP, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE, 
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
-function BlurIn({
+function HoverIn({
   children,
   delay = 0,
   style,
-  skip = false,
+  ready = true,
 }: {
   children: React.ReactNode;
   delay?: number;
   style?: React.CSSProperties;
-  skip?: boolean;
+  ready?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-8% 0px" });
-  if (skip) return <div style={style}>{children}</div>;
+  const show = ready && inView;
   return (
     <motion.div
       ref={ref}
-      animate={inView
-        ? { filter: "blur(0px)", opacity: 1, y: 0 }
-        : { filter: "blur(10px)", opacity: 0, y: 16 }
+      initial={{ opacity: 0, y: 14 }}
+      animate={show
+        ? { opacity: 1, y: 0 }
+        : { opacity: 0, y: 14 }
       }
-      initial={{ filter: "blur(10px)", opacity: 0, y: 16 }}
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.7, delay: show ? delay : 0, ease: [0.16, 1, 0.3, 1] }}
       style={style}
     >
       {children}
@@ -41,9 +41,10 @@ interface AboutProps {
   siteData: SiteData | null;
   lang?: Lang;
   skipAnimation?: boolean;
+  ready?: boolean;
 }
 
-const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko", skipAnimation = false }, ref) => {
+const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko", skipAnimation = false, ready = true }, ref) => {
   const bioKo = siteData?.aboutBio ?? [];
   const bioEn = siteData?.aboutBioEn ?? [];
   const services = siteData?.services ?? [];
@@ -64,29 +65,31 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         borderTop: "1px solid rgba(0,0,0,0.1)",
       }}
     >
-      {/* "About" label bar — same style as Selected Work / Awards */}
-      <div style={{
-        height: "52px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: `0 ${GUTTER}`,
-        borderBottom: "1px solid rgba(0,0,0,0.15)",
-      }}>
-        <span style={{
-          fontFamily: FONT,
-          fontWeight: 300,
-          fontSize: FONT_SECTION_TITLE,
-          letterSpacing: "-0.02em",
-          color: "#0A0A0A",
+      {/* "About" label bar */}
+      <HoverIn ready={ready} delay={0}>
+        <div style={{
+          height: "52px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: `0 ${GUTTER}`,
+          borderBottom: "1px solid rgba(0,0,0,0.15)",
         }}>
-          About
-        </span>
-      </div>
+          <span style={{
+            fontFamily: FONT,
+            fontWeight: 300,
+            fontSize: FONT_SECTION_TITLE,
+            letterSpacing: "-0.02em",
+            color: "#0A0A0A",
+          }}>
+            About
+          </span>
+        </div>
+      </HoverIn>
 
       <div style={{ padding: `${SPACE_A} ${GUTTER} ${SPACE_B}` }}>
       {/* Headline */}
-      <BlurIn skip={skipAnimation}>
+      <HoverIn ready={ready} delay={0.05}>
         <h2 style={{
           fontFamily: FONT,
           fontWeight: 300,
@@ -101,10 +104,9 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
             <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
           ))}
         </h2>
-      </BlurIn>
+      </HoverIn>
 
-      {/* 7-column grid: col 1-4 = Bio, col 5 = gap, col 6 = Services, col 7 = Experience */}
-      {/* Mobile: Bio full 8 cols, Services col 1-3, Experience col 4-6 (stacked below) */}
+      {/* 7-column grid */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "repeat(8, 1fr)" : "repeat(7, 1fr)",
@@ -112,10 +114,10 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         columnGap: GRID_GAP,
         alignItems: "start",
       }}>
-        {/* Bio — desktop: 1–4 / mobile: 1–8 (full), KO + EN */}
+        {/* Bio */}
         <div style={{ gridColumn: isMobile ? "1 / 9" : "1 / 5", display: "flex", flexDirection: "column", gap: "20px" }}>
           {bioKo.map((p, i) => (
-            <BlurIn key={`ko-${i}`} delay={i * 0.06} skip={skipAnimation}>
+            <HoverIn key={`ko-${i}`} delay={0.1 + i * 0.06} ready={ready}>
               <p style={{
                 fontFamily: FONT,
                 fontWeight: 300,
@@ -127,10 +129,10 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               }}>
                 {p}
               </p>
-            </BlurIn>
+            </HoverIn>
           ))}
           {bioEn.map((p, i) => (
-            <BlurIn key={`en-${i}`} delay={(bioKo.length + i) * 0.06} skip={skipAnimation}>
+            <HoverIn key={`en-${i}`} delay={0.1 + (bioKo.length + i) * 0.06} ready={ready}>
               <p style={{
                 fontFamily: FONT,
                 fontWeight: 300,
@@ -141,14 +143,12 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               }}>
                 {p}
               </p>
-            </BlurIn>
+            </HoverIn>
           ))}
         </div>
 
-        {/* Columns 4–5: intentional gap — no content (desktop only) */}
-
-        {/* Services — desktop: col 6 / mobile: col 1-3 */}
-        <BlurIn delay={0.08} skip={skipAnimation} style={{ gridColumn: isMobile ? "1 / 4" : "6" }}>
+        {/* Services */}
+        <HoverIn delay={0.18} ready={ready} style={{ gridColumn: isMobile ? "1 / 4" : "6" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{
               fontFamily: FONT,
@@ -170,10 +170,10 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               }}>{s}</div>
             ))}
           </div>
-        </BlurIn>
+        </HoverIn>
 
-        {/* Experience — desktop: col 7 / mobile: col 4-6 */}
-        <BlurIn delay={0.12} skip={skipAnimation} style={{ gridColumn: isMobile ? "4 / 7" : "7" }}>
+        {/* Experience */}
+        <HoverIn delay={0.22} ready={ready} style={{ gridColumn: isMobile ? "4 / 7" : "7" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{
               fontFamily: FONT,
@@ -195,7 +195,7 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               }}>{s}</div>
             ))}
           </div>
-        </BlurIn>
+        </HoverIn>
       </div>
 
       </div>
