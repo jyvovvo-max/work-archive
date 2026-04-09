@@ -64,7 +64,7 @@ function useExtractedColor(imgSrc: string) {
   // Mix average color toward dark for readability (white text)
   const mix = (c: number, target: number, amount: number) => Math.round(c * amount + target * (1 - amount));
   const [r, g, b] = avg;
-  const bg   = [r, g, b];
+  const bg   = [Math.round(r * 0.85), Math.round(g * 0.85), Math.round(b * 0.85)];
   const foot = [mix(r, 0, 0.90), mix(g, 0, 0.90), mix(b, 0, 0.90)];
   const hover = [mix(r, 40, 0.28), mix(g, 40, 0.28), mix(b, 44, 0.28)];
   const div  = [mix(r, 55, 0.22), mix(g, 55, 0.22), mix(b, 60, 0.22)];
