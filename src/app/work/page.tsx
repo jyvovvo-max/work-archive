@@ -188,12 +188,15 @@ export default function WorkPage() {
   const [cols, setCols] = useState(3);
   const [isExiting, setIsExiting] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("portfolio-lang") as Lang | null;
     if (saved) setLang(saved);
-    fetchProjects().then(setProjects);
-    fetchSiteData().then(setSiteData);
+    Promise.all([
+      fetchProjects().then(setProjects),
+      fetchSiteData().then(setSiteData),
+    ]).then(() => setReady(true));
   }, []);
 
   useEffect(() => {
@@ -244,11 +247,14 @@ export default function WorkPage() {
         lang={lang}
       />
 
-      {/* Entry wrapper — exit handled per-card */}
+      {/* Entry wrapper — waits for data, then reveals all at once */}
       <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, filter: "blur(12px)", y: 14 }}
+        animate={ready
+          ? { opacity: 1, filter: "blur(0px)", y: 0 }
+          : { opacity: 0.3, filter: "blur(12px)", y: 14 }
+        }
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         style={{ paddingTop: "52px" }}
       >
         <CategoryBar categories={categories} active={activeCategory} onChange={setActiveCategory} />
