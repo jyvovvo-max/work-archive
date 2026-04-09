@@ -21,6 +21,7 @@ function CategoryBar({ categories, active, onChange }: {
   onChange: (c: string | null) => void;
 }) {
   if (categories.length === 0) return null;
+  const allCats = ["All", ...categories];
   return (
     <div style={{
       padding: "clamp(12px, 1.8vw, 20px) clamp(12px, 2vw, 24px)",
@@ -29,12 +30,15 @@ function CategoryBar({ categories, active, onChange }: {
       gap: "8px",
       borderBottom: "1px solid rgba(0,0,0,0.08)",
     }}>
-      {["All", ...categories].map(cat => {
+      {allCats.map((cat, i) => {
         const isAll = cat === "All";
         const isActive = isAll ? active === null : active === cat;
         return (
-          <button
+          <motion.button
             key={cat}
+            initial={{ opacity: 0, scale: 0.85, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 + i * 0.035, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => onChange(isAll ? null : cat)}
             style={{
               fontFamily: FONT,
@@ -55,7 +59,7 @@ function CategoryBar({ categories, active, onChange }: {
             onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.70)"; e.currentTarget.style.color = "rgba(0,0,0,0.55)"; } }}
           >
             {cat.charAt(0).toUpperCase() + cat.slice(1)}
-          </button>
+          </motion.button>
         );
       })}
     </div>
@@ -240,11 +244,11 @@ export default function WorkPage() {
         lang={lang}
       />
 
-      {/* Blur entry wrapper — exit handled per-card */}
+      {/* Entry wrapper — exit handled per-card */}
       <motion.div
-        initial={{ filter: "blur(20px)", opacity: 0 }}
-        animate={{ filter: "blur(0px)", opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         style={{ paddingTop: "52px" }}
       >
         <CategoryBar categories={categories} active={activeCategory} onChange={setActiveCategory} />

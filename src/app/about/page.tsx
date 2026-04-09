@@ -57,12 +57,12 @@ export default function AboutPage() {
       />
 
       <motion.div
-        initial={{ filter: "blur(20px)", opacity: 0 }}
-        animate={{ filter: "blur(0px)", opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         style={{ paddingTop: "52px" }}
       >
-        <AboutSection siteData={siteData} lang={lang} />
+        <AboutSection siteData={siteData} lang={lang} skipAnimation />
         <AwardsSection projects={projects} onOpen={openProject} />
         <Footer siteData={siteData} lang={lang} />
       </motion.div>
