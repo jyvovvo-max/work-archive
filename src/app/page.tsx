@@ -125,7 +125,7 @@ export default function Page() {
         position: "relative",
         zIndex: 3,
         background: "#F0F0F0",
-        borderTop: "1px solid rgba(0,0,0,0.08)",
+        borderTop: "none",
       }}>
         <Footer siteData={siteData} lang={lang} />
       </div>
