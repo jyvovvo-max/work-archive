@@ -448,8 +448,8 @@ export default function ProjectDetailV2({
         const [nr, ng, nb] = nextColors.avg;
         const prevBg = [mx(cr, pr), mx(cg, pg), mx(cb, pb)];
         const nextBg = [mx(cr, nr), mx(cg, ng), mx(cb, nb)];
-        const prevBorder = `rgb(${dk(prevBg[0])}, ${dk(prevBg[1])}, ${dk(prevBg[2])})`;
-        const nextBorder = `rgb(${dk(nextBg[0])}, ${dk(nextBg[1])}, ${dk(nextBg[2])})`;
+        const prevBorder = "rgba(0,0,0,0.5)";
+        const nextBorder = "rgba(0,0,0,0.5)";
         const prevBgStr = `rgb(${prevBg[0]}, ${prevBg[1]}, ${prevBg[2]})`;
         const nextBgStr = `rgb(${nextBg[0]}, ${nextBg[1]}, ${nextBg[2]})`;
         const prevHoverBg = `rgb(${Math.min(prevBg[0] + 20, 255)}, ${Math.min(prevBg[1] + 20, 255)}, ${Math.min(prevBg[2] + 20, 255)})`;
