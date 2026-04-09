@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Project } from "./types";
 import { GUTTER, GRID_COLS, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE, FONT_LABEL } from "./layout";
 
@@ -9,6 +9,35 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 const fmtCode = (id: number, month: string, year: string) =>
   `${String(id).padStart(3, "0")}-${MONTHS[Math.max(0, parseInt(month, 10) - 1)]}-${year}`;
 
+function HoverIn({
+  children,
+  delay = 0,
+  style,
+  ready = true,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  style?: React.CSSProperties;
+  ready?: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+  const show = ready && inView;
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 14 }}
+      animate={show
+        ? { opacity: 1, y: 0 }
+        : { opacity: 0, y: 14 }
+      }
+      transition={{ duration: 0.7, delay: show ? delay : 0, ease: [0.16, 1, 0.3, 1] }}
+      style={style}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 function AwardRow({
   project,
@@ -109,9 +138,10 @@ function AwardRow({
 interface AwardsSectionProps {
   projects: Project[];
   onOpen: (p: Project) => void;
+  ready?: boolean;
 }
 
-export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) {
+export default function AwardsSection({ projects, onOpen, ready = true }: AwardsSectionProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [mobileFontSize, setMobileFontSize] = useState<string | null>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -177,37 +207,41 @@ export default function AwardsSection({ projects, onOpen }: AwardsSectionProps) 
         </span>
       )}
 
-      <div style={{
-        height: "52px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: `0 ${GUTTER}`,
-        borderTop: "1px solid rgba(0,0,0,0.15)",
-        borderBottom: "1px solid rgba(0,0,0,0.15)",
-        marginBottom: SPACE_A,
-        position: "relative",
-        zIndex: 1,
-      }}>
-        <span style={{
-          fontFamily: FONT,
-          fontWeight: 300,
-          fontSize: FONT_SECTION_TITLE,
-          letterSpacing: "-0.02em",
-          color: "#0A0A0A",
+      {/* Awards title bar */}
+      <HoverIn ready={ready} delay={0.28}>
+        <div style={{
+          height: "52px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: `0 ${GUTTER}`,
+          borderTop: "1px solid rgba(0,0,0,0.15)",
+          borderBottom: "1px solid rgba(0,0,0,0.15)",
+          marginBottom: SPACE_A,
+          position: "relative",
+          zIndex: 1,
         }}>
-          Awards
-        </span>
-      </div>
+          <span style={{
+            fontFamily: FONT,
+            fontWeight: 300,
+            fontSize: FONT_SECTION_TITLE,
+            letterSpacing: "-0.02em",
+            color: "#0A0A0A",
+          }}>
+            Awards
+          </span>
+        </div>
+      </HoverIn>
 
-      {awardProjects.map((p) => (
-        <AwardRow
-          key={p.id}
-          project={p}
-          onOpen={onOpen}
-          isMobile={isMobile}
-          mobileFontSize={mobileFontSize}
-        />
+      {awardProjects.map((p, i) => (
+        <HoverIn key={p.id} ready={ready} delay={0.32 + i * 0.05}>
+          <AwardRow
+            project={p}
+            onOpen={onOpen}
+            isMobile={isMobile}
+            mobileFontSize={mobileFontSize}
+          />
+        </HoverIn>
       ))}
     </section>
   );
