@@ -69,7 +69,7 @@ function AwardRow({
         <sup data-code style={{
           fontFamily: FONT,
           fontWeight: 400,
-          fontSize: isMobile ? "7px" : "clamp(9px, 0.7vw, 11px)",
+          fontSize: isMobile ? "9px" : "clamp(11px, 0.84vw, 13px)",
           letterSpacing: "0.06em",
           color: "rgba(10,10,10,0.3)",
           marginLeft: "4px",
