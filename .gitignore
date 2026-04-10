@@ -33,6 +33,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!tools/.env.example
 
 # upload tool local state
 tools/.upload-state.json
@@ -43,5 +45,3 @@ tools/.upload-state.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-.vercel
