@@ -331,10 +331,10 @@ export default function ProjectDetailV2({
       </motion.div>
 
       {/* ── Title + Meta ── */}
-      {/* Mobile: paddingTop += 52px (header height) so content starts below fixed header */}
+      {/* Mobile: paddingTop is half of the legacy (52px + clamp(32,5vh,56)) gap */}
       <div style={{
         padding: isMobile
-          ? `calc(52px + clamp(32px, 5vh, 56px)) ${hPad} clamp(32px, 5vh, 56px)`
+          ? `calc((52px + clamp(32px, 5vh, 56px)) / 2) ${hPad} clamp(32px, 5vh, 56px)`
           : `clamp(48px, 7vh, 80px) ${hPad}`,
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "repeat(7, 1fr)",
@@ -351,7 +351,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: isMobile ? "clamp(24px, 7.88vw, 44px)" : "clamp(31px, 3.78vw, 55px)",
+              fontSize: isMobile ? "clamp(22px, 7.1vw, 40px)" : "clamp(31px, 3.78vw, 55px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
               color: T.solid,
