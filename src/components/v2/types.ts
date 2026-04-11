@@ -11,7 +11,11 @@ export interface Project {
   images?: string[];
   pairs?: string;
   videoUrl?: string;
-  thumbnailVideo?: string;
+  // 1-based slot numbers that are videos (not images).
+  // Parsed from the sheet `Video` column, comma-separated (e.g. "2" or "1,5").
+  // - Selected Works card uses the FIRST slot as the thumbnail loop.
+  // - Project detail gallery renders ALL listed slots as videos.
+  videoSlots?: number[];
   selected: boolean;
   award?: string;
 }

@@ -85,7 +85,7 @@ function useExtractedColor(imgSrc: string) {
 
 // Header is rendered by page.tsx — no local header needed here
 
-// Convert image URL → video URL (used when image 404s, falling back to video)
+// Convert image URL → video URL for slots flagged as videos via the sheet `Video` column.
 // f_auto intentionally omitted from video prefix: the Cloudinary auto-format pipeline
 // occasionally fails on specific source encodings (e.g. puuvilla_society/001), returning
 // 404 even when the raw asset exists. q_auto alone is safe across all sources.
@@ -96,16 +96,16 @@ const toVideoUrl = (src: string) =>
     ? src.replace(CLD_IMG_PREFIX, CLD_VID_PREFIX)
     : src;
 
-// Gallery media — image first (common case), swaps to video only if image 404s.
-// This is the reverse of the old probe-video-first logic, which issued a video request
-// for every gallery item. Now real videos (image 404) cost 1 img + 1 video; everything
-// else is just 1 img. Parent receives aspect ratio via onRatio for flex-row layout.
-function GalleryImage({ src, alt, index, onLightbox, onRatio }: {
+// Gallery media — explicit: `isVideo` is set by the parent from `project.videoSlots`.
+// No auto-detection: the sheet `Video` column is the single source of truth. This avoids
+// ambiguity when Cloudinary's dual image/video namespace holds stale image assets at the
+// same public_id (see shinsegae-market/002 incident).
+function GalleryImage({ src, alt, index, isVideo, onLightbox, onRatio }: {
   src: string; alt: string; index: number;
+  isVideo: boolean;
   onLightbox: () => void;
   onRatio?: (ratio: number) => void;
 }) {
-  const [isVideo, setIsVideo] = useState(false);
   const [failed, setFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -158,7 +158,7 @@ function GalleryImage({ src, alt, index, onLightbox, onRatio }: {
               onRatio?.(img.naturalWidth / img.naturalHeight);
             }
           }}
-          onError={() => setIsVideo(true)}
+          onError={() => setFailed(true)}
           style={{ width: "100%", height: "auto", display: "block" }}
         />
       ) : (
@@ -229,8 +229,10 @@ function GalleryImage({ src, alt, index, onLightbox, onRatio }: {
 // Parallel row with dynamic aspect-ratio flex.
 // Ratios are reported by each GalleryImage via onRatio (from img.naturalWidth
 // or video.videoWidth once metadata loads), so no hidden probe image is needed.
-function ParallelRow({ row, ri, onLightbox }: {
-  row: string[]; ri: number; onLightbox: (idx: number) => void;
+function ParallelRow({ row, ri, videoUrlSet, onLightbox }: {
+  row: string[]; ri: number;
+  videoUrlSet: Set<string>;
+  onLightbox: (idx: number) => void;
 }) {
   const [ratios, setRatios] = useState<number[]>(() => row.map(() => 1));
   return (
@@ -241,6 +243,7 @@ function ParallelRow({ row, ri, onLightbox }: {
             src={src}
             alt={`${ri}-${ci}`}
             index={ri + ci}
+            isVideo={videoUrlSet.has(src)}
             onLightbox={() => onLightbox(ci)}
             onRatio={r => setRatios(prev => {
               if (prev[ci] === r) return prev;
@@ -289,6 +292,13 @@ export default function ProjectDetailV2({
 
   const allImages = [project.img, ...(project.images ?? [])];
   const galleryImages = project.images ?? [];
+  // Resolve videoSlots (1-based slot numbers from sheet "Video" column) to the
+  // actual gallery image URLs at those slots, so GalleryImage can check membership.
+  const videoUrlSet = new Set(
+    (project.videoSlots ?? [])
+      .map(slot => galleryImages[slot - 1])
+      .filter((url): url is string => !!url)
+  );
   const rows = buildRows(galleryImages.length > 0 ? galleryImages : [project.img], project.pairs);
 
   const goLightbox = (dir: 1 | -1) =>
@@ -460,6 +470,7 @@ export default function ProjectDetailV2({
               src={row[0]}
               alt={`${project.title} — ${ri + 1}`}
               index={ri}
+              isVideo={videoUrlSet.has(row[0])}
               onLightbox={() => setLightboxIdx(allImages.indexOf(row[0]))}
             />
           ) : (
@@ -467,6 +478,7 @@ export default function ProjectDetailV2({
               key={ri}
               row={row}
               ri={ri}
+              videoUrlSet={videoUrlSet}
               onLightbox={ci => setLightboxIdx(allImages.indexOf(row[ci]))}
             />
           )

@@ -83,7 +83,12 @@ function rowToProject(row: Record<string, string>): Project | null {
     images: imageCount > 0 ? cldImgs(row.folder, imageCount) : undefined,
     pairs: row.pairs || undefined,
     videoUrl: row.videoUrl || undefined,
-    thumbnailVideo: row.Selected_video || undefined,
+    videoSlots: row.Video
+      ? row.Video
+          .split(",")
+          .map(s => parseInt(s.trim(), 10))
+          .filter(n => Number.isInteger(n) && n > 0)
+      : undefined,
     selected: row.selected?.toUpperCase() === "TRUE",
     award: row.Award?.trim() || undefined,
   };
