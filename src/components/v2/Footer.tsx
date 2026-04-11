@@ -23,7 +23,14 @@ function BlurIn({ children, delay = 0, style }: { children: React.ReactNode; del
   );
 }
 
-interface OverrideColors { bg: string; text: string; textHover: string; border: string; }
+interface OverrideColors {
+  bg: string;
+  text: string;         // mid-weight — info row values/links
+  textStrong: string;   // full-solid — headline
+  textFaint: string;    // dim — bottom-bar name
+  textHover: string;
+  border: string;
+}
 
 export default function Footer({ siteData, lang = "ko", overrideColors }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors }) {
   const headline = siteData?.footerHeadline ?? "";
@@ -80,7 +87,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
           <span style={{
             fontFamily: FONT, fontWeight: 300,
             fontSize: "clamp(12px, 1.28vw, 16px)",
-            letterSpacing: "0.01em", color: overrideColors ? "#F0F0F0" : "#0A0A0A",
+            letterSpacing: "0.01em", color: overrideColors?.textStrong ?? "#0A0A0A",
             whiteSpace: "pre-line",
           }}>
             {headline}
@@ -168,7 +175,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
         <span style={{
           fontFamily: FONT, fontWeight: 300,
           fontSize: "12px",
-          letterSpacing: "0.04em", color: overrideColors ? "rgba(240,237,232,0.35)" : "rgba(0,0,0,0.45)",
+          letterSpacing: "0.04em", color: overrideColors?.textFaint ?? "rgba(0,0,0,0.45)",
         }}>
           {name}
         </span>

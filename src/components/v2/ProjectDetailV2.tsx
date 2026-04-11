@@ -698,7 +698,7 @@ export default function ProjectDetailV2({
         )}
       </AnimatePresence>
 
-      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: T.footer, textHover: T.navHover, border: colors.divider }} />
+      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: T.footer, textStrong: T.solid, textFaint: T.footerFaint, textHover: T.navHover, border: colors.divider }} />
     </motion.div>
   );
 }
