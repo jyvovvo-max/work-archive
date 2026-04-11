@@ -170,7 +170,7 @@ const SCALE_PUSHED  = 0.78;  // other images recede when one is hovered
 // Hover target: any hovered image scales up to this visual width (vw). Small images grow
 // more (larger scale factor), large images grow less — but all end up the same "front plane"
 // width, guaranteed to exceed the largest baseline image. Depth-equalized focus zoom.
-const HOVER_TARGET_VW = 28.8; // ≈ 90% of previous 32vw
+const HOVER_TARGET_VW = 25;
 // Minimum multiplier so every image — even the one already close to target — still has
 // a perceptible "come forward" gesture on hover.
 const HOVER_SCALE_MIN = 1.05;
@@ -182,6 +182,10 @@ const LENS_BLUR_RELIEF = 0.3; // near neighbours blur less aggressively
 // Gather: near non-hovered images also drift slightly toward the focal point, weighted
 // by their proximity factor (near = most drift, far = no drift).
 const GATHER_MAX_PX = 40;
+// Edge-clip compensation: when a hovered image would extend past the viewport edge, nudge
+// it toward the centre. Allow up to CLIP_ALLOWED_FRACTION of the scaled width to clip;
+// only the excess is compensated.
+const CLIP_ALLOWED_FRACTION = 1 / 6;
 
 // Sequence:
 //  1. Images fade in clean (staggered, 0.1s gap, 1.0s each)
@@ -204,6 +208,7 @@ function CollageImage({
   isHovered,
   anyHovered,
   hoveredCenter,
+  screenW,
   onHoverChange,
   onOpen,
 }: {
@@ -218,6 +223,7 @@ function CollageImage({
   isHovered: boolean;
   anyHovered: boolean;
   hoveredCenter: Center | null;
+  screenW: number;
   onHoverChange: (hover: boolean, center?: Center) => void;
   onOpen: (p: Project) => void;
 }) {
@@ -328,7 +334,30 @@ function CollageImage({
   // Asymmetric timing: grow-in on hover is snappy, release-out is a slow exhale.
   // `anyHovered` reflects the target state — true means we're transitioning TO a hover
   // configuration (fast), false means we're transitioning BACK to baseline (slow).
-  const duration = !hasSettled ? 1.0 : anyHovered ? 0.15 : 0.8;
+  // Edge-clip compensation — only for the currently hovered image. When its scaled
+  // width would extend past the viewport edge by more than CLIP_ALLOWED_FRACTION of
+  // the scaled width, nudge the image toward the centre by exactly the excess. Near
+  // middle-of-screen images compensate by 0.
+  let compX = 0;
+  if (isHovered && screenW > 0) {
+    const vwPx = screenW / 100;
+    const w = parseFloat(pos.w) * vwPx;
+    const left = parseFloat(pos.left) * vwPx;
+    const centerX = left + w / 2;
+    const halfScaled = (w * hoverScale) / 2;
+    const allowed = (w * hoverScale) * CLIP_ALLOWED_FRACTION;
+    const leftOver  = Math.max(0, halfScaled - centerX);             // positive = clipping left
+    const rightOver = Math.max(0, (centerX + halfScaled) - screenW); // positive = clipping right
+    if (leftOver > allowed) compX = leftOver - allowed;
+    else if (rightOver > allowed) compX = -(rightOver - allowed);
+  }
+
+  // Effective translate for the image wrapper: compensation wins for the hovered image,
+  // gather pull wins for non-hovered images.
+  const effectiveX = isHovered ? compX : pull.x;
+  const effectiveY = isHovered ? 0    : pull.y;
+
+  const duration = !hasSettled ? 1.0 : anyHovered ? 0.15 : 0.9;
   const blurTransition = {
     filter: { duration, ease: "easeInOut" as const },
     scale:  { duration, ease: "easeInOut" as const },
@@ -338,25 +367,20 @@ function CollageImage({
   const blurAnimate = {
     filter: `blur(${targetBlurPx}px)`,
     scale: targetScale,
-    x: pull.x,
-    y: pull.y,
+    x: effectiveX,
+    y: effectiveY,
   };
 
-  // Label tracks the image's visual top-right corner as it scales AND the gather pull.
-  // Scale corner offset: (S-1)*W/2 right, -(S-1)*H*imgAspect/2 up (using the real image
-  // aspect captured on load — a 16:9 image would otherwise overshoot with IMG_RATIO=0.75).
-  // CSS supports multiple translates in a single transform — they compose additively.
-  // Additionally, the image→label gap shrinks as the image grows so the label doesn't
-  // appear to drift away on hover (target: half the baseline gap at full hover scale).
+  // Label tracks the image's visual top-right corner as it scales AND the current
+  // translate (gather pull OR edge compensation). Uses the real image aspect captured
+  // on load — a 16:9 image would otherwise overshoot with IMG_RATIO=0.75.
+  // translateZ lifts the label slightly forward in the preserve-3d stacking context so
+  // the scaled image (same Z=0) never paints over it, regardless of DOM sibling order.
   const posWvw = parseFloat(pos.w);
   const labelShiftXvw = (targetScale - 1) * 0.5 * posWvw;
   const labelShiftYvw = -labelShiftXvw * imgAspect;
-  const hoverGrowth = Math.min(1, Math.max(0, targetScale - 1));
-  const gapDeltaPx = hoverGrowth * 6.5; // at S≥2, label sits 6.5px lower → gap is halved
-  // translateZ lifts the label slightly forward in the preserve-3d stacking context so
-  // the scaled image (same Z=0) never paints over it, regardless of DOM sibling order.
   const labelTransform =
-    `translate(${labelShiftXvw}vw, ${labelShiftYvw}vw) translate(${pull.x}px, ${pull.y + gapDeltaPx}px) translateZ(1px)`;
+    `translate(${labelShiftXvw}vw, ${labelShiftYvw}vw) translate(${effectiveX}px, ${effectiveY}px) translateZ(1px)`;
 
   return (
     // Outer: staggered clean fade-in — sits behind text (zIndex 2)
@@ -758,8 +782,12 @@ interface HeroProps {
 export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }: HeroProps) {
   const [scatter] = useState<ScatterPos[]>(() => makeScatter());
   const [isMobile, setIsMobile] = useState(false);
+  const [screenW, setScreenW] = useState(0);
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => {
+      setIsMobile(window.innerWidth < 768);
+      setScreenW(window.innerWidth);
+    };
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -986,6 +1014,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
           isHovered={hoveredIdx === i}
           anyHovered={hoveredIdx !== null}
           hoveredCenter={hoveredCenter}
+          screenW={screenW}
           onHoverChange={(hover, center) => {
             setHoveredIdx(hover ? i : null);
             setHoveredCenter(hover ? (center ?? null) : null);
