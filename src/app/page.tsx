@@ -1,29 +1,23 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Project, SiteData, Lang } from "@/components/v2/types";
 import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
 import Header from "@/components/v2/Header";
 import HeroSection from "@/components/v2/HeroSection";
 import WorksGrid from "@/components/v2/WorksGrid";
-import AboutSection from "@/components/v2/AboutSection";
 import Footer from "@/components/v2/Footer";
 import ContactModal from "@/components/v2/ContactModal";
-
-const ProjectDetailV2 = dynamic(() => import("@/components/v2/ProjectDetailV2"), { ssr: false });
+import { SPACE_B } from "@/components/v2/layout";
 
 export default function Page() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
-  const [selected, setSelected] = useState<Project | null>(null);
   const [lang, setLang] = useState<Lang>("ko");
   const [contactOpen, setContactOpen] = useState(false);
-  const [pendingDetailId, setPendingDetailId] = useState<number | null>(null);
   const [isExiting, setIsExiting] = useState(false);
-  const aboutRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (typeof history !== "undefined") {
@@ -33,10 +27,11 @@ export default function Page() {
     const saved = localStorage.getItem("portfolio-lang") as Lang | null;
     if (saved) setLang(saved);
 
+    // Legacy hash redirect → /project/{id}
     const hash = window.location.hash;
     if (hash.startsWith("#/detail/")) {
       const id = parseInt(hash.replace("#/detail/", ""));
-      if (!isNaN(id)) setPendingDetailId(id);
+      if (!isNaN(id)) { router.replace(`/project/${id}`); return; }
     }
     fetchProjects().then(setProjects);
     fetchSiteData().then(setSiteData);
@@ -46,22 +41,6 @@ export default function Page() {
     }, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  // Update URL hash for detail view
-  const didMountHash = useRef(false);
-  useEffect(() => {
-    if (!didMountHash.current) { didMountHash.current = true; return; }
-    if (selected) window.location.hash = `#/detail/${selected.id}`;
-    else window.location.hash = "";
-  }, [selected]);
-
-  // Resolve pending detail once projects are loaded
-  useEffect(() => {
-    if (pendingDetailId !== null && projects.length > 0) {
-      const project = projects.find(p => p.id === pendingDetailId);
-      if (project) { setSelected(project); setPendingDetailId(null); }
-    }
-  }, [pendingDetailId, projects]);
 
   const selectedWorks = useMemo(() => {
     const sel = projects.filter(p => p.selected);
@@ -77,26 +56,16 @@ export default function Page() {
     }
   }, [selectedWorks]);
 
-  const detailList = [...projects].sort((a, b) => a.id - b.id);
-  const detailIdx = selected ? detailList.findIndex(p => p.id === selected.id) : -1;
-  const handleNext = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx + 1) % detailList.length]); };
-  const handlePrev = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx - 1 + detailList.length) % detailList.length]); };
-  const nextProject = detailIdx >= 0 ? detailList[(detailIdx + 1) % detailList.length] : undefined;
-  const prevProject = detailIdx >= 0 ? detailList[(detailIdx - 1 + detailList.length) % detailList.length] : undefined;
-
-  const handleCloseDetail = () => {
-    setSelected(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const openProject = (p: Project) => router.push(`/project/${p.id}`);
 
   const scrollToTop = () => {
-    setSelected(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleAbout = () => {
-    setSelected(null);
-    setTimeout(() => aboutRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  const handleAbout = async () => {
+    setIsExiting(true);
+    await new Promise(r => setTimeout(r, 350));
+    router.push("/about");
   };
 
   const handleViewAll = async () => {
@@ -105,16 +74,6 @@ export default function Page() {
     router.push("/work");
   };
 
-  const handleLangToggle = () => {
-    setLang(l => {
-      const next = l === "ko" ? "en" : "ko";
-      localStorage.setItem("portfolio-lang", next);
-      return next;
-    });
-  };
-
-  const headerZIndex = selected ? 700 : 500;
-  const headerOnBack = selected ? handleCloseDetail : undefined;
 
   return (
     <div style={{ color: "#0A0A0A", background: "#F0F0F0" }}>
@@ -132,11 +91,9 @@ export default function Page() {
         onViewAll={handleViewAll}
         onAbout={handleAbout}
         onContact={() => setContactOpen(true)}
-        onBack={headerOnBack}
-        zIndex={headerZIndex}
+        zIndex={500}
         siteData={siteData}
         lang={lang}
-        onLangToggle={handleLangToggle}
       />
 
       {/* Layer 1: Hero — fixed behind */}
@@ -144,7 +101,7 @@ export default function Page() {
         <HeroSection
           projects={shuffledWorks}
           siteData={siteData}
-          onOpen={setSelected}
+          onOpen={openProject}
           lang={lang}
         />
       </div>
@@ -159,35 +116,19 @@ export default function Page() {
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.12)",
       }}>
-        <WorksGrid projects={shuffledWorks} onOpen={setSelected} />
+        <WorksGrid projects={shuffledWorks} onOpen={openProject} />
+        <div style={{ height: SPACE_B }} />
       </div>
 
-      {/* Layer 3: About + Footer */}
+      {/* Layer 3: Footer */}
       <div style={{
         position: "relative",
         zIndex: 3,
         background: "#F0F0F0",
-        borderTop: "1px solid rgba(0,0,0,0.08)",
+        borderTop: "none",
       }}>
-        <AboutSection ref={aboutRef} siteData={siteData} lang={lang} />
-        <Footer siteData={siteData} lang={lang} />
+        <Footer siteData={siteData} lang={lang} onContact={() => setContactOpen(true)} />
       </div>
-
-      <AnimatePresence>
-        {selected && (
-          <ProjectDetailV2
-            key={`detail-${selected.id}`}
-            project={selected}
-            onClose={handleCloseDetail}
-            onNext={handleNext}
-            onPrev={handlePrev}
-            nextProject={nextProject}
-            prevProject={prevProject}
-            siteData={siteData}
-            lang={lang}
-          />
-        )}
-      </AnimatePresence>
 
       <ContactModal
         open={contactOpen}

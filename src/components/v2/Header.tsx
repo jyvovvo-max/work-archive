@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SiteData, Lang } from "./types";
-import { GUTTER } from "./layout";
+import { GUTTER, RIGHT_OPT_PILL } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -16,12 +16,11 @@ interface HeaderProps {
   alwaysVisible?: boolean;
   siteData?: SiteData | null;
   lang?: Lang;
-  onLangToggle?: () => void;
 }
 
 export default function Header({
   onHome, onViewAll, onAbout, onContact, onBack, zIndex = 500, alwaysVisible = false, siteData,
-  lang = "ko", onLangToggle,
+  lang = "ko",
 }: HeaderProps) {
   const siteName = siteData?.siteName || "Jinyoung Hwang";
   const [visible, setVisible] = useState(alwaysVisible);
@@ -96,7 +95,7 @@ export default function Header({
       {show && (
         <motion.header
           key="header"
-          initial={isMobile ? false : { y: -60, opacity: 0 }}
+          initial={isMobile || alwaysVisible ? false : { y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={alwaysVisible ? undefined : { y: -60, opacity: 0 }}
           transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
@@ -119,7 +118,7 @@ export default function Header({
             padding: onBack ? "0" : `0 ${GUTTER}`,
           }}
         >
-          {/* Left: optional back arrow + site name */}
+          {/* Left: optional back arrow (outside gutter) + site name */}
           <div style={{ display: "flex", alignItems: "center" }}>
             {onBack && (
               <button
@@ -155,7 +154,7 @@ export default function Header({
                 color: nameColor,
                 userSelect: "none",
                 cursor: "pointer",
-                paddingLeft: onBack ? "clamp(16px, 2vw, 28px)" : "0",
+                paddingLeft: onBack ? `calc(${GUTTER} - 52px)` : "0",
               }}
             >
               {siteName}
@@ -197,30 +196,6 @@ export default function Header({
               </button>
             ))}
 
-            {/* KO / EN toggle — single pill, shows current language */}
-            {onLangToggle && (
-              <button
-                onClick={onLangToggle}
-                style={{
-                  fontFamily: FONT,
-                  fontWeight: 300,
-                  fontSize: "clamp(11px, 1.4vw, 20px)",
-                  letterSpacing: "0.06em",
-                  color: navColor,
-                  background: "none",
-                  border: `1px solid ${border}`,
-                  borderRadius: "100px",
-                  cursor: "pointer",
-                  padding: "3px 10px",
-                  marginRight: "-1px",
-                  transition: "color 0.15s, border-color 0.15s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = navHover; }}
-                onMouseLeave={e => { e.currentTarget.style.color = navColor; }}
-              >
-                {lang === "ko" ? "KOR" : "ENG"}
-              </button>
-            )}
           </nav>
         </motion.header>
       )}

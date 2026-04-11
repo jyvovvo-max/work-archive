@@ -83,7 +83,14 @@ function rowToProject(row: Record<string, string>): Project | null {
     images: imageCount > 0 ? cldImgs(row.folder, imageCount) : undefined,
     pairs: row.pairs || undefined,
     videoUrl: row.videoUrl || undefined,
+    videoSlots: row.Video
+      ? row.Video
+          .split(",")
+          .map(s => parseInt(s.trim(), 10))
+          .filter(n => Number.isInteger(n) && n > 0)
+      : undefined,
     selected: row.selected?.toUpperCase() === "TRUE",
+    award: row.Award?.trim() || undefined,
   };
 }
 
@@ -130,8 +137,9 @@ export const FALLBACK_SITE: SiteData = {
     "Culture & Arts", "Corporate Identity",
   ],
   awards: [],
-  footerHeadline: "I would love to hear from you!",
+  footerHeadline: "",
   footerLocation: "Korea",
+  footerEmailHandle: "Mail",
   footerEmail: "jyvovvo@gmail.com",
   footerInstagramHandle: "@jyvovvo",
   footerInstagramUrl: "https://instagram.com/jyvovvo",
@@ -183,7 +191,8 @@ export async function fetchSiteData(): Promise<SiteData> {
       footerHeadline: map.footer_headline_kr || map.footer_headline || FALLBACK_SITE.footerHeadline,
       footerHeadlineEn: map.footer_headline_en || undefined,
       footerLocation: map.footer_location || FALLBACK_SITE.footerLocation,
-      footerEmail: map.footer_email || FALLBACK_SITE.footerEmail,
+      footerEmailHandle: map.footer_email_handle || FALLBACK_SITE.footerEmailHandle,
+      footerEmail: map.footer_email_address || map.footer_email || FALLBACK_SITE.footerEmail,
       footerInstagramHandle: map.footer_instagram_handle || FALLBACK_SITE.footerInstagramHandle,
       footerInstagramUrl: map.footer_instagram_url || FALLBACK_SITE.footerInstagramUrl,
       footerName: map.footer_name || FALLBACK_SITE.footerName,

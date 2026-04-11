@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_C, SPACE_D } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -23,11 +23,19 @@ function BlurIn({ children, delay = 0, style }: { children: React.ReactNode; del
   );
 }
 
-export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData | null; lang?: Lang }) {
-  const headline = (lang === "en" && siteData?.footerHeadlineEn)
-    ? siteData.footerHeadlineEn
-    : siteData?.footerHeadline ?? "I would love to hear from you!";
+interface OverrideColors {
+  bg: string;
+  text: string;         // mid-weight — info row values/links
+  textStrong: string;   // full-solid — headline
+  textFaint: string;    // dim — bottom-bar name
+  textHover: string;
+  border: string;
+}
+
+export default function Footer({ siteData, lang = "ko", overrideColors, onContact }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors; onContact?: () => void }) {
+  const headline = siteData?.footerHeadline ?? "";
   const location = siteData?.footerLocation ?? "Korea";
+  const emailHandle = siteData?.footerEmailHandle ?? "Mail";
   const email = siteData?.footerEmail ?? "";
   const igHandle = siteData?.footerInstagramHandle ?? "";
   const igUrl = siteData?.footerInstagramUrl ?? "";
@@ -54,42 +62,53 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
     return () => clearInterval(id);
   }, []);
 
+  const textColor = overrideColors?.text ?? "rgba(0,0,0,0.6)";
+  const textHover = overrideColors?.textHover ?? "#0A0A0A";
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300,
     fontSize: "13px",
     letterSpacing: "0.03em",
-    color: "rgba(240,237,232,0.55)",
+    color: textColor,
     lineHeight: 2.0,
   };
   const linkStyle: React.CSSProperties = {
     ...valueStyle, cursor: "pointer", textDecoration: "none", transition: "color 0.18s",
   };
+  const linkButtonStyle: React.CSSProperties = {
+    ...linkStyle,
+    background: "transparent", border: "none", padding: 0, textAlign: "left", font: "inherit",
+  };
+  // Mail button: if onContact provided → open the contact modal, else fall back to mailto.
+  const handleMailClick = (e: React.MouseEvent) => {
+    if (onContact) {
+      e.preventDefault();
+      onContact();
+    }
+  };
 
   return (
     <footer style={{
-      background: "#1A1A1A",
-      borderTop: "1px solid rgba(240,237,232,0.06)",
-      padding: `clamp(20px, 2.5vh, 35px) ${GUTTER} clamp(12px, 1.5vh, 20px)`,
+      background: overrideColors?.bg ?? "#F0F0F0",
+      borderTop: "none",
+      padding: `${isMobile ? "clamp(16px, 2vh, 28px)" : SPACE_C} ${GUTTER} ${isMobile ? "clamp(10px, 1.2vh, 16px)" : "clamp(5px, 0.6vh, 8px)"}`,
     }}>
       {/* Headline */}
       <BlurIn>
-        <div style={{ marginBottom: "clamp(38px, 5.6vh, 64px)" }}>
-          <span style={{ display: "inline-flex", alignItems: "center" }}>
-            <span style={{
-              fontFamily: FONT, fontWeight: 300,
-              fontSize: "clamp(12px, 1.28vw, 16px)",
-              letterSpacing: "0.01em", color: "#F0EDE8",
-              whiteSpace: "pre-line",
-            }}>
-              {headline}
-            </span>
+        <div style={{ marginBottom: "clamp(8px, 1.1vh, 14px)" }}>
+          <span style={{
+            fontFamily: FONT, fontWeight: 300,
+            fontSize: "clamp(12px, 1.28vw, 16px)",
+            letterSpacing: "0.01em", color: overrideColors?.textStrong ?? "#0A0A0A",
+            whiteSpace: "pre-line",
+          }}>
+            {headline}
           </span>
         </div>
       </BlurIn>
 
       {/* Info */}
       {isMobile ? (
-        <BlurIn delay={0.06} style={{ marginBottom: "clamp(38px, 5.6vh, 64px)" }}>
+        <BlurIn delay={0.06} style={{ marginBottom: SPACE_D }}>
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(8, 1fr)",
@@ -97,21 +116,33 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           }}>
             <div style={{ gridColumn: "1 / 4", display: "flex", flexDirection: "column" }}>
               <div style={valueStyle}>{location}</div>
-              <a
-                href={`mailto:${email}`}
-                style={linkStyle}
-                onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
-              >
-                {email}
-              </a>
+              {onContact ? (
+                <button
+                  type="button"
+                  onClick={handleMailClick}
+                  style={linkButtonStyle}
+                  onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                  onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+                >
+                  {emailHandle}
+                </button>
+              ) : (
+                <a
+                  href={`mailto:${email}`}
+                  style={linkStyle}
+                  onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                  onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+                >
+                  {emailHandle}
+                </a>
+              )}
               <a
                 href={igUrl}
                 target="_blank"
                 rel="noreferrer"
                 style={linkStyle}
-                onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
               >
                 {igHandle}
               </a>
@@ -125,20 +156,32 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
           columnGap: "clamp(16px, 2vw, 32px)",
-          marginBottom: "clamp(38px, 5.6vh, 64px)",
+          marginBottom: SPACE_C,
         }}>
           <BlurIn delay={0.06} style={{ gridColumn: "1" }}>
             <div style={valueStyle}>{location}</div>
           </BlurIn>
           <BlurIn delay={0.12} style={{ gridColumn: "2" }}>
-            <a
-              href={`mailto:${email}`}
-              style={linkStyle}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
-            >
-              {email}
-            </a>
+            {onContact ? (
+              <button
+                type="button"
+                onClick={handleMailClick}
+                style={linkButtonStyle}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+              >
+                {emailHandle}
+              </button>
+            ) : (
+              <a
+                href={`mailto:${email}`}
+                style={linkStyle}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+              >
+                {emailHandle}
+              </a>
+            )}
           </BlurIn>
           <BlurIn delay={0.18} style={{ gridColumn: "3" }}>
             <a
@@ -146,14 +189,14 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
               target="_blank"
               rel="noreferrer"
               style={linkStyle}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.55)")}
+              onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+              onMouseLeave={e => (e.currentTarget.style.color = textColor)}
             >
               {igHandle}
             </a>
           </BlurIn>
-          {/* Clock — rightmost column on desktop */}
-          <BlurIn delay={0.24} style={{ gridColumn: "7" }}>
+          {/* Clock — rightmost column on desktop, right-aligned */}
+          <BlurIn delay={0.24} style={{ gridColumn: "7", display: "flex", justifyContent: "flex-end" }}>
             <div style={valueStyle}>KST, {time}</div>
           </BlurIn>
         </div>
@@ -161,13 +204,13 @@ export default function Footer({ siteData, lang = "ko" }: { siteData: SiteData |
 
       {/* Bottom bar — always visible */}
       <div style={{
-        borderTop: "1px solid rgba(240,237,232,0.06)",
-        paddingTop: "20px",
+        marginTop: SPACE_D,
+        paddingBottom: SPACE_C,
       }}>
         <span style={{
           fontFamily: FONT, fontWeight: 300,
           fontSize: "12px",
-          letterSpacing: "0.04em", color: "rgba(240,237,232,0.4)",
+          letterSpacing: "0.04em", color: overrideColors?.textFaint ?? "rgba(0,0,0,0.45)",
         }}>
           {name}
         </span>

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --gutter: clamp(42px, 8.4vw, 118px);
   --background: #000000;
   --foreground: #ffffff;
   /* Monument Grotesk Variable placeholder — swap src to your @font-face when licensed */
@@ -20,6 +21,10 @@ html, body {
 
 body {
   overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  :root { --gutter: clamp(20px, 4vw, 56px); }
 }
 
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }

@@ -1,20 +1,77 @@
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Project, SiteData, Lang } from "@/components/v2/types";
+import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
+import Header from "@/components/v2/Header";
+import AboutSection from "@/components/v2/AboutSection";
+import AwardsSection from "@/components/v2/AwardsSection";
+import Footer from "@/components/v2/Footer";
+import ContactModal from "@/components/v2/ContactModal";
+
 export default function AboutPage() {
+  const router = useRouter();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
+  const [lang, setLang] = useState<Lang>("ko");
+  const [contactOpen, setContactOpen] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("portfolio-lang") as Lang | null;
+    if (saved) setLang(saved);
+    Promise.all([
+      fetchProjects().then(setProjects),
+      fetchSiteData().then(setSiteData),
+    ]).then(() => setReady(true));
+  }, []);
+
+  const handleBack = async () => {
+    setIsExiting(true);
+    await new Promise(r => setTimeout(r, 350));
+    router.back();
+  };
+
+  const openProject = (p: Project) => router.push(`/project/${p.id}`);
+
   return (
-    <main className="min-h-screen pt-40 px-8 bg-white dark:bg-black text-black dark:text-white pb-24">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase mb-12">
-          Hello. I am a<br />Creative Developer.
-        </h1>
-        <div className="text-xl md:text-2xl font-medium leading-relaxed tracking-tight text-zinc-600 dark:text-zinc-400 space-y-8">
-          <p>
-            I specialize in crafting high-end, interactive web experiences. 
-            Blurring the line between design and engineering to build digital products that leave a lasting impression.
-          </p>
-          <p>
-            Based in Seoul, South Korea. Always open to new opportunities and exciting collaborations.
-          </p>
-        </div>
+    <div style={{ background: "#F0F0F0", color: "#0A0A0A", minHeight: "100vh" }}>
+      {isExiting && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.35 }}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#F0F0F0" }}
+        />
+      )}
+
+      <Header
+        onHome={() => router.push("/")}
+        onViewAll={() => router.push("/work")}
+        onAbout={() => {}}
+        onContact={() => setContactOpen(true)}
+        onBack={handleBack}
+        zIndex={500}
+        alwaysVisible
+        siteData={siteData}
+        lang={lang}
+      />
+
+      <div style={{ paddingTop: "52px", opacity: ready ? 1 : 0 }}>
+        <AboutSection siteData={siteData} lang={lang} ready={ready} />
+        <AwardsSection projects={projects} onOpen={openProject} ready={ready} />
+        <Footer siteData={siteData} lang={lang} onContact={() => setContactOpen(true)} />
       </div>
-    </main>
+
+      <ContactModal
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        email={siteData?.footerEmail ?? ""}
+        igHandle={siteData?.footerInstagramHandle ?? ""}
+        igUrl={siteData?.footerInstagramUrl ?? ""}
+      />
+    </div>
   );
 }

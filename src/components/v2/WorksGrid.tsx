@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useInView } from "framer-motion";
 import { Project } from "./types";
-import { GUTTER } from "./layout";
+import { GUTTER, FONT_SECTION_TITLE } from "./layout";
+import { CLD_VIDEO } from "./dataFetch";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -16,9 +17,25 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   isMobile: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const inView = useInView(ref, { once: true, margin: "-6% 0px" });
   const [hovered, setHovered] = useState(false);
   const [isCentered, setIsCentered] = useState(false);
+
+  // Build video thumbnail URL (first 15s via Cloudinary transformation).
+  // Card thumbnail only plays a video when slot 1 is flagged as video in the sheet
+  // `Video` column. Other video slots (e.g. "2" or "2,5") are gallery-only.
+  const folder = project.img.split("/portfolio-images/")[1]?.replace("/cover", "");
+  const hasSlot1Video = project.videoSlots?.includes(1) ?? false;
+  const videoSrc = hasSlot1Video && folder
+    ? `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto,so_0,eo_15/portfolio-images/${folder}/001`
+    : null;
+
+  // Loop at 15s mark
+  const handleTimeUpdate = useCallback(() => {
+    const v = videoRef.current;
+    if (v && v.currentTime >= 15) v.currentTime = 0;
+  }, []);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -40,7 +57,7 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {/* Image — blur-to-clean on scroll */}
+      {/* Thumbnail — video or image */}
       <motion.div
         animate={inView
           ? { filter: "blur(0px)", opacity: 1 }
@@ -49,13 +66,32 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
         initial={{ filter: "blur(14px)", opacity: 0 }}
         transition={{ duration: 1.1, delay: colIdx * 0.1, ease: [0.16, 1, 0.3, 1] }}
       >
-        <motion.img
-          src={project.img}
-          alt={project.title}
-          animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
-        />
+        {videoSrc ? (
+          <motion.div
+            animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              autoPlay
+              muted
+              loop
+              playsInline
+              onTimeUpdate={handleTimeUpdate}
+              poster={project.img}
+              style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+            />
+          </motion.div>
+        ) : (
+          <motion.img
+            src={project.img}
+            alt={project.title}
+            animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+          />
+        )}
       </motion.div>
 
       {/* White acrylic bar — centered card on mobile, hover on desktop */}
@@ -137,6 +173,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
         height: "52px",
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         padding: `0 ${GUTTER}`,
         borderTop: "1px solid rgba(0,0,0,0.15)",
         borderBottom: "1px solid rgba(0,0,0,0.15)",
@@ -144,7 +181,7 @@ export default function WorksGrid({ projects, onOpen }: WorksGridProps) {
         <span style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(24px, 2.8vw, 38px)",
+          fontSize: FONT_SECTION_TITLE,
           letterSpacing: "-0.02em",
           color: "#0A0A0A",
         }}>

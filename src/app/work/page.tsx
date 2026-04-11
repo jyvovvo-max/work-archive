@@ -2,14 +2,12 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Project, SiteData, Lang } from "@/components/v2/types";
 import { fetchProjects, fetchSiteData, FALLBACK_SITE } from "@/components/v2/dataFetch";
 import Header from "@/components/v2/Header";
 import Footer from "@/components/v2/Footer";
+import ContactModal from "@/components/v2/ContactModal";
 import { RetryImg } from "@/components/v2/RetryImg";
-
-const ProjectDetailV2 = dynamic(() => import("@/components/v2/ProjectDetailV2"), { ssr: false });
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -23,26 +21,24 @@ function CategoryBar({ categories, active, onChange }: {
   onChange: (c: string | null) => void;
 }) {
   if (categories.length === 0) return null;
+  const allCats = ["All", ...categories];
   return (
     <div style={{
       padding: "clamp(12px, 1.8vw, 20px) clamp(12px, 2vw, 24px)",
       display: "flex",
       flexWrap: "wrap",
       gap: "8px",
-      background: "rgba(240,240,240,0.88)",
-      backdropFilter: "blur(10px)",
-      WebkitBackdropFilter: "blur(10px)",
       borderBottom: "1px solid rgba(0,0,0,0.08)",
-      position: "sticky",
-      top: "52px",
-      zIndex: 10,
     }}>
-      {["All", ...categories].map(cat => {
+      {allCats.map((cat, i) => {
         const isAll = cat === "All";
         const isActive = isAll ? active === null : active === cat;
         return (
-          <button
+          <motion.button
             key={cat}
+            initial={{ opacity: 0, scale: 0.85, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 + i * 0.035, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => onChange(isAll ? null : cat)}
             style={{
               fontFamily: FONT,
@@ -63,7 +59,7 @@ function CategoryBar({ categories, active, onChange }: {
             onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.70)"; e.currentTarget.style.color = "rgba(0,0,0,0.55)"; } }}
           >
             {cat.charAt(0).toUpperCase() + cat.slice(1)}
-          </button>
+          </motion.button>
         );
       })}
     </div>
@@ -71,10 +67,11 @@ function CategoryBar({ categories, active, onChange }: {
 }
 
 // ── Grid card ───────────────────────────────────────────────────
-function GridCard({ project, onOpen, idx }: {
+function GridCard({ project, onOpen, isExiting }: {
   project: Project;
   onOpen: (p: Project) => void;
-  idx: number;
+  isExiting?: boolean;
+  idx?: number;
 }) {
   const [hovered, setHovered] = useState(false);
   const [isCentered, setIsCentered] = useState(false);
@@ -82,6 +79,9 @@ function GridCard({ project, onOpen, idx }: {
   const [imgFailed, setImgFailed] = useState(false);
   const [imgRetry, setImgRetry] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
+  // Separate random delays for entry and exit
+  const imgDelay  = useRef(Math.random() * 0.75).current;
+  const exitDelay = useRef(Math.random() * 0.28).current;
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -102,41 +102,58 @@ function GridCard({ project, onOpen, idx }: {
     return () => observer.disconnect();
   }, [isMobile]);
 
+  const scaled = (!isMobile && hovered) || (isMobile && isCentered);
+
   return (
-    <motion.div
+    <div
       ref={cardRef}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: idx * 0.02, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => onOpen(project)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {imgFailed ? (
-        <div style={{ width: "100%", aspectRatio: "16/9", background: "rgba(120,120,120,0.12)" }} />
-      ) : (
-        <RetryImg
-          key={imgRetry}
-          src={project.img}
-          alt={project.title}
-          style={{
-            width: "100%",
-            aspectRatio: "16/9" as React.CSSProperties["aspectRatio"],
-            objectFit: "cover",
-            display: "block",
-            transform: ((!isMobile && hovered) || (isMobile && isCentered)) ? "scale(1.04)" : "scale(1)",
-            transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
-          }}
-          onError={() => {
-            if (imgRetry < 2) setTimeout(() => setImgRetry(r => r + 1), 800 * (imgRetry + 1));
-            else setImgFailed(true);
-          }}
-        />
-      )}
+      {/* Placeholder — always visible, gives grid its structure */}
+      <div style={{ width: "100%", aspectRatio: "16/9", position: "relative", background: "rgba(160,160,160,0.10)" }}>
+        <motion.div
+          initial={{ opacity: 0, filter: "blur(16px)" }}
+          animate={isExiting
+            ? { opacity: 0, filter: "blur(16px)" }
+            : { opacity: 1, filter: "blur(0px)" }
+          }
+          transition={isExiting
+            ? { delay: exitDelay, duration: 0.4, ease: [0.55, 0, 1, 0.6] }
+            : { delay: imgDelay,  duration: 0.9, ease: [0.55, 0, 1, 0.6] }
+          }
+          style={{ position: "absolute", inset: 0 }}
+        >
+          {imgFailed ? (
+            <div style={{ width: "100%", height: "100%", background: "rgba(120,120,120,0.12)" }} />
+          ) : (
+            <RetryImg
+              key={imgRetry}
+              src={project.img}
+              alt={project.title}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+                transform: scaled ? "scale(1.04)" : "scale(1)",
+                transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+              }}
+              onError={() => {
+                if (imgRetry < 2) setTimeout(() => setImgRetry(r => r + 1), 800 * (imgRetry + 1));
+                else setImgFailed(true);
+              }}
+            />
+          )}
+        </motion.div>
+      </div>
+
+      {/* Hover title overlay */}
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
         <motion.div
-          animate={{ y: isCentered || (!isMobile && hovered) ? "0%" : "-100%" }}
+          animate={{ y: scaled ? "0%" : "-100%" }}
           initial={{ y: "-100%" }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           style={{
@@ -157,7 +174,7 @@ function GridCard({ project, onOpen, idx }: {
           </span>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -166,17 +183,20 @@ export default function WorkPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
-  const [selected, setSelected] = useState<Project | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("ko");
   const [cols, setCols] = useState(3);
   const [isExiting, setIsExiting] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("portfolio-lang") as Lang | null;
     if (saved) setLang(saved);
-    fetchProjects().then(setProjects);
-    fetchSiteData().then(setSiteData);
+    Promise.all([
+      fetchProjects().then(setProjects),
+      fetchSiteData().then(setSiteData),
+    ]).then(() => setReady(true));
   }, []);
 
   useEffect(() => {
@@ -186,18 +206,16 @@ export default function WorkPage() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const handleLangToggle = () => {
-    setLang(l => {
-      const next = l === "ko" ? "en" : "ko";
-      localStorage.setItem("portfolio-lang", next);
-      return next;
-    });
-  };
-
   const handleBack = async () => {
     setIsExiting(true);
-    await new Promise(r => setTimeout(r, 350));
+    await new Promise(r => setTimeout(r, 750));
     router.back();
+  };
+
+  const handleAbout = async () => {
+    setIsExiting(true);
+    await new Promise(r => setTimeout(r, 750));
+    router.push("/about");
   };
 
   const categories = useMemo(() => [...new Set(
@@ -213,36 +231,30 @@ export default function WorkPage() {
     return (parseInt(b.month) || 0) - (parseInt(a.month) || 0);
   }), [projects, activeCategory]);
 
-  const detailList = [...projects].sort((a, b) => a.id - b.id);
-  const detailIdx = selected ? detailList.findIndex(p => p.id === selected.id) : -1;
-  const nextProject = detailIdx >= 0 ? detailList[(detailIdx + 1) % detailList.length] : undefined;
-  const prevProject = detailIdx >= 0 ? detailList[(detailIdx - 1 + detailList.length) % detailList.length] : undefined;
-  const handleNext = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx + 1) % detailList.length]); };
-  const handlePrev = () => { if (detailIdx >= 0) setSelected(detailList[(detailIdx - 1 + detailList.length) % detailList.length]); };
+  const openProject = (p: Project) => router.push(`/project/${p.id}`);
 
   return (
     <div style={{ background: "#F0F0F0", color: "#0A0A0A", minHeight: "100vh" }}>
       <Header
         onHome={handleBack}
         onViewAll={() => {}}
-        onAbout={() => {}}
-        onContact={() => {}}
-        onBack={selected ? () => setSelected(null) : handleBack}
-        zIndex={selected ? 700 : 500}
+        onAbout={handleAbout}
+        onContact={() => setContactOpen(true)}
+        onBack={handleBack}
+        zIndex={500}
         alwaysVisible
         siteData={siteData}
         lang={lang}
-        onLangToggle={handleLangToggle}
       />
 
-      {/* Blur entry / exit wrapper */}
+      {/* Entry wrapper — waits for data, then reveals all at once */}
       <motion.div
-        initial={{ filter: "blur(20px)", opacity: 0 }}
-        animate={isExiting
-          ? { filter: "blur(20px)", opacity: 0 }
-          : { filter: "blur(0px)", opacity: 1 }
+        initial={{ opacity: 0, filter: "blur(12px)", y: 14 }}
+        animate={ready
+          ? { opacity: 1, filter: "blur(0px)", y: 0 }
+          : { opacity: 0.3, filter: "blur(12px)", y: 14 }
         }
-        transition={{ duration: isExiting ? 0.35 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         style={{ paddingTop: "52px" }}
       >
         <CategoryBar categories={categories} active={activeCategory} onChange={setActiveCategory} />
@@ -261,35 +273,33 @@ export default function WorkPage() {
               padding: "clamp(3px, 0.4vw, 6px)",
             }}
           >
-            {filtered.map((project, i) => (
+            {filtered.map((project) => (
               <GridCard
                 key={project.id}
                 project={project}
-                onOpen={setSelected}
-                idx={i}
+                onOpen={openProject}
+                isExiting={isExiting}
               />
             ))}
           </motion.div>
         </AnimatePresence>
 
-        <Footer siteData={siteData} lang={lang} />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Footer siteData={siteData} lang={lang} onContact={() => setContactOpen(true)} />
+        </motion.div>
       </motion.div>
 
-      <AnimatePresence>
-        {selected && (
-          <ProjectDetailV2
-            key={`detail-${selected.id}`}
-            project={selected}
-            onClose={() => setSelected(null)}
-            onNext={handleNext}
-            onPrev={handlePrev}
-            nextProject={nextProject}
-            prevProject={prevProject}
-            siteData={siteData}
-            lang={lang}
-          />
-        )}
-      </AnimatePresence>
+      <ContactModal
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        email={siteData?.footerEmail ?? ""}
+        igHandle={siteData?.footerInstagramHandle ?? ""}
+        igUrl={siteData?.footerInstagramUrl ?? ""}
+      />
     </div>
   );
 }

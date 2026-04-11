@@ -3,30 +3,33 @@ import { forwardRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE, FONT_BODY, FONT_LIST, FONT_LABEL } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
-function BlurIn({
+function HoverIn({
   children,
   delay = 0,
   style,
+  ready = true,
 }: {
   children: React.ReactNode;
   delay?: number;
   style?: React.CSSProperties;
+  ready?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+  const show = ready && inView;
   return (
     <motion.div
       ref={ref}
-      animate={inView
-        ? { filter: "blur(0px)", opacity: 1, y: 0 }
-        : { filter: "blur(10px)", opacity: 0, y: 16 }
+      initial={{ opacity: 0, y: 14 }}
+      animate={show
+        ? { opacity: 1, y: 0 }
+        : { opacity: 0, y: 14 }
       }
-      initial={{ filter: "blur(10px)", opacity: 0, y: 16 }}
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.7, delay: show ? delay : 0, ease: [0.16, 1, 0.3, 1] }}
       style={style}
     >
       {children}
@@ -37,15 +40,15 @@ function BlurIn({
 interface AboutProps {
   siteData: SiteData | null;
   lang?: Lang;
+  skipAnimation?: boolean;
+  ready?: boolean;
 }
 
-const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko" }, ref) => {
-  const bio = (lang === "en" && siteData?.aboutBioEn?.length)
-    ? siteData.aboutBioEn
-    : siteData?.aboutBio ?? [];
+const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko", skipAnimation = false, ready = true }, ref) => {
+  const bioKo = siteData?.aboutBio ?? [];
+  const bioEn = siteData?.aboutBioEn ?? [];
   const services = siteData?.services ?? [];
   const experience = siteData?.experience ?? [];
-  const awards = siteData?.awards ?? [];
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -58,31 +61,52 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
     <section
       ref={ref}
       style={{
-        padding: `clamp(80px, 10vh, 140px) ${GUTTER} clamp(80px, 10vh, 140px)`,
         background: "#F0F0F0",
         borderTop: "1px solid rgba(0,0,0,0.1)",
       }}
     >
-      {/* Headline — full width, 80% of previous size */}
-      <BlurIn>
+      {/* "About" label bar */}
+      <HoverIn ready={ready} delay={0}>
+        <div style={{
+          height: "52px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: `0 ${GUTTER}`,
+          borderBottom: "1px solid rgba(0,0,0,0.15)",
+        }}>
+          <span style={{
+            fontFamily: FONT,
+            fontWeight: 300,
+            fontSize: FONT_SECTION_TITLE,
+            letterSpacing: "-0.02em",
+            color: "#0A0A0A",
+          }}>
+            About
+          </span>
+        </div>
+      </HoverIn>
+
+      <div style={{ padding: `${SPACE_A} ${GUTTER} ${SPACE_B}` }}>
+      {/* Headline */}
+      <HoverIn ready={ready} delay={0.05}>
         <h2 style={{
           fontFamily: FONT,
           fontWeight: 300,
-          fontSize: "clamp(19px, 2.69vw, 37px)",
+          fontSize: FONT_HEADLINE,
           letterSpacing: "-0.02em",
           lineHeight: 1.2,
           color: "#0A0A0A",
-          margin: isMobile ? "0 0 clamp(34px, 4.9vh, 62px) 0" : "0 0 clamp(48px, 7vh, 88px) 0",
+          margin: `0 0 ${SPACE_A} 0`,
           wordBreak: "keep-all",
         }}>
           {(siteData?.aboutHeadline ?? "Brand Designer at\nSHINSEGAE.").split("\n").map((line, i, arr) => (
             <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
           ))}
         </h2>
-      </BlurIn>
+      </HoverIn>
 
-      {/* 7-column grid: col 1-3 = Bio, col 4-5 = gap, col 6 = Services, col 7 = Experience */}
-      {/* Mobile: Bio full 7 cols, Services col 1-2, Experience col 3-4 (stacked below) */}
+      {/* 7-column grid */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "repeat(8, 1fr)" : "repeat(7, 1fr)",
@@ -90,14 +114,14 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
         columnGap: GRID_GAP,
         alignItems: "start",
       }}>
-        {/* Bio — desktop: 1–3 / mobile: 1–8 (full) */}
-        <div style={{ gridColumn: isMobile ? "1 / 9" : "1 / 4", display: "flex", flexDirection: "column", gap: "20px" }}>
-          {bio.map((p, i) => (
-            <BlurIn key={i} delay={i * 0.06}>
+        {/* Bio */}
+        <div style={{ gridColumn: isMobile ? "1 / 9" : "1 / 5", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {bioKo.map((p, i) => (
+            <HoverIn key={`ko-${i}`} delay={0.1 + i * 0.06} ready={ready}>
               <p style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(16px, 1.37vw, 20px)",
+                fontSize: FONT_BODY,
                 lineHeight: 1.8,
                 color: "rgba(0,0,0,0.6)",
                 margin: 0,
@@ -105,67 +129,76 @@ const AboutSection = forwardRef<HTMLElement, AboutProps>(({ siteData, lang = "ko
               }}>
                 {p}
               </p>
-            </BlurIn>
+            </HoverIn>
+          ))}
+          {bioEn.map((p, i) => (
+            <HoverIn key={`en-${i}`} delay={0.1 + (bioKo.length + i) * 0.06} ready={ready}>
+              <p style={{
+                fontFamily: FONT,
+                fontWeight: 300,
+                fontSize: FONT_BODY,
+                lineHeight: 1.8,
+                color: "rgba(0,0,0,0.6)",
+                margin: 0,
+              }}>
+                {p}
+              </p>
+            </HoverIn>
           ))}
         </div>
 
-        {/* Columns 4–5: intentional gap — no content (desktop only) */}
-
-        {/* Services — desktop: col 6 / mobile: col 1-3 */}
-        <BlurIn delay={0.08} style={{ gridColumn: isMobile ? "1 / 4" : "6" }}>
+        {/* Services */}
+        <HoverIn delay={0.18} ready={ready} style={{ gridColumn: isMobile ? "1 / 4" : "6" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{
+              fontFamily: FONT,
+              fontWeight: 400,
+              fontSize: FONT_LABEL,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase" as const,
+              color: "rgba(0,0,0,0.35)",
+              marginBottom: "12px",
+            }}>Services</div>
             {services.map(s => (
               <div key={s} style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(13px, 1.05vw, 16px)",
+                fontSize: FONT_LIST,
                 letterSpacing: "0.02em",
                 color: "rgba(0,0,0,0.55)",
                 lineHeight: 2.0,
               }}>{s}</div>
             ))}
           </div>
-        </BlurIn>
+        </HoverIn>
 
-        {/* Experience — desktop: col 7 / mobile: col 4-6 */}
-        <BlurIn delay={0.12} style={{ gridColumn: isMobile ? "4 / 7" : "7" }}>
+        {/* Experience */}
+        <HoverIn delay={0.22} ready={ready} style={{ gridColumn: isMobile ? "4 / 7" : "7" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{
+              fontFamily: FONT,
+              fontWeight: 400,
+              fontSize: FONT_LABEL,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase" as const,
+              color: "rgba(0,0,0,0.35)",
+              marginBottom: "12px",
+            }}>Experience</div>
             {experience.map(s => (
               <div key={s} style={{
                 fontFamily: FONT,
                 fontWeight: 300,
-                fontSize: "clamp(13px, 1.05vw, 16px)",
+                fontSize: FONT_LIST,
                 letterSpacing: "0.02em",
                 color: "rgba(0,0,0,0.55)",
                 lineHeight: 2.0,
               }}>{s}</div>
             ))}
           </div>
-        </BlurIn>
+        </HoverIn>
       </div>
 
-      {/* Awards — below grid, shown only when data exists */}
-      {awards.length > 0 && (
-        <BlurIn delay={0.06}>
-          <div style={{
-            marginTop: "clamp(48px, 7vh, 88px)",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0 clamp(24px, 4vw, 60px)",
-          }}>
-            {awards.map(a => (
-              <div key={a} style={{
-                fontFamily: FONT,
-                fontWeight: 300,
-                fontSize: "clamp(13px, 1.05vw, 16px)",
-                letterSpacing: "0.02em",
-                color: "rgba(0,0,0,0.55)",
-                lineHeight: 2.0,
-              }}>{a}</div>
-            ))}
-          </div>
-        </BlurIn>
-      )}
+      </div>
     </section>
   );
 });
