@@ -325,7 +325,10 @@ function CollageImage({
     targetScale = SCALE_SETTLED;
   }
 
-  const duration = hasSettled ? 0.35 : 1.0;
+  // Asymmetric timing: grow-in on hover is snappy, release-out is a slow exhale.
+  // `anyHovered` reflects the target state — true means we're transitioning TO a hover
+  // configuration (fast), false means we're transitioning BACK to baseline (slow).
+  const duration = !hasSettled ? 1.0 : anyHovered ? 0.25 : 0.65;
   const blurTransition = {
     filter: { duration, ease: "easeInOut" as const },
     scale:  { duration, ease: "easeInOut" as const },
