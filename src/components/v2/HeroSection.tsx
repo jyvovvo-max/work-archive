@@ -156,17 +156,26 @@ function makeScatter(): ScatterPos[] {
 // ── Depth system (desktop hero) ──
 // Images are sized by span (SCATTER_MIN_SPAN..SCATTER_MAX_SPAN columns).
 // Size encodes depth: small = far (more blur, less tilt), large = near (less blur, more tilt).
-// Hover pulls the target forward and pushes everything else back for a 3D-space feel.
+// Hover pulls the target forward to a fixed target size (so any hovered image ends up
+// larger than the biggest baseline image) while everything else recedes in concert.
 const SCATTER_MIN_SPAN = 2;
 const SCATTER_MAX_SPAN = 5;
 const BASE_BLUR_MIN = 1;     // px — large images (near plane, cleaner but still soft)
-const BASE_BLUR_MAX = 5;     // px — small images (far plane, most blurred)
-const TILT_BASE    = 7;      // max tilt degrees for the largest image (reduced from 12)
-const HOVER_BLUR_MULT = 1.3; // when someone else is hovered, push non-hovered further back
-const HOVER_BLUR_CAP  = 7;   // absolute max blur during push-back
-const SCALE_SETTLED = 0.95;  // baseline scale after initial settle (unchanged)
-const SCALE_HOVERED = 1.08;  // hovered image pulls forward
-const SCALE_PUSHED  = 0.88;  // other images recede when one is hovered
+const BASE_BLUR_MAX = 3.5;   // px — small images (far plane) — reduced so far plane isn't too mushy
+const TILT_BASE    = 9;      // max tilt degrees for the largest image
+const HOVER_BLUR_MULT = 1.4; // when someone else is hovered, push non-hovered further back
+const HOVER_BLUR_CAP  = 4.5; // absolute max blur during push-back
+const SCALE_SETTLED = 0.95;  // baseline scale after initial settle
+const SCALE_PUSHED  = 0.78;  // other images recede when one is hovered
+// Hover target: any hovered image scales up to this visual width (vw). Small images grow
+// more (larger scale factor), large images grow less — but all end up the same "front plane"
+// width, guaranteed to exceed the largest baseline image. Depth-equalized focus zoom.
+const HOVER_TARGET_VW = 36;
+// Convex-lens field — images near the hovered one recede LESS than images far from it,
+// producing a local bulge around the focus.
+const LENS_RADIUS_PX = 550;  // how far the bulge extends
+const LENS_SCALE_BUMP = 0.10; // near neighbours get this much of their push reversed
+const LENS_BLUR_RELIEF = 0.3; // near neighbours blur less aggressively
 
 // Sequence:
 //  1. Images fade in clean (staggered, 0.1s gap, 1.0s each)
@@ -175,6 +184,8 @@ const SCALE_PUSHED  = 0.88;  // other images recede when one is hovered
 //  4. Title appears (4.0s delay, 1.5s)
 //  5. Desc appears (5.0s delay, 1.5s)
 // Images sit behind text (zIndex 2); text zIndex 5/20
+type Center = { x: number; y: number };
+
 function CollageImage({
   project,
   pos,
@@ -186,6 +197,7 @@ function CollageImage({
   allImagesIn,
   isHovered,
   anyHovered,
+  hoveredCenter,
   onHoverChange,
   onOpen,
 }: {
@@ -199,11 +211,13 @@ function CollageImage({
   allImagesIn: boolean;
   isHovered: boolean;
   anyHovered: boolean;
-  onHoverChange: (hover: boolean) => void;
+  hoveredCenter: Center | null;
+  onHoverChange: (hover: boolean, center?: Center) => void;
   onOpen: (p: Project) => void;
 }) {
   const imgRef = useRef<HTMLDivElement>(null);
   const [hasSettled, setHasSettled] = useState(false);
+  const [proximityFactor, setProximityFactor] = useState(0);
 
   // Depth from span: 0 = smallest (far), 1 = largest (near)
   const depth = (pos.span - SCATTER_MIN_SPAN) / (SCATTER_MAX_SPAN - SCATTER_MIN_SPAN);
@@ -247,6 +261,26 @@ function CollageImage({
     return () => clearTimeout(t);
   }, [allImagesIn]);
 
+  // Convex-lens proximity: when someone else is hovered, compute how close this image
+  // is to the focal point. Near images recede less, far images recede fully.
+  useEffect(() => {
+    if (!anyHovered || isHovered || !hoveredCenter) {
+      setProximityFactor(0);
+      return;
+    }
+    const rect = imgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const myX = rect.left + rect.width / 2;
+    const myY = rect.top + rect.height / 2;
+    const dist = Math.hypot(myX - hoveredCenter.x, myY - hoveredCenter.y);
+    setProximityFactor(Math.max(0, 1 - dist / LENS_RADIUS_PX));
+  }, [anyHovered, isHovered, hoveredCenter]);
+
+  // Hover scale is depth-equalized: every hovered image lands at HOVER_TARGET_VW wide,
+  // so small images grow a lot more than large ones, and any hovered image ends up as
+  // the front-most element regardless of its original size.
+  const hoverScale = HOVER_TARGET_VW / (pos.span * COL_W);
+
   // Target blur/scale based on interaction state
   let targetBlurPx: number;
   let targetScale: number;
@@ -255,10 +289,13 @@ function CollageImage({
     targetScale = 1;
   } else if (isHovered) {
     targetBlurPx = 0;
-    targetScale = SCALE_HOVERED;
+    targetScale = hoverScale;
   } else if (anyHovered) {
-    targetBlurPx = Math.min(baseBlurPx * HOVER_BLUR_MULT, HOVER_BLUR_CAP);
-    targetScale = SCALE_PUSHED;
+    // Lens bulge: near neighbours resist the push-back, far ones receive the full push.
+    const lensBump  = proximityFactor * LENS_SCALE_BUMP;        // 0 (far) → 0.10 (near)
+    const blurEase  = 1 - proximityFactor * LENS_BLUR_RELIEF;   // 1 (far) → 0.70 (near)
+    targetBlurPx = Math.min(baseBlurPx * HOVER_BLUR_MULT * blurEase, HOVER_BLUR_CAP);
+    targetScale  = SCALE_PUSHED + lensBump;
   } else {
     targetBlurPx = baseBlurPx;
     targetScale = SCALE_SETTLED;
@@ -299,7 +336,13 @@ function CollageImage({
       {/* Tilt + opacity wrapper — contains both ID and image */}
       <motion.div
         ref={imgRef}
-        onMouseEnter={() => onHoverChange(true)}
+        onMouseEnter={() => {
+          const rect = imgRef.current?.getBoundingClientRect();
+          const center = rect
+            ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+            : undefined;
+          onHoverChange(true, center);
+        }}
         onMouseLeave={() => onHoverChange(false)}
         style={{
           opacity: scrollOpacity,
@@ -667,6 +710,9 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   const [allImagesIn, setAllImagesIn] = useState(false);
   // Shared hover state — drives the "one forward, rest recede" interaction
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  // Screen-space centre of the hovered image, captured when hover starts. Used by
+  // non-hovered images to compute their lens proximity factor.
+  const [hoveredCenter, setHoveredCenter] = useState<Center | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setAllImagesIn(true), 2650);
@@ -879,7 +925,11 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
           allImagesIn={allImagesIn}
           isHovered={hoveredIdx === i}
           anyHovered={hoveredIdx !== null}
-          onHoverChange={hover => setHoveredIdx(hover ? i : null)}
+          hoveredCenter={hoveredCenter}
+          onHoverChange={(hover, center) => {
+            setHoveredIdx(hover ? i : null);
+            setHoveredCenter(hover ? (center ?? null) : null);
+          }}
           onOpen={onOpen}
         />
       ))}
