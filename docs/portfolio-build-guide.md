@@ -1,0 +1,702 @@
+# 포트폴리오 만들기 — 처음부터 배포까지
+
+> Deep Field 포트폴리오 사이트를 만든 전 과정 기록. 학습용 / 공유용.
+>
+> 스택: **Next.js 16 (App Router, Turbopack) + TypeScript + Framer Motion + Tailwind CSS v4**
+> 호스팅: **Vercel (자동 배포)**
+> 데이터: **Google Sheets (CMS) + Cloudinary (이미지/비디오)**
+> 메일: **Resend (Next.js API Route)**
+
+---
+
+## 목차
+
+1. [왜 이 스택인가](#1-왜-이-스택인가)
+2. [초기 세팅 — Next.js + Git + Vercel](#2-초기-세팅--nextjs--git--vercel)
+3. [콘텐츠 관리 — Google Sheets + Cloudinary](#3-콘텐츠-관리--google-sheets--cloudinary)
+4. [비디오 슬롯 시스템의 진화](#4-비디오-슬롯-시스템의-진화)
+5. [Contact 폼 — Resend + API Route](#5-contact-폼--resend--api-route)
+6. [커스텀 도메인 설정](#6-커스텀-도메인-설정)
+7. [트러블슈팅 기록](#7-트러블슈팅-기록)
+8. [배운 점과 앞으로](#8-배운-점과-앞으로)
+
+---
+
+## 1. 왜 이 스택인가
+
+### Next.js를 선택한 이유
+
+- **React 기반**이라 생태계가 크고, 컴포넌트 재사용이 자연스럽다
+- **App Router**로 라우팅이 파일 기반이라 직관적 (`app/project/[id]/page.tsx` → `/project/123` URL 자동 생성)
+- **Turbopack**이 개발 서버 속도가 빠르다 (HMR 체감 빠름)
+- 정적 페이지 + API Route를 한 프로젝트에서 같이 돌릴 수 있다 (Contact 폼 같은 건 API Route로)
+
+### Vercel을 선택한 이유
+
+- Next.js를 만든 회사라 통합이 가장 매끄럽다
+- GitHub 연결하면 **push할 때마다 자동 배포**
+- 브랜치마다 **preview URL**이 자동 생성돼서 실험하기 좋다
+- 개인 포트폴리오 수준은 **무료 Hobby 플랜**으로 충분
+- 환경변수 관리 UI가 편하다
+
+### Google Sheets + Cloudinary를 데이터/미디어로 쓴 이유
+
+- 코드 건드리지 않고 프로젝트 추가/수정 가능 (디자이너 친화적)
+- 시트는 **CMS 대용**. DB 안 세팅해도 됨. 무료
+- Cloudinary는 **이미지/비디오 자동 최적화 + CDN + 변환 API** 한 번에
+- 둘 다 무료 플랜으로 개인 포트폴리오엔 충분
+
+---
+
+## 2. 초기 세팅 — Next.js + Git + Vercel
+
+### 2-1. Next.js 프로젝트 만들기
+
+터미널에서:
+
+```bash
+npx create-next-app@latest portfolio
+```
+
+옵션 선택:
+- TypeScript? → **Yes**
+- ESLint? → **Yes**
+- Tailwind CSS? → **Yes**
+- `src/` directory? → **Yes**
+- App Router? → **Yes**
+- Turbopack? → **Yes**
+- Import alias? → `@/*` (기본값 유지)
+
+생성 후:
+
+```bash
+cd portfolio
+npm run dev
+```
+
+→ `http://localhost:3000`에서 기본 페이지 확인.
+
+### 2-2. Git 저장소 만들기
+
+프로젝트 폴더에서:
+
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+```
+
+`.gitignore`는 Next.js가 자동으로 만들어주는데, 추가로 다음 항목들을 넣어두면 좋음:
+
+```gitignore
+# Local env
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel
+
+# Cloudinary upload state (나중에 tools/로 자동 업로드 만들면)
+tools/.upload-state.json
+
+# Cloud credentials (service account json 파일들)
+gen-lang-client-*.json
+*service-account*.json
+```
+
+### 2-3. GitHub에 올리기
+
+1. https://github.com/new → 저장소 만들기 (예: `work-archive`)
+2. 저장소 생성하면 뜨는 안내대로:
+
+```bash
+git remote add origin https://github.com/{username}/{repo-name}.git
+git branch -M main
+git push -u origin main
+```
+
+### 2-4. Vercel에 배포
+
+1. https://vercel.com/signup → GitHub 계정으로 가입 (추천)
+2. Dashboard → **Add New → Project**
+3. **Import Git Repository** → 방금 만든 GitHub 저장소 선택 → Import
+4. Framework Preset은 자동으로 **Next.js** 감지됨
+5. 특별한 설정 없이 **Deploy** 클릭
+6. 1~2분 후 `https://{project-name}.vercel.app` URL 생성
+
+이후부터는 **git push만 하면 자동 배포**. 따로 명령 실행할 필요 없음.
+
+### 2-5. 브랜치 전략 (Production vs Preview)
+
+Vercel은 브랜치별로 배포를 나눕니다:
+
+- **Production 브랜치** (프로젝트 설정에서 지정, 보통 `main`): 이 브랜치에 push하면 공식 프로덕션 URL에 반영
+- **그 외 브랜치**: 각 브랜치마다 **고유한 Preview URL**이 자동 생성. 실험, PR 리뷰, 고객 공유용으로 좋음
+
+### 실전 팁: 작업 브랜치 vs 프로덕션 브랜치
+
+- `main` 또는 `production`을 Vercel 프로덕션 브랜치로 지정
+- 실험은 `feat/xxx`, `design-v2` 같은 별도 브랜치에서 → 각자 preview URL로 확인
+- 검증되면 main으로 merge → 프로덕션 배포
+- Preview URL 형태: `https://{project}-git-{branch-slug}-{team}.vercel.app`
+
+> **주의**: 작업 브랜치와 프로덕션 브랜치가 다른데 무심코 "프로덕션 도메인"이라고 부르다 보면 혼동됩니다. 항상 현재 작업 중인 브랜치의 preview URL로 테스트하는 습관이 안전해요.
+
+---
+
+## 3. 콘텐츠 관리 — Google Sheets + Cloudinary
+
+### 3-1. Google Sheets를 CMS로 쓰기
+
+**핵심 아이디어**: 구글시트 한 장에 프로젝트 데이터 전부 적고, 웹에서 CSV로 public publish해서 fetch.
+
+#### 설정 단계
+
+1. 구글시트 만들기. 첫 행은 헤더 (`id`, `title`, `year`, `folder`, `imageCount`, `pairs`, `Video`, `videoUrl`, `selected`, `Award` 등)
+2. 각 행에 프로젝트 데이터 입력
+3. **파일 > 공유 > 웹에 게시** → CSV 형식 선택 → 게시 → URL 복사
+4. 코드에서 fetch:
+
+```ts
+// src/components/v2/dataFetch.ts
+const SHEETS_CSV = "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv";
+
+export async function fetchProjects(): Promise<Project[]> {
+  const res = await fetch(`${SHEETS_CSV}&_=${Date.now()}`, { cache: "no-store" });
+  const text = await res.text();
+  return parseCSV(text).map(rowToProject).filter((p): p is Project => p !== null);
+}
+```
+
+`&_=${Date.now()}` 쿼리스트링은 브라우저 캐시 무효화용. `cache: "no-store"`는 Next.js fetch 캐시 무효화용. 둘 다 해야 업데이트가 바로 반영됨.
+
+#### CSV 파싱 주의점
+
+단순히 `split(",")` 하면 **쉼표가 포함된 필드**(예: 설명문 안의 쉼표)에서 깨짐. 큰따옴표로 감싼 필드를 제대로 파싱하는 로직이 필요:
+
+```ts
+function parseCSVRow(line: string): string[] {
+  const fields: string[] = [];
+  let cur = "";
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }  // escaped quote
+      else inQuote = !inQuote;
+    } else if (!inQuote && c === ',') {
+      fields.push(cur);
+      cur = "";
+    } else {
+      cur += c;
+    }
+  }
+  fields.push(cur);
+  return fields;
+}
+```
+
+#### 퍼블리시 캐시 지연 주의
+
+구글시트의 "웹에 게시" CSV 출력은 **최대 5분 정도 캐시 지연**이 있어요. 시트 수정해도 바로 반영 안 되면:
+
+- `파일 > 웹에 게시 > 다시 게시(Republish)` 눌러서 강제 갱신
+- 또는 5분 기다리기
+
+### 3-2. Cloudinary로 이미지/비디오 호스팅
+
+**왜 Cloudinary?**: 이미지 업로드하면 자동으로 포맷 변환(`f_auto`), 크기 조절, CDN 배포까지 해줌. 무료 플랜도 충분히 넉넉.
+
+#### 폴더 구조 컨벤션
+
+```
+portfolio-images/
+  {project-folder}/
+    cover            ← 커버 이미지 (썸네일)
+    001              ← 첫 번째 갤러리 슬롯
+    002
+    ...
+```
+
+#### Public ID는 **확장자 없이**
+
+업로드 시 Cloudinary 대시보드에서 "Use filename as public ID" 옵션을 **끄고**, public_id를 `001`처럼 숫자 3자리로 직접 지정. 확장자(`001.jpg`, `001.mp4`)가 public_id에 포함되면 나중에 URL 짜기 귀찮아짐.
+
+#### 코드에서 URL 빌드
+
+```ts
+export const CLD = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
+
+// 이미지 1~N까지 URL 배열 생성
+export const cldImgs = (folder: string, count: number) =>
+  Array.from({ length: count }, (_, i) => {
+    const num = String(i + 1).padStart(3, "0");
+    return `${CLD}${folder}/${num}`;
+  });
+```
+
+`f_auto,q_auto` = Cloudinary가 브라우저에 맞는 최적 포맷(WebP, AVIF 등) + 품질 자동 선택.
+
+---
+
+## 4. 비디오 슬롯 시스템의 진화
+
+이 부분은 세 번 리팩터한 흥미로운 히스토리가 있어요. 디자이너가 **"이미지 폴더에 비디오도 섞어 올리고 싶다"**는 요구사항을 만족시키는 최적 방법을 찾는 과정.
+
+### v1 — 비디오 자동감지 (Video First)
+
+초창기 로직:
+1. 갤러리의 모든 아이템을 `<video>` 태그로 먼저 시도
+2. 비디오 로드 실패(`onError`) → `<img>`로 swap
+
+```tsx
+const [isImg, setIsImg] = useState(false);
+return isImg ? <img src={src} /> : <video src={videoSrc} onError={() => setIsImg(true)} />;
+```
+
+**문제점**:
+- 갤러리의 99%는 이미지인데 전부 video 요청 먼저 날림 = 대역폭 낭비
+- Cloudinary의 `f_auto`가 특정 원본 인코딩에서 간헐적으로 404 반환 (엣지 케이스 감지 실패)
+
+### v2 — 감지 순서 역전 (Image First)
+
+**핵심 인사이트**: "이미지가 상식적인 default"
+
+```tsx
+const [isVideo, setIsVideo] = useState(false);
+return !isVideo ? <img src={src} onError={() => setIsVideo(true)} /> : <video src={videoSrc} />;
+```
+
+대부분의 아이템(이미지)은 `<img>` 로드 성공 → 끝. 일부 슬롯(비디오)은 `<img>` 404 → `<video>`로 swap.
+
+**요청 수가 거의 절반으로 감소** (15개 이미지 갤러리 기준: 이전 30개 요청 → 새 15개 + 1개).
+
+### v2의 한계 — 이미지가 404가 아닐 때
+
+Cloudinary는 `image`와 `video`가 **완전 별개의 네임스페이스**. 같은 `public_id`에 대해 두 타입이 동시 존재 가능. 그래서 다음 상황이 생길 수 있음:
+
+- 원래 이미지 `002.jpg` 업로드 → `image/upload/002` 저장
+- 대시보드에서 "Replace" 기능으로 비디오 `002.mp4` 덮어쓰기 시도
+- 결과: **image 네임스페이스의 이전 이미지는 그대로**, video 네임스페이스에 비디오 추가
+- `image/upload/002` → 200 (기존 이미지 그대로), `video/upload/002` → 200 (신규)
+- 코드 로직: `<img>`가 성공 → 이미지로 렌더링 → **비디오 안 나옴**
+
+### v3 — 명시적 슬롯 (Single Source of Truth)
+
+교훈: **자동감지는 Cloudinary의 dual namespace 때문에 항상 불안정.** 시트에 명시적으로 적자.
+
+시트에 `Video` 컬럼 추가:
+- `2` → 슬롯 2가 비디오
+- `1,5` → 슬롯 1, 5 둘 다 비디오
+- (빈칸) → 비디오 없음
+
+```ts
+// dataFetch.ts
+videoSlots: row.Video
+  ? row.Video.split(",").map(s => parseInt(s.trim(), 10)).filter(n => n > 0)
+  : undefined,
+```
+
+```tsx
+// ProjectDetailV2.tsx
+const videoUrlSet = new Set(
+  (project.videoSlots ?? []).map(slot => galleryImages[slot - 1]).filter(Boolean)
+);
+
+<GalleryImage isVideo={videoUrlSet.has(src)} src={src} ... />
+```
+
+추가 규칙: **Selected Works 카드 썸네일은 슬롯 1이 리스트에 있을 때만** 비디오 루프 재생.
+
+```ts
+const hasSlot1Video = project.videoSlots?.includes(1) ?? false;
+const videoSrc = hasSlot1Video ? `${CLD_VIDEO}/${folder}/001` : null;
+```
+
+### 배운 점
+
+- **Trust the source** — 콘텐츠 관리자(시트)가 진실의 근원. 추론하지 말고 명시.
+- **Auto-detect는 fallback, not primary** — 동작할 때는 편하지만 엣지 케이스에서 무너짐.
+- **네임스페이스가 분리된 시스템**(Cloudinary image/video)은 교차 상태가 숨어있을 수 있음.
+
+---
+
+## 5. Contact 폼 — Resend + API Route
+
+### 왜 Resend?
+
+정적 사이트에서 실제 메일을 보내려면 서버가 필요합니다. 선택지:
+
+| 방식 | 장단점 |
+|---|---|
+| **mailto: 링크** | 사용자 메일앱을 열어주는 것뿐. "실제 발송"이 아님 |
+| **Web3Forms / Formspree** | 서드파티 폼 서비스. 무료지만 브랜드 노출/제약 있음 |
+| **Resend + Next.js API route** | ★ 전문적. Next.js와 통합 깔끔. 무료 플랜 100통/일 |
+| **SendGrid / Mailgun** | 기능 많지만 과함. 포트폴리오엔 오버킬 |
+
+**Resend 장점**:
+- Next.js 공식 파트너 (공식 예제 존재)
+- API key만 있으면 바로 시작 (도메인 verify는 나중에 해도 됨)
+- 테스트용 샌드박스 발신자(`onboarding@resend.dev`) 제공
+- 로그/분석 대시보드 깔끔
+
+### 구현
+
+#### 패키지 설치
+
+```bash
+npm install resend
+```
+
+#### API Route 작성
+
+파일 경로: `src/app/api/contact/route.ts`
+
+```ts
+import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+
+const FROM_DEFAULT = "Portfolio <onboarding@resend.dev>";
+
+export async function POST(req: NextRequest) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.CONTACT_TO;
+  const from = process.env.CONTACT_FROM || FROM_DEFAULT;
+
+  if (!apiKey || !to) {
+    return NextResponse.json(
+      { error: "Contact endpoint not configured" },
+      { status: 500 }
+    );
+  }
+
+  const { from: senderEmail, message } = await req.json();
+  const trimmedMessage = (message || "").trim();
+
+  if (!trimmedMessage) {
+    return NextResponse.json({ error: "Message is required" }, { status: 400 });
+  }
+  if (trimmedMessage.length > 5000) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
+  const resend = new Resend(apiKey);
+  const label = (senderEmail || "").trim() || "anonymous visitor";
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail || "");
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from,
+      to: [to],
+      replyTo: isValidEmail ? senderEmail : undefined,
+      subject: `Portfolio contact — ${label}`,
+      text: `From: ${label}\n\n${trimmedMessage}`,
+    });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
+    }
+    return NextResponse.json({ success: true, id: data?.id });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+#### 클라이언트에서 호출
+
+ContactModal 안에서:
+
+```ts
+const handleSend = async () => {
+  if (!message.trim() || status === "sending") return;
+  setStatus("sending");
+  try {
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from, message }),
+    });
+    if (res.ok) {
+      setStatus("sent");
+      setFrom("");
+      setMessage("");
+    } else {
+      setStatus("error");
+    }
+  } catch {
+    setStatus("error");
+  }
+};
+```
+
+### 환경변수 설정 (Vercel)
+
+#### 1. Resend에서 API Key 발급
+
+1. https://resend.com/signup → GitHub 로그인
+2. Dashboard → **API Keys** → **Create API Key**
+3. Permission: **Sending access**
+4. 발급된 `re_xxxxxxxx...` 키 복사 (한 번만 표시됨!)
+
+#### 2. Vercel에 환경변수 등록
+
+Vercel 프로젝트 → **Settings → Environment Variables** → 다음 3개 추가:
+
+| Key | Value | Environments |
+|---|---|---|
+| `RESEND_API_KEY` | `re_xxxxxxxx...` | Production + Preview |
+| `CONTACT_TO` | 받을 메일 주소 | Production + Preview |
+| `CONTACT_FROM` | `Portfolio <onboarding@resend.dev>` | Production + Preview |
+
+- **Sensitive** 토글은 켜두면 좋음 (API key니까). 단 Development 환경은 Sensitive 미지원이라 Production+Preview만 선택
+- **Branch** 필터는 비워둠 (특정 브랜치 제한 없음)
+
+#### 3. Redeploy
+
+환경변수는 **새 deploy에만 적용됨**. 기존 deploy는 재배포 필요.
+
+- Deployments 탭 → 최신 deploy `⋯` → **Redeploy** → "Use existing Build Cache" 해제 → Redeploy
+
+1~2분 후 테스트.
+
+### 동작 확인
+
+배포 후:
+1. 사이트 Contact 모달 열기
+2. 이메일 + 메시지 입력 → Send
+3. "메시지 전송됨" 초록 표시
+4. `CONTACT_TO`에 지정한 메일함에서 확인 (스팸함도 체크)
+
+---
+
+## 6. 커스텀 도메인 설정
+
+두 종류의 "도메인 연결"이 있습니다. 헷갈리지 말기:
+
+1. **사이트 도메인** — `yourdomain.com` → Vercel 배포된 사이트에 연결
+2. **이메일 발신 도메인** — `hi@yourdomain.com`에서 Resend가 메일 보낼 수 있게 verify
+
+### 6-1. 도메인 사기
+
+**어디서**:
+- Cloudflare Registrars (추천, 마진 없이 원가 판매)
+- Namecheap
+- 가비아 (국내)
+- Google Domains은 종료됨
+
+**가격**: `.com` 연 1~2만원, `.design`/`.studio` 연 3~5만원
+
+### 6-2. Vercel에 사이트 도메인 연결
+
+1. Vercel 프로젝트 → **Settings → Domains**
+2. **Add** → 도메인 입력 (예: `jyvovvo.com`)
+3. Vercel이 DNS 레코드 알려줌. 보통:
+   - `A` 레코드: `@` → `76.76.21.21`
+   - 또는 `CNAME`: `www` → `cname.vercel-dns.com`
+4. 도메인 등록처(Cloudflare/Namecheap 등) DNS 설정에 레코드 추가
+5. 몇 분~몇 시간 후 Vercel에서 자동 verify → `https://jyvovvo.com` 활성화
+6. SSL 인증서는 Vercel이 자동 발급/갱신 (무료, Let's Encrypt)
+
+### 6-3. Resend에 이메일 도메인 verify
+
+#### 왜 해야 하나
+
+`onboarding@resend.dev`로 계속 발송하면:
+- 수신자에게 "resend.dev"라는 낯선 발신자로 보여 덜 프로페셔널
+- Gmail이 점점 스팸함으로 분류할 수 있음 (많은 사람이 쓰니까)
+- 답장을 받고 싶으면 From을 본인 도메인으로 해야 자연스러움
+
+#### 절차
+
+1. **Resend 대시보드 → Domains → Add Domain**
+2. 도메인 입력 (예: `jyvovvo.com`)
+3. Region: **Asia** (도쿄 리전, 한국에서 가장 빠름)
+4. Resend가 **DNS 레코드 3~5개** 알려줌:
+   - `TXT` — domain verification
+   - `MX` — mail routing
+   - `TXT` — DKIM 서명 (보통 2개)
+   - `TXT` — SPF (선택)
+5. 이 레코드들을 도메인 DNS 설정에 추가 (등록처 어디든 방법 동일)
+6. **Verify DNS Records** 버튼 클릭 → 전파 완료되면 "Verified" 상태
+
+보통 10분~1시간 내에 verify 완료. Cloudflare DNS 쓰면 빠름.
+
+#### Vercel 환경변수 한 줄 수정
+
+```
+CONTACT_FROM = Portfolio <hi@jyvovvo.com>    ← 원하는 주소
+```
+
+(여기서 `hi@`, `contact@`, `noreply@` 등 뭐든 가능. Resend는 verified 도메인의 아무 주소나 허용)
+
+저장 → Redeploy → 끝.
+
+> **코드는 아무것도 안 건드려요** — 이미 환경변수로 설계해뒀기 때문.
+
+#### 답장 받기
+
+`hi@jyvovvo.com`으로 발송한 메일에 누가 답장하면 그 주소로 오는데, `hi@jyvovvo.com`을 실제 inbox로 쓰려면:
+
+- 도메인 등록처 또는 DNS에서 **메일 포워딩** 설정
+  - Cloudflare Email Routing (무료)
+  - ImprovMX (무료)
+  - 둘 다 `hi@jyvovvo.com` → `jyvovvo@gmail.com` 같이 자동 전달
+- 또는 Google Workspace 등 유료 이메일 서비스 연결
+
+포트폴리오용이라면 **Cloudflare Email Routing 무료**가 가장 간단.
+
+---
+
+## 7. 트러블슈팅 기록
+
+실제로 막혔던 문제들.
+
+### 7-1. Cloudinary `f_auto`가 특정 비디오에서 404
+
+**증상**: 어떤 비디오는 `video/upload/q_auto,f_auto/folder/001` 요청하면 404. 다른 비디오는 200.
+
+**원인**: Cloudinary의 `f_auto`(자동 포맷 선택)가 특정 원본 인코딩에서 변환 파이프라인 실패. 샌드박스 이슈라 재현성 낮음.
+
+**해결**: 비디오 URL prefix에서 `f_auto` 빼고 `q_auto`만 쓰기.
+
+```ts
+// Before
+const CLD_VID_PREFIX = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/";
+// After
+const CLD_VID_PREFIX = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto/";
+```
+
+**교훈**: `f_auto`는 이미지엔 안전하지만 비디오에선 간헐 이슈 있음. 비디오는 `q_auto`만 쓰는 게 안전.
+
+### 7-2. 대시보드 vs CDN 상태 불일치
+
+**증상**: Cloudinary 대시보드는 `002`를 "Video 27.3 MB"로 보여주는데, `video/upload/002` URL은 404.
+
+**원인**: image namespace에 기존 이미지가 남아있고, video namespace에는 비디오가 업로드 안 됨 (또는 다른 public_id로 업로드됨).
+
+**해결 절차**:
+1. 대시보드에서 asset details 열고 **URL** 필드 확인
+2. `image/upload/...`로 시작하면 → image namespace에 있는 이전 이미지. 이걸 **삭제**.
+3. 비디오 파일을 **새로 업로드** (Resource type = Video, Public ID = `002`, 확장자 없이)
+4. `video/upload/portfolio-images/.../002` 브라우저에서 직접 열어서 재생 확인
+
+**교훈**: Cloudinary 대시보드의 UI 표시와 실제 CDN 리소스가 다를 수 있음. 항상 브라우저에서 직접 URL로 확인하는 게 확실.
+
+### 7-3. Footer 색상이 adaptive palette를 무시하는 버그
+
+**증상**: 프로젝트 디테일 페이지에서 배경색이 밝은지 어두운지에 따라 본문 텍스트는 자동으로 검은색/흰색으로 바뀌는데, Footer의 headline과 name만 항상 흰색으로 고정.
+
+**원인**: Footer가 `overrideColors` prop을 받아 쓰긴 했는데, headline과 name은 **오버라이드 유무만 체크**하고 실제 색상값은 하드코딩.
+
+```tsx
+// Before — 오버라이드 있으면 무조건 흰색
+color: overrideColors ? "#F0F0F0" : "#0A0A0A"
+
+// After — 실제 색상값을 오버라이드에서 읽음
+color: overrideColors?.textStrong ?? "#0A0A0A"
+```
+
+그리고 호출부에서 adaptive palette를 넘기게 수정:
+
+```tsx
+<Footer overrideColors={{ ..., textStrong: T.solid, textFaint: T.footerFaint }} />
+```
+
+**교훈**: "prop을 받아 쓴다"와 "prop의 값을 실제로 반영한다"는 다르다. 코드 리뷰에서 흔히 놓치는 실수.
+
+### 7-4. 시트 컬럼 rename 시 주의점
+
+**상황**: 시트 컬럼 `thumbnail` → `Selected_video` → 최종 `Video`로 두 번 이름 변경.
+
+**주의**:
+- 시트에서 컬럼명 바꾸면 **퍼블리시 CSV에도 즉시 반영** (다른 곳보다 빠름)
+- 코드는 `row.thumbnail` → `row.Video`로 명시적으로 바꿔야 함
+- 두 이름을 동시에 지원하는 fallback 코드는 **가급적 피함**. 임시로 두면 언젠가 혼동 생김
+- 한 번에 바꾸고 양쪽(시트 + 코드) 같이 push
+
+### 7-5. 작업 브랜치 vs 프로덕션 브랜치 혼동
+
+**상황**: 메모리엔 "design-v2.1 = production branch"로 기록돼 있었는데, 실제론 `design-v2`가 production 브랜치. design-v2.1에 작업한 커밋이 "내 브랜치 preview URL에서는 보이지만 프로덕션 URL에는 반영 안 됨".
+
+**해결**:
+- Vercel 프로젝트 → Settings → Git → **Production Branch** 필드 확인
+- 실제 production 브랜치가 뭔지 **현재 상태**로 확인 (메모리 말고)
+- 작업 브랜치와 production 브랜치가 다르면 주기적으로 merge하거나, 아예 production 브랜치를 바꿔버리거나
+
+**교훈**: 배포 관련 설정은 **현재 상태를 직접 확인**. 기억에만 의존하지 말기.
+
+---
+
+## 8. 배운 점과 앞으로
+
+### 배운 점
+
+1. **"왜 이게 안 될까?"는 대부분 인프라 레벨 문제** — 코드가 아니라 DNS, 캐시, 네임스페이스, 환경변수 같은 것.
+2. **자동화는 편하지만 엣지 케이스에서 무너진다** — 명시적 설정이 장기적으로 안정적.
+3. **단일 진실의 원천(Single Source of Truth)** — 시트든 코드든, 어느 한 곳이 기준이어야 함. 두 곳에 같은 정보를 두면 언젠가 불일치 발생.
+4. **커밋은 작은 단위로** — 디버깅할 때 bisect하기 좋고, 롤백 쉽고, 리뷰하기 좋음.
+5. **도메인과 네임스페이스의 분리를 이해해야 함** — 같은 이름(public_id)이 image에도 video에도 있을 수 있다.
+
+### 앞으로 공부/개선할 것
+
+- [ ] Selected Works 레이아웃 프로토타입 (Stacked Reveal / Marquee Ticker / Feature Spotlight)
+- [ ] Hero Z축 회전 효과
+- [ ] 파티클 효과 테스트 페이지 적용 여부 결정
+- [ ] 나머지 프로젝트 업로드 완성
+- [ ] 커스텀 도메인 붙이기 + Resend 이메일 verify
+- [ ] Contact 폼에 hCaptcha 또는 rate limit 추가 (스팸 대응)
+- [ ] OG 이미지 / SEO 메타 태그 정비
+- [ ] Vercel Speed Insights / Web Analytics 활성화
+
+---
+
+## 부록 — 편리한 명령어 모음
+
+```bash
+# 개발 서버 실행
+npm run dev
+
+# 프로덕션 빌드 로컬 확인
+npm run build && npm run start
+
+# TypeScript 타입 체크만
+npx tsc --noEmit
+
+# Lint
+npm run lint
+
+# 브랜치 만들고 이동
+git checkout -b feat/new-thing
+
+# 현재 상태 확인
+git status
+git log --oneline -10
+
+# 커밋 + 푸시
+git add .
+git commit -m "feat: ..."
+git push origin feat/new-thing
+
+# Vercel 로그 (Vercel CLI 설치 필요)
+npx vercel logs
+```
+
+---
+
+## 참고 링크
+
+- [Next.js App Router 공식 문서](https://nextjs.org/docs/app)
+- [Vercel 배포 가이드](https://vercel.com/docs/deployments/overview)
+- [Cloudinary 이미지 변환 레퍼런스](https://cloudinary.com/documentation/image_transformations)
+- [Resend Next.js 예제](https://resend.com/docs/send-with-nextjs)
+- [Framer Motion 공식 문서](https://motion.dev)
+- [Tailwind CSS v4](https://tailwindcss.com/docs)
+
+---
+
+*이 문서는 Deep Field 포트폴리오 작업 기록입니다. 2026-04-11 기준 최종 수정.*
