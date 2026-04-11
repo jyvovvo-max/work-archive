@@ -76,7 +76,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
   };
   const linkButtonStyle: React.CSSProperties = {
     ...linkStyle,
-    background: "transparent", border: "none", padding: 0, textAlign: "left", font: "inherit",
+    background: "transparent", border: "none", padding: 0, textAlign: "left",
   };
   // Mail button: if onContact provided → open the contact modal, else fall back to mailto.
   const handleMailClick = (e: React.MouseEvent) => {
