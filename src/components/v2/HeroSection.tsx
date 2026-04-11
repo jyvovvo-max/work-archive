@@ -155,13 +155,13 @@ function makeScatter(): ScatterPos[] {
 
 // ── Depth system (desktop hero) ──
 // Images are sized by span (SCATTER_MIN_SPAN..SCATTER_MAX_SPAN columns).
-// Size encodes depth: small = far (more blur, less tilt), large = near (less blur, more tilt).
-// Hover pulls the target forward to a fixed target size (so any hovered image ends up
-// larger than the biggest baseline image) while everything else recedes in concert.
+// Size encodes depth for TILT only (large = near plane tilts more, small = far tilts less).
+// Blur is uniform across all images at BLUR_UNIFORM — depth weighting on blur was too
+// mushy on the far plane. Hover pulls the target forward to a fixed target size while
+// everything else recedes and gathers around the focus.
 const SCATTER_MIN_SPAN = 2;
 const SCATTER_MAX_SPAN = 5;
-const BASE_BLUR_MIN = 1;     // px — large images (near plane, cleaner but still soft)
-const BASE_BLUR_MAX = 3.5;   // px — small images (far plane) — reduced so far plane isn't too mushy
+const BLUR_UNIFORM = 2;      // px — baseline blur for every image (roughly "front image +1")
 const TILT_BASE    = 9;      // max tilt degrees for the largest image
 const HOVER_BLUR_MULT = 1.4; // when someone else is hovered, push non-hovered further back
 const HOVER_BLUR_CAP  = 4.5; // absolute max blur during push-back
@@ -170,12 +170,18 @@ const SCALE_PUSHED  = 0.78;  // other images recede when one is hovered
 // Hover target: any hovered image scales up to this visual width (vw). Small images grow
 // more (larger scale factor), large images grow less — but all end up the same "front plane"
 // width, guaranteed to exceed the largest baseline image. Depth-equalized focus zoom.
-const HOVER_TARGET_VW = 36;
+const HOVER_TARGET_VW = 32;
+// Minimum multiplier so every image — even the one already close to target — still has
+// a perceptible "come forward" gesture on hover.
+const HOVER_SCALE_MIN = 1.05;
 // Convex-lens field — images near the hovered one recede LESS than images far from it,
 // producing a local bulge around the focus.
 const LENS_RADIUS_PX = 550;  // how far the bulge extends
 const LENS_SCALE_BUMP = 0.10; // near neighbours get this much of their push reversed
 const LENS_BLUR_RELIEF = 0.3; // near neighbours blur less aggressively
+// Gather: near non-hovered images also drift slightly toward the focal point, weighted
+// by their proximity factor (near = most drift, far = no drift).
+const GATHER_MAX_PX = 28;
 
 // Sequence:
 //  1. Images fade in clean (staggered, 0.1s gap, 1.0s each)
@@ -218,11 +224,18 @@ function CollageImage({
   const imgRef = useRef<HTMLDivElement>(null);
   const [hasSettled, setHasSettled] = useState(false);
   const [proximityFactor, setProximityFactor] = useState(0);
+  // Drift vector toward the hovered image's centre (0,0 when nobody is hovered or
+  // when this image IS the hovered one). Weighted by proximity so near neighbours
+  // gather while distant ones stay put.
+  const [pull, setPull] = useState({ x: 0, y: 0 });
+  // Actual rendered image aspect (height / width). Captured onLoad so the label
+  // offset can follow the real image corner, not a hard-coded 4:3 assumption.
+  const [imgAspect, setImgAspect] = useState(IMG_RATIO);
 
-  // Depth from span: 0 = smallest (far), 1 = largest (near)
+  // Depth from span: 0 = smallest (far), 1 = largest (near). Used for tilt weighting.
   const depth = (pos.span - SCATTER_MIN_SPAN) / (SCATTER_MAX_SPAN - SCATTER_MIN_SPAN);
-  const baseBlurPx = BASE_BLUR_MAX - depth * (BASE_BLUR_MAX - BASE_BLUR_MIN);
-  const maxTilt    = TILT_BASE * (0.4 + 0.6 * depth);
+  const maxTilt = TILT_BASE * (0.4 + 0.6 * depth);
+  const baseBlurPx = BLUR_UNIFORM; // uniform across all images — no depth weighting
 
   // Proximity tilt — depth-weighted, 650px radius, quadratic weighting
   const localRotateX = useMotionValue(0);
@@ -262,24 +275,35 @@ function CollageImage({
   }, [allImagesIn]);
 
   // Convex-lens proximity: when someone else is hovered, compute how close this image
-  // is to the focal point. Near images recede less, far images recede fully.
+  // is to the focal point. Near images recede less (lens bulge) AND drift slightly
+  // toward the focus (gather). Far images recede fully and stay put.
   useEffect(() => {
     if (!anyHovered || isHovered || !hoveredCenter) {
       setProximityFactor(0);
+      setPull({ x: 0, y: 0 });
       return;
     }
     const rect = imgRef.current?.getBoundingClientRect();
     if (!rect) return;
     const myX = rect.left + rect.width / 2;
     const myY = rect.top + rect.height / 2;
-    const dist = Math.hypot(myX - hoveredCenter.x, myY - hoveredCenter.y);
-    setProximityFactor(Math.max(0, 1 - dist / LENS_RADIUS_PX));
+    const dx = hoveredCenter.x - myX;   // toward focal point
+    const dy = hoveredCenter.y - myY;
+    const dist = Math.hypot(dx, dy);
+    const factor = Math.max(0, 1 - dist / LENS_RADIUS_PX);
+    setProximityFactor(factor);
+    if (dist > 0) {
+      const pullMag = factor * GATHER_MAX_PX;
+      setPull({ x: (dx / dist) * pullMag, y: (dy / dist) * pullMag });
+    } else {
+      setPull({ x: 0, y: 0 });
+    }
   }, [anyHovered, isHovered, hoveredCenter]);
 
   // Hover scale is depth-equalized: every hovered image lands at HOVER_TARGET_VW wide,
-  // so small images grow a lot more than large ones, and any hovered image ends up as
-  // the front-most element regardless of its original size.
-  const hoverScale = HOVER_TARGET_VW / (pos.span * COL_W);
+  // so small images grow a lot more than large ones. The HOVER_SCALE_MIN floor ensures
+  // even the largest images still show a perceptible "come forward" gesture.
+  const hoverScale = Math.max(HOVER_SCALE_MIN, HOVER_TARGET_VW / (pos.span * COL_W));
 
   // Target blur/scale based on interaction state
   let targetBlurPx: number;
@@ -305,16 +329,29 @@ function CollageImage({
   const blurTransition = {
     filter: { duration, ease: "easeInOut" as const },
     scale:  { duration, ease: "easeInOut" as const },
+    x:      { duration, ease: "easeInOut" as const },
+    y:      { duration, ease: "easeInOut" as const },
   };
-  const blurAnimate = { filter: `blur(${targetBlurPx}px)`, scale: targetScale };
+  const blurAnimate = {
+    filter: `blur(${targetBlurPx}px)`,
+    scale: targetScale,
+    x: pull.x,
+    y: pull.y,
+  };
 
-  // Label tracks the image's visual top-right corner as it scales.
-  // With centre-origin scale(S), the top-right corner offsets by ((S-1)*W/2, -(S-1)*H/2).
-  // We translate the label by the same vector (in vw units) via CSS and use a CSS
-  // transition on `transform` so it stays in sync with the framer-motion scale animation.
+  // Label tracks the image's visual top-right corner as it scales AND the gather pull.
+  // Scale corner offset: (S-1)*W/2 right, -(S-1)*H*imgAspect/2 up (using the real image
+  // aspect captured on load — a 16:9 image would otherwise overshoot with IMG_RATIO=0.75).
+  // CSS supports multiple translates in a single transform — they compose additively.
+  // Additionally, the image→label gap shrinks as the image grows so the label doesn't
+  // appear to drift away on hover (target: half the baseline gap at full hover scale).
   const posWvw = parseFloat(pos.w);
-  const labelShiftVw = (targetScale - 1) * 0.5 * posWvw;
-  const labelTransform = `translate(${labelShiftVw}vw, ${-labelShiftVw * IMG_RATIO}vw)`;
+  const labelShiftXvw = (targetScale - 1) * 0.5 * posWvw;
+  const labelShiftYvw = -labelShiftXvw * imgAspect;
+  const hoverGrowth = Math.min(1, Math.max(0, targetScale - 1));
+  const gapDeltaPx = hoverGrowth * 6.5; // at S≥2, label sits 6.5px lower → gap is halved
+  const labelTransform =
+    `translate(${labelShiftXvw}vw, ${labelShiftYvw}vw) translate(${pull.x}px, ${pull.y + gapDeltaPx}px)`;
 
   return (
     // Outer: staggered clean fade-in — sits behind text (zIndex 2)
@@ -395,6 +432,12 @@ function CollageImage({
             src={project.img}
             alt={project.title}
             draggable={false}
+            onLoad={e => {
+              const el = e.currentTarget;
+              if (el.naturalWidth > 0 && el.naturalHeight > 0) {
+                setImgAspect(el.naturalHeight / el.naturalWidth);
+              }
+            }}
             style={{ width: "100%", height: "auto", display: "block" }}
             placeholderStyle={{ aspectRatio: "4/3" }}
           />
