@@ -90,6 +90,7 @@ export default function ProjectPage() {
         prevProject={prevProject}
         siteData={siteData}
         lang={lang}
+        onContact={() => setContactOpen(true)}
       />
 
       <ContactModal

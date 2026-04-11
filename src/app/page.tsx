@@ -127,7 +127,7 @@ export default function Page() {
         background: "#F0F0F0",
         borderTop: "none",
       }}>
-        <Footer siteData={siteData} lang={lang} />
+        <Footer siteData={siteData} lang={lang} onContact={() => setContactOpen(true)} />
       </div>
 
       <ContactModal

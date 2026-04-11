@@ -32,7 +32,7 @@ interface OverrideColors {
   border: string;
 }
 
-export default function Footer({ siteData, lang = "ko", overrideColors }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors }) {
+export default function Footer({ siteData, lang = "ko", overrideColors, onContact }: { siteData: SiteData | null; lang?: Lang; overrideColors?: OverrideColors; onContact?: () => void }) {
   const headline = siteData?.footerHeadline ?? "";
   const location = siteData?.footerLocation ?? "Korea";
   const emailHandle = siteData?.footerEmailHandle ?? "Mail";
@@ -74,6 +74,17 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
   const linkStyle: React.CSSProperties = {
     ...valueStyle, cursor: "pointer", textDecoration: "none", transition: "color 0.18s",
   };
+  const linkButtonStyle: React.CSSProperties = {
+    ...linkStyle,
+    background: "transparent", border: "none", padding: 0, textAlign: "left", font: "inherit",
+  };
+  // Mail button: if onContact provided → open the contact modal, else fall back to mailto.
+  const handleMailClick = (e: React.MouseEvent) => {
+    if (onContact) {
+      e.preventDefault();
+      onContact();
+    }
+  };
 
   return (
     <footer style={{
@@ -105,14 +116,26 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
           }}>
             <div style={{ gridColumn: "1 / 4", display: "flex", flexDirection: "column" }}>
               <div style={valueStyle}>{location}</div>
-              <a
-                href={`mailto:${email}`}
-                style={linkStyle}
-                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
-                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
-              >
-                {emailHandle}
-              </a>
+              {onContact ? (
+                <button
+                  type="button"
+                  onClick={handleMailClick}
+                  style={linkButtonStyle}
+                  onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                  onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+                >
+                  {emailHandle}
+                </button>
+              ) : (
+                <a
+                  href={`mailto:${email}`}
+                  style={linkStyle}
+                  onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                  onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+                >
+                  {emailHandle}
+                </a>
+              )}
               <a
                 href={igUrl}
                 target="_blank"
@@ -139,14 +162,26 @@ export default function Footer({ siteData, lang = "ko", overrideColors }: { site
             <div style={valueStyle}>{location}</div>
           </BlurIn>
           <BlurIn delay={0.12} style={{ gridColumn: "2" }}>
-            <a
-              href={`mailto:${email}`}
-              style={linkStyle}
-              onMouseEnter={e => (e.currentTarget.style.color = textHover)}
-              onMouseLeave={e => (e.currentTarget.style.color = textColor)}
-            >
-              {emailHandle}
-            </a>
+            {onContact ? (
+              <button
+                type="button"
+                onClick={handleMailClick}
+                style={linkButtonStyle}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+              >
+                {emailHandle}
+              </button>
+            ) : (
+              <a
+                href={`mailto:${email}`}
+                style={linkStyle}
+                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+              >
+                {emailHandle}
+              </a>
+            )}
           </BlurIn>
           <BlurIn delay={0.18} style={{ gridColumn: "3" }}>
             <a

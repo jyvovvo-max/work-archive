@@ -267,10 +267,11 @@ interface Props {
   prevProject?: Project;
   siteData?: SiteData | null;
   lang?: Lang;
+  onContact?: () => void;
 }
 
 export default function ProjectDetailV2({
-  project, onClose, onNext, onPrev, nextProject, prevProject, siteData, lang = "ko",
+  project, onClose, onNext, onPrev, nextProject, prevProject, siteData, lang = "ko", onContact,
 }: Props) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -698,7 +699,7 @@ export default function ProjectDetailV2({
         )}
       </AnimatePresence>
 
-      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: T.footer, textStrong: T.solid, textFaint: T.footerFaint, textHover: T.navHover, border: colors.divider }} />
+      <Footer siteData={siteData ?? null} lang={lang} overrideColors={{ bg: colors.footerBg, text: T.footer, textStrong: T.solid, textFaint: T.footerFaint, textHover: T.navHover, border: colors.divider }} onContact={onContact} />
     </motion.div>
   );
 }

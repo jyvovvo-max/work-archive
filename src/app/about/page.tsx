@@ -62,7 +62,7 @@ export default function AboutPage() {
       <div style={{ paddingTop: "52px", opacity: ready ? 1 : 0 }}>
         <AboutSection siteData={siteData} lang={lang} ready={ready} />
         <AwardsSection projects={projects} onOpen={openProject} ready={ready} />
-        <Footer siteData={siteData} lang={lang} />
+        <Footer siteData={siteData} lang={lang} onContact={() => setContactOpen(true)} />
       </div>
 
       <ContactModal

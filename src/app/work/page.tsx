@@ -289,7 +289,7 @@ export default function WorkPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <Footer siteData={siteData} lang={lang} />
+          <Footer siteData={siteData} lang={lang} onContact={() => setContactOpen(true)} />
         </motion.div>
       </motion.div>
 
