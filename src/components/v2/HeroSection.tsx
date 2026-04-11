@@ -180,8 +180,14 @@ const LENS_RADIUS_PX = 550;  // how far the bulge extends
 const LENS_SCALE_BUMP = 0.10; // near neighbours get this much of their push reversed
 const LENS_BLUR_RELIEF = 0.3; // near neighbours blur less aggressively
 // Gather: near non-hovered images also drift slightly toward the focal point, weighted
-// by their proximity factor (near = most drift, far = no drift).
+// by their proximity factor (near = most drift, far = no drift). This is the initial snap.
 const GATHER_MAX_PX = 40;
+// Sustained drift — after the initial gather snap, all images keep slowly gravitating
+// toward the hovered centre as long as hover is held. Weight by distance so near images
+// drift faster than far ones, and cap total pull so motion plateaus.
+const DRIFT_SPEED_PX_PER_SEC = 8;
+const DRIFT_RADIUS_PX = 1400;
+const MAX_PULL_PX = 140;
 // Edge-clip compensation: when a hovered image would extend past the viewport edge, nudge
 // it toward the centre. Allow up to CLIP_ALLOWED_FRACTION of the scaled width to clip;
 // only the excess is compensated.
@@ -280,9 +286,12 @@ function CollageImage({
     return () => clearTimeout(t);
   }, [allImagesIn]);
 
-  // Convex-lens proximity: when someone else is hovered, compute how close this image
-  // is to the focal point. Near images recede less (lens bulge) AND drift slightly
-  // toward the focus (gather). Far images recede fully and stay put.
+  // Convex-lens proximity + sustained drift:
+  //  1. Compute proximity factor (for blur/scale bulge, based on LENS_RADIUS_PX).
+  //  2. Set an initial "gather snap" pull toward the focal point (factor × GATHER_MAX_PX).
+  //  3. While hover remains, accumulate a slow drift on top so all images keep creeping
+  //     toward the hovered centre. Drift speed is weighted by a wider-radius distance
+  //     metric so EVERY image participates, just at different speeds.
   useEffect(() => {
     if (!anyHovered || isHovered || !hoveredCenter) {
       setProximityFactor(0);
@@ -296,14 +305,32 @@ function CollageImage({
     const dx = hoveredCenter.x - myX;   // toward focal point
     const dy = hoveredCenter.y - myY;
     const dist = Math.hypot(dx, dy);
-    const factor = Math.max(0, 1 - dist / LENS_RADIUS_PX);
-    setProximityFactor(factor);
-    if (dist > 0) {
-      const pullMag = factor * GATHER_MAX_PX;
-      setPull({ x: (dx / dist) * pullMag, y: (dy / dist) * pullMag });
-    } else {
+    if (dist === 0) {
+      setProximityFactor(0);
       setPull({ x: 0, y: 0 });
+      return;
     }
+    const proxFactor  = Math.max(0, 1 - dist / LENS_RADIUS_PX);
+    const driftFactor = Math.max(0, 1 - dist / DRIFT_RADIUS_PX);
+    setProximityFactor(proxFactor);
+
+    const unitX = dx / dist;
+    const unitY = dy / dist;
+    const initialMag = proxFactor * GATHER_MAX_PX;
+
+    // 1. Initial snap
+    setPull({ x: unitX * initialMag, y: unitY * initialMag });
+
+    // 2. Sustained drift (only if this image is within the drift radius)
+    if (driftFactor === 0) return;
+    const startTime = performance.now();
+    const interval = setInterval(() => {
+      const elapsed = (performance.now() - startTime) / 1000;
+      const driftMag = driftFactor * DRIFT_SPEED_PX_PER_SEC * elapsed;
+      const totalMag = Math.min(initialMag + driftMag, MAX_PULL_PX);
+      setPull({ x: unitX * totalMag, y: unitY * totalMag });
+    }, 80);
+    return () => clearInterval(interval);
   }, [anyHovered, isHovered, hoveredCenter]);
 
   // Hover scale is depth-equalized: every hovered image lands at HOVER_TARGET_VW wide,
