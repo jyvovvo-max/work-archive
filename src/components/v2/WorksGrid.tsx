@@ -23,7 +23,7 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   const [isCentered, setIsCentered] = useState(false);
 
   // Build video thumbnail URL (first 15s via Cloudinary transformation)
-  // thumbnailVideo: sheet "thumbnail" column (e.g. "01") → {folder}/001
+  // thumbnailVideo: sheet "Selected_video" column (e.g. "01") → {folder}/001
   const folder = project.img.split("/portfolio-images/")[1]?.replace("/cover", "");
   const videoSrc = project.thumbnailVideo && folder
     ? `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto,so_0,eo_15/portfolio-images/${folder}/${project.thumbnailVideo.padStart(3, "0")}`
