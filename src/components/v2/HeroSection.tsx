@@ -384,7 +384,7 @@ function CollageImage({
   const effectiveX = isHovered ? compX : pull.x;
   const effectiveY = isHovered ? 0    : pull.y;
 
-  const duration = !hasSettled ? 1.0 : anyHovered ? 0.15 : 0.7;
+  const duration = !hasSettled ? 1.0 : anyHovered ? 0.25 : 0.7;
   const blurTransition = {
     filter: { duration, ease: "easeInOut" as const },
     scale:  { duration, ease: "easeInOut" as const },
