@@ -161,7 +161,7 @@ function makeScatter(): ScatterPos[] {
 // everything else recedes and gathers around the focus.
 const SCATTER_MIN_SPAN = 2;
 const SCATTER_MAX_SPAN = 5;
-const BLUR_UNIFORM = 2;      // px — baseline blur for every image (roughly "front image +1")
+const BLUR_UNIFORM = 0.5;    // px — baseline blur for every image (very subtle softness)
 const TILT_BASE    = 9;      // max tilt degrees for the largest image
 const HOVER_BLUR_MULT = 1.4; // when someone else is hovered, push non-hovered further back
 const HOVER_BLUR_CAP  = 4.5; // absolute max blur during push-back
@@ -181,7 +181,7 @@ const LENS_SCALE_BUMP = 0.10; // near neighbours get this much of their push rev
 const LENS_BLUR_RELIEF = 0.3; // near neighbours blur less aggressively
 // Gather: near non-hovered images also drift slightly toward the focal point, weighted
 // by their proximity factor (near = most drift, far = no drift).
-const GATHER_MAX_PX = 28;
+const GATHER_MAX_PX = 33;
 
 // Sequence:
 //  1. Images fade in clean (staggered, 0.1s gap, 1.0s each)
@@ -350,8 +350,10 @@ function CollageImage({
   const labelShiftYvw = -labelShiftXvw * imgAspect;
   const hoverGrowth = Math.min(1, Math.max(0, targetScale - 1));
   const gapDeltaPx = hoverGrowth * 6.5; // at S≥2, label sits 6.5px lower → gap is halved
+  // translateZ lifts the label slightly forward in the preserve-3d stacking context so
+  // the scaled image (same Z=0) never paints over it, regardless of DOM sibling order.
   const labelTransform =
-    `translate(${labelShiftXvw}vw, ${labelShiftYvw}vw) translate(${pull.x}px, ${pull.y + gapDeltaPx}px)`;
+    `translate(${labelShiftXvw}vw, ${labelShiftYvw}vw) translate(${pull.x}px, ${pull.y + gapDeltaPx}px) translateZ(1px)`;
 
   return (
     // Outer: staggered clean fade-in — sits behind text (zIndex 2)
@@ -403,6 +405,7 @@ function CollageImage({
             position: "absolute",
             top: "-13px",
             right: "1px",
+            zIndex: 1,
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: "10.8px",
             fontWeight: 300,
