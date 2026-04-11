@@ -331,10 +331,10 @@ export default function ProjectDetailV2({
       </motion.div>
 
       {/* ── Title + Meta ── */}
-      {/* Mobile: paddingTop is half of the legacy (52px + clamp(32,5vh,56)) gap */}
+      {/* Mobile: paddingTop matches the 28px description→credits gap for a consistent vertical rhythm */}
       <div style={{
         padding: isMobile
-          ? `calc((52px + clamp(32px, 5vh, 56px)) / 2) ${hPad} clamp(32px, 5vh, 56px)`
+          ? `28px ${hPad} clamp(32px, 5vh, 56px)`
           : `clamp(48px, 7vh, 80px) ${hPad}`,
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "repeat(7, 1fr)",
