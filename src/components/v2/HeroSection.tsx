@@ -170,7 +170,7 @@ const SCALE_PUSHED  = 0.78;  // other images recede when one is hovered
 // Hover target: any hovered image scales up to this visual width (vw). Small images grow
 // more (larger scale factor), large images grow less — but all end up the same "front plane"
 // width, guaranteed to exceed the largest baseline image. Depth-equalized focus zoom.
-const HOVER_TARGET_VW = 32;
+const HOVER_TARGET_VW = 28.8; // ≈ 90% of previous 32vw
 // Minimum multiplier so every image — even the one already close to target — still has
 // a perceptible "come forward" gesture on hover.
 const HOVER_SCALE_MIN = 1.05;
@@ -328,7 +328,7 @@ function CollageImage({
   // Asymmetric timing: grow-in on hover is snappy, release-out is a slow exhale.
   // `anyHovered` reflects the target state — true means we're transitioning TO a hover
   // configuration (fast), false means we're transitioning BACK to baseline (slow).
-  const duration = !hasSettled ? 1.0 : anyHovered ? 0.25 : 0.65;
+  const duration = !hasSettled ? 1.0 : anyHovered ? 0.15 : 0.8;
   const blurTransition = {
     filter: { duration, ease: "easeInOut" as const },
     scale:  { duration, ease: "easeInOut" as const },
