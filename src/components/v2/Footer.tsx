@@ -158,10 +158,10 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
           columnGap: "clamp(16px, 2vw, 32px)",
           marginBottom: SPACE_C,
         }}>
-          <BlurIn delay={0.06} style={{ gridColumn: "1" }}>
+          <BlurIn delay={0.06} style={{ gridColumn: "1 / 3" }}>
             <div style={valueStyle}>{location}</div>
           </BlurIn>
-          <BlurIn delay={0.12} style={{ gridColumn: "2" }}>
+          <BlurIn delay={0.12} style={{ gridColumn: "3 / 5" }}>
             {onContact ? (
               <button
                 type="button"
@@ -183,7 +183,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
               </a>
             )}
           </BlurIn>
-          <BlurIn delay={0.18} style={{ gridColumn: "3" }}>
+          <BlurIn delay={0.18} style={{ gridColumn: "5 / 7" }}>
             <a
               href={igUrl}
               target="_blank"
