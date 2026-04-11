@@ -16,6 +16,11 @@ export interface Project {
   // - Selected Works card uses the FIRST slot as the thumbnail loop.
   // - Project detail gallery renders ALL listed slots as videos.
   videoSlots?: number[];
+  // Optional override for the Selected Works card thumbnail.
+  // - undefined → default behavior (video iff videoSlots includes 1)
+  // - true       → force video thumbnail (requires videoSlots to include 1)
+  // - false      → force cover image thumbnail, even if slot 1 is a video
+  thumbVideo?: boolean;
   selected: boolean;
   award?: string;
 }
