@@ -85,19 +85,28 @@ function useExtractedColor(imgSrc: string) {
 
 // Header is rendered by page.tsx — no local header needed here
 
-// Convert image URL → video URL for auto-detection probe
+// Convert image URL → video URL (used when image 404s, falling back to video)
+// f_auto intentionally omitted from video prefix: the Cloudinary auto-format pipeline
+// occasionally fails on specific source encodings (e.g. puuvilla_society/001), returning
+// 404 even when the raw asset exists. q_auto alone is safe across all sources.
 const CLD_IMG_PREFIX  = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/";
-const CLD_VID_PREFIX  = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/";
+const CLD_VID_PREFIX  = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto/";
 const toVideoUrl = (src: string) =>
   src.startsWith(CLD_IMG_PREFIX)
     ? src.replace(CLD_IMG_PREFIX, CLD_VID_PREFIX)
     : src;
 
-// Gallery media — auto-detects video by probing video URL first, falls back to image on error
-function GalleryImage({ src, alt, index, onLightbox }: {
-  src: string; alt: string; index: number; onLightbox: () => void;
+// Gallery media — image first (common case), swaps to video only if image 404s.
+// This is the reverse of the old probe-video-first logic, which issued a video request
+// for every gallery item. Now real videos (image 404) cost 1 img + 1 video; everything
+// else is just 1 img. Parent receives aspect ratio via onRatio for flex-row layout.
+function GalleryImage({ src, alt, index, onLightbox, onRatio }: {
+  src: string; alt: string; index: number;
+  onLightbox: () => void;
+  onRatio?: (ratio: number) => void;
 }) {
-  const [isImg, setIsImg] = useState(false);
+  const [isVideo, setIsVideo] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [muted, setMuted] = useState(true);
   const [hovered, setHovered] = useState(false);
@@ -121,6 +130,8 @@ function GalleryImage({ src, alt, index, onLightbox }: {
     setMuted(next);
   };
 
+  const clickable = !isVideo && !failed;
+
   return (
     <motion.div
       ref={ref}
@@ -130,13 +141,26 @@ function GalleryImage({ src, alt, index, onLightbox }: {
       }
       initial={{ filter: "blur(12px)", opacity: 0, y: 24 }}
       transition={{ duration: 0.95, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
-      onClick={isImg ? onLightbox : undefined}
-      onMouseEnter={() => !isImg && setHovered(true)}
+      onClick={clickable ? onLightbox : undefined}
+      onMouseEnter={() => isVideo && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ cursor: isImg ? "zoom-in" : "default", position: "relative" }}
+      style={{ cursor: clickable ? "zoom-in" : "default", position: "relative" }}
     >
-      {isImg ? (
-        <RetryImg src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} placeholderStyle={{ aspectRatio: "16/9" }} />
+      {failed ? (
+        <div style={{ background: "rgba(120,120,120,0.12)", width: "100%", aspectRatio: "16/9" }} />
+      ) : !isVideo ? (
+        <img
+          src={src}
+          alt={alt}
+          onLoad={e => {
+            const img = e.currentTarget;
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              onRatio?.(img.naturalWidth / img.naturalHeight);
+            }
+          }}
+          onError={() => setIsVideo(true)}
+          style={{ width: "100%", height: "auto", display: "block" }}
+        />
       ) : (
         <>
           <video
@@ -146,8 +170,14 @@ function GalleryImage({ src, alt, index, onLightbox }: {
             loop
             playsInline
             src={videoSrc}
+            onLoadedMetadata={e => {
+              const v = e.currentTarget;
+              if (v.videoWidth > 0 && v.videoHeight > 0) {
+                onRatio?.(v.videoWidth / v.videoHeight);
+              }
+            }}
             onCanPlay={() => setVideoReady(true)}
-            onError={() => setIsImg(true)}
+            onError={() => setFailed(true)}
             style={{ width: "100%", height: "auto", display: "block" }}
           />
           {/* Speaker icon — only after video ready; hover on desktop, always on mobile */}
@@ -196,7 +226,9 @@ function GalleryImage({ src, alt, index, onLightbox }: {
   );
 }
 
-// Parallel row with dynamic aspect-ratio flex
+// Parallel row with dynamic aspect-ratio flex.
+// Ratios are reported by each GalleryImage via onRatio (from img.naturalWidth
+// or video.videoWidth once metadata loads), so no hidden probe image is needed.
 function ParallelRow({ row, ri, onLightbox }: {
   row: string[]; ri: number; onLightbox: (idx: number) => void;
 }) {
@@ -210,20 +242,12 @@ function ParallelRow({ row, ri, onLightbox }: {
             alt={`${ri}-${ci}`}
             index={ri + ci}
             onLightbox={() => onLightbox(ci)}
-          />
-          <img
-            src={src}
-            alt=""
-            aria-hidden
-            style={{ display: "none" }}
-            onLoad={e => {
-              const img = e.currentTarget;
-              setRatios(prev => {
-                const next = [...prev];
-                next[ci] = img.naturalWidth / img.naturalHeight;
-                return next;
-              });
-            }}
+            onRatio={r => setRatios(prev => {
+              if (prev[ci] === r) return prev;
+              const next = [...prev];
+              next[ci] = r;
+              return next;
+            })}
           />
         </div>
       ))}
