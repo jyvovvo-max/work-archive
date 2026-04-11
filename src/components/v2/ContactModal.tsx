@@ -12,9 +12,12 @@ interface Props {
   igUrl: string;
 }
 
+type SendStatus = "idle" | "sending" | "sent" | "error";
+
 export default function ContactModal({ open, onClose, email, igHandle, igUrl }: Props) {
   const [from, setFrom] = useState("");
   const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<SendStatus>("idle");
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -22,9 +25,34 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  const handleMailSend = () => {
-    const body = from ? `From: ${from}\n\n${message}` : message;
-    window.location.href = `mailto:${email}?body=${encodeURIComponent(body)}`;
+  // Reset transient status shortly after modal closes so it doesn't persist forever
+  useEffect(() => {
+    if (!open) {
+      const t = setTimeout(() => setStatus("idle"), 400);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  const handleSend = async () => {
+    if (!message.trim() || status === "sending") return;
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from, message }),
+      });
+      if (res.ok) {
+        setStatus("sent");
+        setFrom("");
+        setMessage("");
+      } else {
+        // API route returns JSON error — surface generic state to keep UI simple
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
   };
 
   const handleInstagram = () => {
@@ -141,14 +169,25 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
             />
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
               <button
-                onClick={handleMailSend}
-                style={{ ...btnBase, color: "#1A1A1A", background: "#F0EDE8" }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = "0.8")}
-                onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+                onClick={handleSend}
+                disabled={status === "sending" || !message.trim()}
+                style={{
+                  ...btnBase,
+                  color: "#1A1A1A",
+                  background: "#F0EDE8",
+                  opacity: status === "sending" || !message.trim() ? 0.45 : 1,
+                  cursor: status === "sending" || !message.trim() ? "default" : "pointer",
+                }}
+                onMouseEnter={e => {
+                  if (status !== "sending" && message.trim()) e.currentTarget.style.opacity = "0.8";
+                }}
+                onMouseLeave={e => {
+                  if (status !== "sending" && message.trim()) e.currentTarget.style.opacity = "1";
+                }}
               >
-                Send via Mail
+                {status === "sending" ? "Sending…" : "Send"}
               </button>
               <button
                 onClick={handleInstagram}
@@ -158,6 +197,23 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               >
                 DM {igHandle}
               </button>
+              {/* Inline status — keeps layout stable */}
+              {status === "sent" && (
+                <span style={{
+                  fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
+                  textTransform: "uppercase", color: "rgba(160,220,160,0.85)",
+                }}>
+                  메시지 전송됨
+                </span>
+              )}
+              {status === "error" && (
+                <span style={{
+                  fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
+                  textTransform: "uppercase", color: "rgba(230,140,140,0.85)",
+                }}>
+                  전송 실패. 다시 시도해 주세요
+                </span>
+              )}
             </div>
           </motion.div>
         </motion.div>

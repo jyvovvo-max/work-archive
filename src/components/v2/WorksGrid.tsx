@@ -22,12 +22,13 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   const [hovered, setHovered] = useState(false);
   const [isCentered, setIsCentered] = useState(false);
 
-  // Build video thumbnail URL (first 15s via Cloudinary transformation)
-  // videoSlots: sheet "Video" column. First slot is used as the card thumbnail loop.
+  // Build video thumbnail URL (first 15s via Cloudinary transformation).
+  // Card thumbnail only plays a video when slot 1 is flagged as video in the sheet
+  // `Video` column. Other video slots (e.g. "2" or "2,5") are gallery-only.
   const folder = project.img.split("/portfolio-images/")[1]?.replace("/cover", "");
-  const firstVideoSlot = project.videoSlots?.[0];
-  const videoSrc = firstVideoSlot && folder
-    ? `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto,so_0,eo_15/portfolio-images/${folder}/${String(firstVideoSlot).padStart(3, "0")}`
+  const hasSlot1Video = project.videoSlots?.includes(1) ?? false;
+  const videoSrc = hasSlot1Video && folder
+    ? `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto,so_0,eo_15/portfolio-images/${folder}/001`
     : null;
 
   // Loop at 15s mark
