@@ -308,6 +308,14 @@ function CollageImage({
   };
   const blurAnimate = { filter: `blur(${targetBlurPx}px)`, scale: targetScale };
 
+  // Label tracks the image's visual top-right corner as it scales.
+  // With centre-origin scale(S), the top-right corner offsets by ((S-1)*W/2, -(S-1)*H/2).
+  // We translate the label by the same vector (in vw units) via CSS and use a CSS
+  // transition on `transform` so it stays in sync with the framer-motion scale animation.
+  const posWvw = parseFloat(pos.w);
+  const labelShiftVw = (targetScale - 1) * 0.5 * posWvw;
+  const labelTransform = `translate(${labelShiftVw}vw, ${-labelShiftVw * IMG_RATIO}vw)`;
+
   return (
     // Outer: staggered clean fade-in — sits behind text (zIndex 2)
     <motion.div
@@ -352,7 +360,7 @@ function CollageImage({
           position: "relative",
         }}
       >
-        {/* ID label — top-right, outside image. tilt only (no blur) */}
+        {/* ID label — top-right, outside image. Tracks scaled image corner via CSS transform. */}
         <span
           style={{
             position: "absolute",
@@ -365,6 +373,9 @@ function CollageImage({
             color: "rgba(10,10,10,0.3)",
             pointerEvents: "none",
             lineHeight: 1,
+            transform: labelTransform,
+            transition: `transform ${duration}s ease-in-out`,
+            willChange: "transform",
           }}
         >
           {String(project.id).padStart(3, "0")}
