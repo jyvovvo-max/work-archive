@@ -162,7 +162,7 @@ function makeScatter(): ScatterPos[] {
 const SCATTER_MIN_SPAN = 2;
 const SCATTER_MAX_SPAN = 5;
 const BLUR_UNIFORM = 0.5;    // px — baseline blur for every image (very subtle softness)
-const TILT_BASE    = 9;      // max tilt degrees for the largest image
+const TILT_BASE    = 8;      // max tilt degrees for the largest image
 const HOVER_BLUR_MULT = 1.4; // when someone else is hovered, push non-hovered further back
 const HOVER_BLUR_CAP  = 4.5; // absolute max blur during push-back
 const SCALE_SETTLED = 0.95;  // baseline scale after initial settle
