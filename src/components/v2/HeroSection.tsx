@@ -61,7 +61,7 @@ function makeMobileScatter(containerW: number, containerH: number): MPos[] {
   return positions;
 }
 
-type ScatterPos = { left: string; top: string; w: string };
+type ScatterPos = { left: string; top: string; w: string; span: number };
 
 // Y-quantized grid: 16 columns × 6 discrete Y levels
 // Bounding box collision detection with estimated image heights (4:3 ratio)
@@ -138,6 +138,7 @@ function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
       left: `${c.startCol * COL_W}vw`,
       top: `${c.yVh}vh`,
       w: `${c.span * COL_W}vw`,
+      span: c.span,
     });
   }
 
@@ -152,11 +153,27 @@ function makeScatter(): ScatterPos[] {
   return runScatterAttempt(false);
 }
 
+// ── Depth system (desktop hero) ──
+// Images are sized by span (SCATTER_MIN_SPAN..SCATTER_MAX_SPAN columns).
+// Size encodes depth: small = far (more blur, less tilt), large = near (less blur, more tilt).
+// Hover pulls the target forward and pushes everything else back for a 3D-space feel.
+const SCATTER_MIN_SPAN = 2;
+const SCATTER_MAX_SPAN = 5;
+const BASE_BLUR_MIN = 1;     // px — large images (near plane, cleaner but still soft)
+const BASE_BLUR_MAX = 5;     // px — small images (far plane, most blurred)
+const TILT_BASE    = 7;      // max tilt degrees for the largest image (reduced from 12)
+const HOVER_BLUR_MULT = 1.3; // when someone else is hovered, push non-hovered further back
+const HOVER_BLUR_CAP  = 7;   // absolute max blur during push-back
+const SCALE_SETTLED = 0.95;  // baseline scale after initial settle (unchanged)
+const SCALE_HOVERED = 1.08;  // hovered image pulls forward
+const SCALE_PUSHED  = 0.88;  // other images recede when one is hovered
+
 // Sequence:
 //  1. Images fade in clean (staggered, 0.1s gap, 1.0s each)
-//  2. Once all images in (2.65s) → blur 3px + scale 0.95 simultaneously (1.0s)
-//  3. Title appears (4.0s delay, 1.5s)
-//  4. Desc appears (5.0s delay, 1.5s)
+//  2. Once all images in (2.65s) → depth-weighted blur + scale 0.95 (1.0s settle)
+//  3. After settle, hover interactions drive blur/scale changes in concert
+//  4. Title appears (4.0s delay, 1.5s)
+//  5. Desc appears (5.0s delay, 1.5s)
 // Images sit behind text (zIndex 2); text zIndex 5/20
 function CollageImage({
   project,
@@ -167,6 +184,9 @@ function CollageImage({
   scrollOpacity,
   scrollTranslateY,
   allImagesIn,
+  isHovered,
+  anyHovered,
+  onHoverChange,
   onOpen,
 }: {
   project: Project;
@@ -177,12 +197,20 @@ function CollageImage({
   scrollOpacity: MotionValue<number>;
   scrollTranslateY: MotionValue<number>;
   allImagesIn: boolean;
+  isHovered: boolean;
+  anyHovered: boolean;
+  onHoverChange: (hover: boolean) => void;
   onOpen: (p: Project) => void;
 }) {
-  const [hovered, setHovered] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
+  const [hasSettled, setHasSettled] = useState(false);
 
-  // Proximity tilt — 650px radius, quadratic weighting
+  // Depth from span: 0 = smallest (far), 1 = largest (near)
+  const depth = (pos.span - SCATTER_MIN_SPAN) / (SCATTER_MAX_SPAN - SCATTER_MIN_SPAN);
+  const baseBlurPx = BASE_BLUR_MAX - depth * (BASE_BLUR_MAX - BASE_BLUR_MIN);
+  const maxTilt    = TILT_BASE * (0.4 + 0.6 * depth);
+
+  // Proximity tilt — depth-weighted, 650px radius, quadratic weighting
   const localRotateX = useMotionValue(0);
   const localRotateY = useMotionValue(0);
   const springRotateX = useSpring(localRotateX, { stiffness: 50, damping: 20 });
@@ -191,7 +219,6 @@ function CollageImage({
   useEffect(() => {
     if (!allImagesIn) return;   // tilt only after images have appeared
     const maxDist = 650;
-    const maxTilt = 12;
 
     const update = () => {
       const rect = imgRef.current?.getBoundingClientRect();
@@ -210,15 +237,39 @@ function CollageImage({
     const unsubX = mousePxX.onChange(update);
     const unsubY = mousePxY.onChange(update);
     return () => { unsubX(); unsubY(); };
-  }, [allImagesIn, mousePxX, mousePxY, localRotateX, localRotateY]);
+  }, [allImagesIn, mousePxX, mousePxY, localRotateX, localRotateY, maxTilt]);
 
-  const blurred = allImagesIn && !hovered;
+  // After initial settle completes (~1.0s after allImagesIn), switch to snappier
+  // transitions so hover responses feel quick.
+  useEffect(() => {
+    if (!allImagesIn) return;
+    const t = setTimeout(() => setHasSettled(true), 1050);
+    return () => clearTimeout(t);
+  }, [allImagesIn]);
 
+  // Target blur/scale based on interaction state
+  let targetBlurPx: number;
+  let targetScale: number;
+  if (!allImagesIn) {
+    targetBlurPx = 0;
+    targetScale = 1;
+  } else if (isHovered) {
+    targetBlurPx = 0;
+    targetScale = SCALE_HOVERED;
+  } else if (anyHovered) {
+    targetBlurPx = Math.min(baseBlurPx * HOVER_BLUR_MULT, HOVER_BLUR_CAP);
+    targetScale = SCALE_PUSHED;
+  } else {
+    targetBlurPx = baseBlurPx;
+    targetScale = SCALE_SETTLED;
+  }
+
+  const duration = hasSettled ? 0.35 : 1.0;
   const blurTransition = {
-    filter: { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" as const },
-    scale:  { duration: blurred ? 1.0 : 0.1, ease: "easeInOut" as const },
+    filter: { duration, ease: "easeInOut" as const },
+    scale:  { duration, ease: "easeInOut" as const },
   };
-  const blurAnimate = { filter: blurred ? "blur(3px)" : "blur(0px)", scale: blurred ? 0.95 : 1 };
+  const blurAnimate = { filter: `blur(${targetBlurPx}px)`, scale: targetScale };
 
   return (
     // Outer: staggered clean fade-in — sits behind text (zIndex 2)
@@ -238,7 +289,8 @@ function CollageImage({
         width: pos.w,
         minWidth: "80px",
         maxWidth: "440px",
-        zIndex: 2,
+        // Hovered image floats above its neighbours so its scale-up isn't clipped
+        zIndex: isHovered ? 4 : 2,
         perspective: "600px",
         cursor: "pointer",
         y: scrollTranslateY,
@@ -247,8 +299,8 @@ function CollageImage({
       {/* Tilt + opacity wrapper — contains both ID and image */}
       <motion.div
         ref={imgRef}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={() => onHoverChange(true)}
+        onMouseLeave={() => onHoverChange(false)}
         style={{
           opacity: scrollOpacity,
           rotateX: springRotateX,
@@ -613,6 +665,8 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   // Phase control:
   // Image 10 done at 1.05 + 1.0 = 2.05s → 0.5s pause → blur starts at 2.65s
   const [allImagesIn, setAllImagesIn] = useState(false);
+  // Shared hover state — drives the "one forward, rest recede" interaction
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setAllImagesIn(true), 2650);
@@ -823,6 +877,9 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
           scrollOpacity={scrollOpacity}
           scrollTranslateY={scrollTranslateY}
           allImagesIn={allImagesIn}
+          isHovered={hoveredIdx === i}
+          anyHovered={hoveredIdx !== null}
+          onHoverChange={hover => setHoveredIdx(hover ? i : null)}
           onOpen={onOpen}
         />
       ))}
