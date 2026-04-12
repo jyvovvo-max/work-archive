@@ -6,6 +6,18 @@ import { FONT_MODAL_TITLE, FONT_MODAL_BODY, FONT_MODAL_BTN } from "./layout";
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const K85 = "#262626";
 
+// Full-width divider that bleeds to modal edges (cancels parent padding)
+const PAD_X = "clamp(28px, 5vw, 52px)";
+function Divider() {
+  return (
+    <div style={{
+      height: "1px", background: K85, position: "relative",
+      marginLeft: `calc(-1 * ${PAD_X})`,
+      marginRight: `calc(-1 * ${PAD_X})`,
+    }} />
+  );
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -85,20 +97,20 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
     }, 1000);
   };
 
-  const inputStyle: React.CSSProperties = {
+  const fieldText: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300, fontSize: FONT_MODAL_BODY,
     letterSpacing: "0.01em", lineHeight: 1.7,
     color: "#000000", background: "transparent",
-    border: `1px solid ${K85}`,
-    borderRadius: 0, padding: "12px 16px",
+    border: "none", borderRadius: 0,
+    padding: "0",
     outline: "none", width: "100%", boxSizing: "border-box",
-    transition: "border-color 0.18s",
   };
 
   const btnBase: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 400,
     fontSize: FONT_MODAL_BTN, letterSpacing: "0.04em",
     textTransform: "uppercase",
+    border: `1px solid ${K85}`,
     borderRadius: 0,
     padding: "12px 28px", cursor: "pointer",
     transition: "opacity 0.15s, background 0.18s",
@@ -130,7 +142,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={{
-              // Translucent white acrylic — background bleeds through
+              // Translucent white acrylic
               background: "linear-gradient(180deg, rgba(248,248,248,0.42) 0%, rgba(236,236,236,0.48) 100%)",
               backdropFilter: "blur(40px) saturate(160%)",
               WebkitBackdropFilter: "blur(40px) saturate(160%)",
@@ -138,7 +150,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.8), inset 0 -1px 0 0 rgba(255,255,255,0.2), inset 1px 0 0 0 rgba(255,255,255,0.4), inset -1px 0 0 0 rgba(255,255,255,0.4), 0 25px 60px rgba(0,0,0,0.12)",
               border: "none",
               borderRadius: 0,
-              padding: "clamp(32px, 5vh, 56px) clamp(28px, 5vw, 52px)",
+              padding: `clamp(32px, 5vh, 56px) ${PAD_X}`,
               width: "100%", maxWidth: "520px",
               display: "flex", flexDirection: "column", gap: "24px",
               position: "relative",
@@ -173,7 +185,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               onMouseLeave={e => (e.currentTarget.style.color = K85)}
             >✕</button>
 
-            {/* Title — centered, bold scale */}
+            {/* Title — centered */}
             <div style={{ textAlign: "center", position: "relative" }}>
               <span style={{
                 fontFamily: FONT, fontWeight: 300,
@@ -182,8 +194,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               }}>Contact</span>
             </div>
 
-            {/* Divider — K85 */}
-            <div style={{ height: "1px", background: K85, position: "relative" }} />
+            <Divider />
 
             {/* To */}
             <div style={{
@@ -194,16 +205,18 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               To: {email}
             </div>
 
+            <Divider />
+
             {/* From */}
             <input
               type="email"
               value={from}
               onChange={e => setFrom(e.target.value)}
               placeholder="Your email"
-              style={{ ...inputStyle, position: "relative" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "#000")}
-              onBlur={e => (e.currentTarget.style.borderColor = K85)}
+              style={{ ...fieldText, position: "relative" }}
             />
+
+            <Divider />
 
             {/* Message */}
             <textarea
@@ -211,10 +224,10 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               onChange={e => setMessage(e.target.value)}
               placeholder="메시지를 입력하세요"
               rows={6}
-              style={{ ...inputStyle, padding: "14px 16px", resize: "none", position: "relative" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "#000")}
-              onBlur={e => (e.currentTarget.style.borderColor = K85)}
+              style={{ ...fieldText, resize: "none", position: "relative" }}
             />
+
+            <Divider />
 
             {/* Actions */}
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", position: "relative" }}>
@@ -225,7 +238,6 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
                   ...btnBase,
                   color: "#F0EDE8",
                   background: "#0A0A0A",
-                  border: `1px solid ${K85}`,
                   opacity: status === "sending" || !message.trim() ? 0.35 : 1,
                   cursor: status === "sending" || !message.trim() ? "default" : "pointer",
                 }}
@@ -240,7 +252,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               </button>
               <button
                 onClick={handleInstagram}
-                style={{ ...btnBase, color: "#0A0A0A", background: "transparent", border: `1px solid ${K85}` }}
+                style={{ ...btnBase, color: "#0A0A0A", background: "transparent" }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = "#000")}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = K85)}
               >
