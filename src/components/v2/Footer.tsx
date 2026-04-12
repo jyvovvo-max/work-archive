@@ -87,14 +87,11 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
   };
 
   const headlineStyle: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 300,
-    fontSize: "clamp(12px, 1.28vw, 16px)",
-    letterSpacing: "0.01em", color: overrideColors?.textStrong ?? "#0A0A0A",
+    fontFamily: FONT, fontWeight: 400,
+    fontSize: "13px",
+    letterSpacing: "0.03em", color: overrideColors?.textStrong ?? "#0A0A0A",
     whiteSpace: "pre-line",
-    // Match info stack's per-line rhythm (13px × 2.0 = 26px/line) so
-    // each headline line shares a baseline with the corresponding info
-    // item on desktop.
-    lineHeight: "26px",
+    lineHeight: 2.0,
   };
 
   return (
