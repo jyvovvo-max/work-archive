@@ -230,7 +230,6 @@ function CollageImage({
   onOpen: (p: Project) => void;
 }) {
   const imgRef = useRef<HTMLDivElement>(null);
-  const idleRef = useRef<HTMLDivElement>(null);
   const [hasSettled, setHasSettled] = useState(false);
   const [proximityFactor, setProximityFactor] = useState(0);
   // Drift vector toward the hovered image's centre (0,0 when nobody is hovered or
@@ -282,32 +281,6 @@ function CollageImage({
     const t = setTimeout(() => setHasSettled(true), 1050);
     return () => clearTimeout(t);
   }, [allImagesIn]);
-
-  // ── Idle sine float — each image drifts with unique rhythm after settle ──
-  useEffect(() => {
-    if (!hasSettled) return;
-    const el = idleRef.current;
-    if (!el) return;
-    // Deterministic per-image params from idx
-    const seed = (n: number) => ((n * 9301 + 49297) % 233280) / 233280;
-    const freqX = 0.3 + seed(idx * 7 + 1) * 0.5;       // ~0.3-0.8 rad/s (8-20s period)
-    const freqY = 0.25 + seed(idx * 7 + 2) * 0.45;
-    const ampX  = 3 + seed(idx * 7 + 3) * 3;            // 3-6px
-    const ampY  = 3 + seed(idx * 7 + 4) * 3;
-    const phaseX = seed(idx * 7 + 5) * Math.PI * 2;
-    const phaseY = seed(idx * 7 + 6) * Math.PI * 2;
-    let raf: number;
-    const startTime = performance.now();
-    const loop = () => {
-      const t = (performance.now() - startTime) / 1000;
-      const x = Math.sin(t * freqX + phaseX) * ampX;
-      const y = Math.sin(t * freqY + phaseY) * ampY;
-      el.style.transform = `translate(${x}px, ${y}px)`;
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [hasSettled, idx]);
 
   // Convex-lens proximity + sustained drift:
   //  1. Compute proximity factor (for blur/scale bulge, based on LENS_RADIUS_PX).
@@ -468,8 +441,6 @@ function CollageImage({
         y: scrollTranslateY,
       }}
     >
-      {/* Idle float wrapper — sine-driven ambient drift after settle */}
-      <div ref={idleRef} style={{ willChange: "transform" }}>
       {/* Tilt + opacity wrapper — contains both ID and image */}
       <motion.div
         ref={imgRef}
@@ -536,7 +507,6 @@ function CollageImage({
           />
         </motion.div>
       </motion.div>
-      </div>
     </motion.div>
   );
 }
