@@ -409,12 +409,21 @@ function CollageImage({
   const effectiveX = isHovered ? compX : pull.x;
   const effectiveY = isHovered ? 0    : pull.y;
 
+  // Asymmetric easing:
+  // - Hover-in (anyHovered): snappy pull with standard ease
+  // - Hover-out (!anyHovered): fast initial return (~80%), then slow settle (~20%)
+  //   cubic-bezier [0.05, 0.85, 0.25, 1.0] = steep drop then plateau
   const duration = !hasSettled ? 1.0 : anyHovered ? 0.35 : 1.0;
+  const ease: [number, number, number, number] | string = !hasSettled
+    ? [0.16, 1, 0.3, 1]
+    : anyHovered
+      ? [0.16, 1, 0.3, 1]          // in: standard snappy
+      : [0.05, 0.85, 0.25, 1.0];   // out: 80% fast → 20% slow settle
   const blurTransition = {
-    filter: { duration, ease: "easeInOut" as const },
-    scale:  { duration, ease: "easeInOut" as const },
-    x:      { duration, ease: "easeInOut" as const },
-    y:      { duration, ease: "easeInOut" as const },
+    filter: { duration, ease },
+    scale:  { duration, ease },
+    x:      { duration, ease },
+    y:      { duration, ease },
   };
   const blurAnimate = {
     filter: `blur(${targetBlurPx}px)`,
