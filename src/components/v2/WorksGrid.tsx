@@ -23,11 +23,14 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   const [isCentered, setIsCentered] = useState(false);
 
   // Build video thumbnail URL (first 15s via Cloudinary transformation).
-  // Card thumbnail only plays a video when slot 1 is flagged as video in the sheet
-  // `Video` column. Other video slots (e.g. "2" or "2,5") are gallery-only.
+  // Default behavior: thumbnail plays a video iff slot 1 is flagged in the
+  // sheet `Video` column. The optional `thumb_video` column (TRUE/FALSE)
+  // overrides this — FALSE forces the cover image even when slot 1 is a
+  // video (so slot 1 video still plays inside the detail gallery only).
   const folder = project.img.split("/portfolio-images/")[1]?.replace("/cover", "");
-  const hasSlot1Video = project.videoSlots?.includes(1) ?? false;
-  const videoSrc = hasSlot1Video && folder
+  const slot1IsVideo = project.videoSlots?.includes(1) ?? false;
+  const useVideoThumb = project.thumbVideo ?? slot1IsVideo;
+  const videoSrc = useVideoThumb && slot1IsVideo && folder
     ? `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto,so_0,eo_15/portfolio-images/${folder}/001`
     : null;
 

@@ -76,7 +76,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
   };
   const linkButtonStyle: React.CSSProperties = {
     ...linkStyle,
-    background: "transparent", border: "none", padding: 0, textAlign: "left", font: "inherit",
+    background: "transparent", border: "none", padding: 0, textAlign: "left",
   };
   // Mail button: if onContact provided → open the contact modal, else fall back to mailto.
   const handleMailClick = (e: React.MouseEvent) => {
@@ -86,82 +86,89 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
     }
   };
 
+  const headlineStyle: React.CSSProperties = {
+    fontFamily: FONT, fontWeight: 300,
+    fontSize: "clamp(12px, 1.28vw, 16px)",
+    letterSpacing: "0.01em", color: overrideColors?.textStrong ?? "#0A0A0A",
+    whiteSpace: "pre-line",
+    // Match info stack's per-line rhythm (13px × 2.0 = 26px/line) so
+    // each headline line shares a baseline with the corresponding info
+    // item on desktop.
+    lineHeight: "26px",
+  };
+
   return (
     <footer style={{
       background: overrideColors?.bg ?? "#F0F0F0",
       borderTop: "none",
       padding: `${isMobile ? "clamp(16px, 2vh, 28px)" : SPACE_C} ${GUTTER} ${isMobile ? "clamp(10px, 1.2vh, 16px)" : "clamp(5px, 0.6vh, 8px)"}`,
     }}>
-      {/* Headline */}
-      <BlurIn>
-        <div style={{ marginBottom: "clamp(8px, 1.1vh, 14px)" }}>
-          <span style={{
-            fontFamily: FONT, fontWeight: 300,
-            fontSize: "clamp(12px, 1.28vw, 16px)",
-            letterSpacing: "0.01em", color: overrideColors?.textStrong ?? "#0A0A0A",
-            whiteSpace: "pre-line",
-          }}>
-            {headline}
-          </span>
-        </div>
-      </BlurIn>
-
-      {/* Info */}
       {isMobile ? (
-        <BlurIn delay={0.06} style={{ marginBottom: SPACE_D }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(8, 1fr)",
-            columnGap: GRID_GAP,
-          }}>
-            <div style={{ gridColumn: "1 / 4", display: "flex", flexDirection: "column" }}>
-              <div style={valueStyle}>{location}</div>
-              {onContact ? (
-                <button
-                  type="button"
-                  onClick={handleMailClick}
-                  style={linkButtonStyle}
-                  onMouseEnter={e => (e.currentTarget.style.color = textHover)}
-                  onMouseLeave={e => (e.currentTarget.style.color = textColor)}
-                >
-                  {emailHandle}
-                </button>
-              ) : (
+        <>
+          {/* Mobile: headline on top, info stack below */}
+          <BlurIn>
+            <div style={{ marginBottom: "clamp(8px, 1.1vh, 14px)" }}>
+              <span style={headlineStyle}>{headline}</span>
+            </div>
+          </BlurIn>
+          <BlurIn delay={0.06} style={{ marginBottom: SPACE_D }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(8, 1fr)",
+              columnGap: GRID_GAP,
+            }}>
+              <div style={{ gridColumn: "1 / 4", display: "flex", flexDirection: "column" }}>
+                <div style={valueStyle}>{location}</div>
+                {onContact ? (
+                  <button
+                    type="button"
+                    onClick={handleMailClick}
+                    style={linkButtonStyle}
+                    onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                    onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+                  >
+                    {emailHandle}
+                  </button>
+                ) : (
+                  <a
+                    href={`mailto:${email}`}
+                    style={linkStyle}
+                    onMouseEnter={e => (e.currentTarget.style.color = textHover)}
+                    onMouseLeave={e => (e.currentTarget.style.color = textColor)}
+                  >
+                    {emailHandle}
+                  </a>
+                )}
                 <a
-                  href={`mailto:${email}`}
+                  href={igUrl}
+                  target="_blank"
+                  rel="noreferrer"
                   style={linkStyle}
                   onMouseEnter={e => (e.currentTarget.style.color = textHover)}
                   onMouseLeave={e => (e.currentTarget.style.color = textColor)}
                 >
-                  {emailHandle}
+                  {igHandle}
                 </a>
-              )}
-              <a
-                href={igUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={linkStyle}
-                onMouseEnter={e => (e.currentTarget.style.color = textHover)}
-                onMouseLeave={e => (e.currentTarget.style.color = textColor)}
-              >
-                {igHandle}
-              </a>
-              {/* Clock — below instagram on mobile */}
-              <div style={valueStyle}>KST, {time}</div>
+                {/* Clock — below instagram on mobile */}
+                <div style={valueStyle}>KST, {time}</div>
+              </div>
             </div>
-          </div>
-        </BlurIn>
+          </BlurIn>
+        </>
       ) : (
+        /* Desktop: headline (col 1-2) + info stack (col 3-4) + clock (col 7) in one row */
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
           columnGap: "clamp(16px, 2vw, 32px)",
           marginBottom: SPACE_C,
+          alignItems: "baseline",
         }}>
-          <BlurIn delay={0.06} style={{ gridColumn: "1" }}>
-            <div style={valueStyle}>{location}</div>
+          <BlurIn style={{ gridColumn: "1 / 3" }}>
+            <span style={headlineStyle}>{headline}</span>
           </BlurIn>
-          <BlurIn delay={0.12} style={{ gridColumn: "2" }}>
+          <BlurIn delay={0.06} style={{ gridColumn: "3 / 5", display: "flex", flexDirection: "column" }}>
+            <div style={valueStyle}>{location}</div>
             {onContact ? (
               <button
                 type="button"
@@ -182,8 +189,6 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
                 {emailHandle}
               </a>
             )}
-          </BlurIn>
-          <BlurIn delay={0.18} style={{ gridColumn: "3" }}>
             <a
               href={igUrl}
               target="_blank"
@@ -195,8 +200,8 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
               {igHandle}
             </a>
           </BlurIn>
-          {/* Clock — rightmost column on desktop, right-aligned */}
-          <BlurIn delay={0.24} style={{ gridColumn: "7", display: "flex", justifyContent: "flex-end" }}>
+          {/* Clock — rightmost column, right-aligned */}
+          <BlurIn delay={0.12} style={{ gridColumn: "7", display: "flex", justifyContent: "flex-end" }}>
             <div style={valueStyle}>KST, {time}</div>
           </BlurIn>
         </div>

@@ -89,6 +89,12 @@ function rowToProject(row: Record<string, string>): Project | null {
           .map(s => parseInt(s.trim(), 10))
           .filter(n => Number.isInteger(n) && n > 0)
       : undefined,
+    thumbVideo: (() => {
+      const v = row.thumb_video?.trim().toUpperCase();
+      if (v === "TRUE") return true;
+      if (v === "FALSE") return false;
+      return undefined;
+    })(),
     selected: row.selected?.toUpperCase() === "TRUE",
     award: row.Award?.trim() || undefined,
   };
