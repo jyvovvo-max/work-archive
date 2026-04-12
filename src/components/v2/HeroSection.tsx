@@ -174,7 +174,7 @@ const HOVER_SCALE_MIN = 1.05;
 // Proximity pull — images near the hovered one scale UP slightly (come forward on Z),
 // producing a local depth field around the focus. Far images stay at baseline.
 const LENS_RADIUS_PX = 550;  // how far the pull field extends
-const PROXIMITY_PULL_SCALE = 0.05; // max scale boost for the nearest neighbour
+const PROXIMITY_PULL_SCALE = 0.10; // max scale boost for the nearest neighbour
 // Gather: near non-hovered images also drift slightly toward the focal point, weighted
 // by their proximity factor (near = most drift, far = no drift). This is the initial snap.
 const GATHER_MAX_PX = 40;
@@ -475,7 +475,7 @@ function CollageImage({
             pointerEvents: "none",
             lineHeight: 1,
             transform: labelTransform,
-            transition: `transform ${duration}s ease-in-out`,
+            transition: `transform ${duration * 0.6}s ease-in-out`,
             willChange: "transform",
           }}
         >
