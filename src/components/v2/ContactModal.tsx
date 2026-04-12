@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -18,6 +18,25 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   const [from, setFrom] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<SendStatus>("idle");
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Tilt
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(mouseY, [0, 1], [4, -4]), { stiffness: 260, damping: 24 });
+  const rotateY = useSpring(useTransform(mouseX, [0, 1], [-4, 4]), { stiffness: 260, damping: 24 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
+  }, [mouseX, mouseY]);
+
+  const handleMouseLeave = useCallback(() => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -25,7 +44,6 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  // Reset transient status shortly after modal closes so it doesn't persist forever
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => setStatus("idle"), 400);
@@ -47,7 +65,6 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
         setFrom("");
         setMessage("");
       } else {
-        // API route returns JSON error — surface generic state to keep UI simple
         setStatus("error");
       }
     } catch {
@@ -56,7 +73,6 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   };
 
   const handleInstagram = () => {
-    // Try deep link first (opens DM in app on mobile), fall back to profile URL
     const username = igHandle.replace("@", "");
     const deepLink = `instagram://user?username=${username}`;
     const webUrl = igUrl || `https://instagram.com/${username}`;
@@ -70,9 +86,9 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   const inputStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300, fontSize: "13px",
     letterSpacing: "0.02em", lineHeight: 1.7,
-    color: "#F0EDE8", background: "rgba(240,237,232,0.04)",
-    border: "1px solid rgba(240,237,232,0.1)",
-    borderRadius: "2px", padding: "10px 16px",
+    color: "#F0EDE8", background: "rgba(240,237,232,0.03)",
+    border: "1px solid rgba(240,237,232,0.08)",
+    borderRadius: 0, padding: "10px 16px",
     outline: "none", width: "100%", boxSizing: "border-box",
     transition: "border-color 0.18s",
   };
@@ -81,9 +97,9 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
     fontFamily: FONT, fontWeight: 300,
     fontSize: "11px", letterSpacing: "0.1em",
     textTransform: "uppercase",
-    border: "none", borderRadius: "100px",
+    border: "none", borderRadius: 0,
     padding: "10px 24px", cursor: "pointer",
-    transition: "opacity 0.15s",
+    transition: "opacity 0.15s, background 0.18s",
   };
 
   return (
@@ -93,55 +109,81 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.25 }}
           onClick={onClose}
           style={{
             position: "fixed", inset: 0, zIndex: 900,
-            background: "rgba(10,10,10,0.72)",
-            backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+            background: "rgba(10,10,10,0.55)",
+            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: "20px",
           }}
         >
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            ref={cardRef}
+            initial={{ opacity: 0, y: 32, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.98 }}
+            transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
             onClick={e => e.stopPropagation()}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             style={{
-              background: "#1A1A1A",
-              border: "1px solid rgba(240,237,232,0.1)",
-              borderRadius: "4px",
+              // Acrylic glass — matches header
+              background: "rgba(6,6,6,0.58)",
+              backdropFilter: "blur(36px) saturate(180%)",
+              WebkitBackdropFilter: "blur(36px) saturate(180%)",
+              // Header-style border
+              border: "1px solid rgba(240,237,232,0.10)",
+              // Sharp corners
+              borderRadius: 0,
               padding: "clamp(28px, 4vh, 48px) clamp(24px, 4vw, 44px)",
               width: "100%", maxWidth: "480px",
               display: "flex", flexDirection: "column", gap: "20px",
+              position: "relative",
+              // Tilt
+              rotateX,
+              rotateY,
+              transformPerspective: 800,
             }}
           >
-            {/* Header */}
+            {/* Subtle inner highlight line — top edge */}
+            <div style={{
+              position: "absolute", top: 0, left: 0, right: 0, height: "1px",
+              background: "linear-gradient(90deg, transparent 0%, rgba(240,237,232,0.12) 30%, rgba(240,237,232,0.12) 70%, transparent 100%)",
+              pointerEvents: "none",
+            }} />
+
+            {/* Header row */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{
                 fontFamily: FONT, fontWeight: 300,
                 fontSize: "11px", letterSpacing: "0.12em",
-                textTransform: "uppercase", color: "rgba(240,237,232,0.4)",
+                textTransform: "uppercase", color: "rgba(240,237,232,0.35)",
               }}>Contact</span>
               <button
                 onClick={onClose}
                 style={{
                   background: "none", border: "none", cursor: "pointer",
                   fontFamily: FONT, fontWeight: 200, fontSize: "18px",
-                  color: "rgba(240,237,232,0.3)", lineHeight: 1,
+                  color: "rgba(240,237,232,0.25)", lineHeight: 1,
                   transition: "color 0.15s", padding: 0,
                 }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#F0EDE8")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.3)")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,237,232,0.25)")}
               >✕</button>
             </div>
+
+            {/* Divider */}
+            <div style={{
+              height: "1px",
+              background: "rgba(240,237,232,0.08)",
+            }} />
 
             {/* To */}
             <div style={{
               fontFamily: FONT, fontWeight: 300, fontSize: "13px",
-              color: "rgba(240,237,232,0.3)", letterSpacing: "0.02em",
+              color: "rgba(240,237,232,0.25)", letterSpacing: "0.02em",
             }}>
               To: {email}
             </div>
@@ -153,8 +195,8 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               onChange={e => setFrom(e.target.value)}
               placeholder="Your email"
               style={inputStyle}
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.3)")}
-              onBlur={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.1)")}
+              onFocus={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.25)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.08)")}
             />
 
             {/* Message */}
@@ -164,8 +206,8 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               placeholder="메시지를 입력하세요"
               rows={6}
               style={{ ...inputStyle, padding: "14px 16px", resize: "none" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.3)")}
-              onBlur={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.1)")}
+              onFocus={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.25)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.08)")}
             />
 
             {/* Actions */}
@@ -175,9 +217,9 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
                 disabled={status === "sending" || !message.trim()}
                 style={{
                   ...btnBase,
-                  color: "#1A1A1A",
+                  color: "#0A0A0A",
                   background: "#F0EDE8",
-                  opacity: status === "sending" || !message.trim() ? 0.45 : 1,
+                  opacity: status === "sending" || !message.trim() ? 0.35 : 1,
                   cursor: status === "sending" || !message.trim() ? "default" : "pointer",
                 }}
                 onMouseEnter={e => {
@@ -191,13 +233,12 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               </button>
               <button
                 onClick={handleInstagram}
-                style={{ ...btnBase, color: "#F0EDE8", background: "transparent", border: "1px solid rgba(240,237,232,0.2)" }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.6)")}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.2)")}
+                style={{ ...btnBase, color: "#F0EDE8", background: "transparent", border: "1px solid rgba(240,237,232,0.12)" }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.5)")}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(240,237,232,0.12)")}
               >
                 DM {igHandle}
               </button>
-              {/* Inline status — keeps layout stable */}
               {status === "sent" && (
                 <span style={{
                   fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
@@ -215,6 +256,13 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
                 </span>
               )}
             </div>
+
+            {/* Bottom line */}
+            <div style={{
+              position: "absolute", bottom: 0, left: 0, right: 0, height: "1px",
+              background: "linear-gradient(90deg, transparent 0%, rgba(240,237,232,0.06) 30%, rgba(240,237,232,0.06) 70%, transparent 100%)",
+              pointerEvents: "none",
+            }} />
           </motion.div>
         </motion.div>
       )}
