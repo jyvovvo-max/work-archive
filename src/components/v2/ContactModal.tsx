@@ -130,8 +130,8 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={{
-              // Frosted white acrylic — opaque with grain
-              background: "linear-gradient(180deg, rgba(248,248,248,0.88) 0%, rgba(232,232,232,0.92) 100%)",
+              // Translucent white acrylic — background bleeds through
+              background: "linear-gradient(180deg, rgba(248,248,248,0.42) 0%, rgba(236,236,236,0.48) 100%)",
               backdropFilter: "blur(40px) saturate(160%)",
               WebkitBackdropFilter: "blur(40px) saturate(160%)",
               // Glassmorphism edge highlights
