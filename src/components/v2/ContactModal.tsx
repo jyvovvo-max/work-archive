@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
+// K85% — 인쇄 기준 85% 블랙
+const K85 = "#262626";
 
 interface Props {
   open: boolean;
@@ -86,8 +88,8 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   const inputStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 400, fontSize: "15px",
     letterSpacing: "0.01em", lineHeight: 1.7,
-    color: "#000000", background: "rgba(0,0,0,0.03)",
-    border: "1px solid rgba(0,0,0,0.12)",
+    color: "#000000", background: "transparent",
+    border: `1px solid ${K85}`,
     borderRadius: 0, padding: "10px 16px",
     outline: "none", width: "100%", boxSizing: "border-box",
     transition: "border-color 0.18s",
@@ -97,7 +99,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
     fontFamily: FONT, fontWeight: 600,
     fontSize: "13px", letterSpacing: "0.08em",
     textTransform: "uppercase",
-    border: "none", borderRadius: 0,
+    borderRadius: 0,
     padding: "10px 24px", cursor: "pointer",
     transition: "opacity 0.15s, background 0.18s",
   };
@@ -113,8 +115,8 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
           onClick={onClose}
           style={{
             position: "fixed", inset: 0, zIndex: 900,
-            background: "rgba(10,10,10,0.55)",
-            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            background: "rgba(10,10,10,0.4)",
+            backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: "20px",
           }}
@@ -129,33 +131,37 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={{
-              // White acrylic glass
-              background: "rgba(240,240,240,0.48)",
-              backdropFilter: "blur(36px) saturate(180%)",
-              WebkitBackdropFilter: "blur(36px) saturate(180%)",
-              // Header-style border
-              border: "1px solid rgba(0,0,0,0.12)",
-              // Sharp corners
+              // Frosted white acrylic — translucent, grainy
+              background: "rgba(240,240,240,0.52)",
+              backdropFilter: "blur(40px) saturate(160%)",
+              WebkitBackdropFilter: "blur(40px) saturate(160%)",
+              // Edge highlight — glassmorphism
+              boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.7), inset 0 -1px 0 0 rgba(255,255,255,0.15), inset 1px 0 0 0 rgba(255,255,255,0.3), inset -1px 0 0 0 rgba(255,255,255,0.3), 0 25px 60px rgba(0,0,0,0.15)",
+              border: "none",
               borderRadius: 0,
               padding: "clamp(28px, 4vh, 48px) clamp(24px, 4vw, 44px)",
               width: "100%", maxWidth: "480px",
               display: "flex", flexDirection: "column", gap: "20px",
               position: "relative",
+              overflow: "hidden",
               // Tilt
               rotateX,
               rotateY,
               transformPerspective: 800,
             }}
           >
-            {/* Subtle inner highlight line — top edge */}
+            {/* Grain texture overlay */}
             <div style={{
-              position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-              background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 30%, rgba(255,255,255,0.6) 70%, transparent 100%)",
+              position: "absolute", inset: 0,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+              backgroundSize: "128px 128px",
+              opacity: 0.12,
+              mixBlendMode: "multiply",
               pointerEvents: "none",
             }} />
 
             {/* Header row */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative" }}>
               <span style={{
                 fontFamily: FONT, fontWeight: 600,
                 fontSize: "14px", letterSpacing: "0.10em",
@@ -166,24 +172,22 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
                 style={{
                   background: "none", border: "none", cursor: "pointer",
                   fontFamily: FONT, fontWeight: 300, fontSize: "20px",
-                  color: "rgba(0,0,0,0.35)", lineHeight: 1,
+                  color: K85, lineHeight: 1,
                   transition: "color 0.15s", padding: 0,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#0A0A0A")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(10,10,10,0.25)")}
+                onMouseEnter={e => (e.currentTarget.style.color = "#000")}
+                onMouseLeave={e => (e.currentTarget.style.color = K85)}
               >✕</button>
             </div>
 
-            {/* Divider */}
-            <div style={{
-              height: "1px",
-              background: "rgba(0,0,0,0.08)",
-            }} />
+            {/* Divider — K85 */}
+            <div style={{ height: "1px", background: K85, position: "relative" }} />
 
             {/* To */}
             <div style={{
               fontFamily: FONT, fontWeight: 400, fontSize: "15px",
               color: "rgba(0,0,0,0.5)", letterSpacing: "0.02em",
+              position: "relative",
             }}>
               To: {email}
             </div>
@@ -194,9 +198,9 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               value={from}
               onChange={e => setFrom(e.target.value)}
               placeholder="Your email"
-              style={inputStyle}
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.25)")}
-              onBlur={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.10)")}
+              style={{ ...inputStyle, position: "relative" }}
+              onFocus={e => (e.currentTarget.style.borderColor = "#000")}
+              onBlur={e => (e.currentTarget.style.borderColor = K85)}
             />
 
             {/* Message */}
@@ -205,13 +209,13 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               onChange={e => setMessage(e.target.value)}
               placeholder="메시지를 입력하세요"
               rows={6}
-              style={{ ...inputStyle, padding: "14px 16px", resize: "none" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.25)")}
-              onBlur={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.10)")}
+              style={{ ...inputStyle, padding: "14px 16px", resize: "none", position: "relative" }}
+              onFocus={e => (e.currentTarget.style.borderColor = "#000")}
+              onBlur={e => (e.currentTarget.style.borderColor = K85)}
             />
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", position: "relative" }}>
               <button
                 onClick={handleSend}
                 disabled={status === "sending" || !message.trim()}
@@ -219,6 +223,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
                   ...btnBase,
                   color: "#F0EDE8",
                   background: "#0A0A0A",
+                  border: `1px solid ${K85}`,
                   opacity: status === "sending" || !message.trim() ? 0.35 : 1,
                   cursor: status === "sending" || !message.trim() ? "default" : "pointer",
                 }}
@@ -233,16 +238,16 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               </button>
               <button
                 onClick={handleInstagram}
-                style={{ ...btnBase, color: "#0A0A0A", background: "transparent", border: "1px solid rgba(0,0,0,0.15)" }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.5)")}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)")}
+                style={{ ...btnBase, color: "#0A0A0A", background: "transparent", border: `1px solid ${K85}` }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = "#000")}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = K85)}
               >
                 DM {igHandle}
               </button>
               {status === "sent" && (
                 <span style={{
                   fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
-                  textTransform: "uppercase", color: "rgba(160,220,160,0.85)",
+                  textTransform: "uppercase", color: "#1a6b1a",
                 }}>
                   메시지 전송됨
                 </span>
@@ -250,19 +255,12 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               {status === "error" && (
                 <span style={{
                   fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
-                  textTransform: "uppercase", color: "rgba(230,140,140,0.85)",
+                  textTransform: "uppercase", color: "#8b1a1a",
                 }}>
                   전송 실패. 다시 시도해 주세요
                 </span>
               )}
             </div>
-
-            {/* Bottom line */}
-            <div style={{
-              position: "absolute", bottom: 0, left: 0, right: 0, height: "1px",
-              background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.4) 70%, transparent 100%)",
-              pointerEvents: "none",
-            }} />
           </motion.div>
         </motion.div>
       )}
