@@ -158,15 +158,12 @@ function makeScatter(): ScatterPos[] {
 // Size encodes depth for TILT only (large = near plane tilts more, small = far tilts less).
 // Blur is uniform across all images at BLUR_UNIFORM — depth weighting on blur was too
 // mushy on the far plane. Hover pulls the target forward to a fixed target size while
-// everything else recedes and gathers around the focus.
+// nearby images also pull forward slightly (scale up), creating a depth-coherent field.
 const SCATTER_MIN_SPAN = 2;
 const SCATTER_MAX_SPAN = 5;
 const BLUR_UNIFORM = 1;      // px — baseline blur for every image
 const TILT_BASE    = 8;      // max tilt degrees for the largest image
-const HOVER_BLUR_MULT = 1.4; // when someone else is hovered, push non-hovered further back
-const HOVER_BLUR_CAP  = 4.5; // absolute max blur during push-back
 const SCALE_SETTLED = 0.95;  // baseline scale after initial settle
-const SCALE_PUSHED  = 0.78;  // other images recede when one is hovered
 // Hover target: any hovered image scales up to this visual width (vw). Small images grow
 // more (larger scale factor), large images grow less — but all end up the same "front plane"
 // width, guaranteed to exceed the largest baseline image. Depth-equalized focus zoom.
@@ -174,11 +171,10 @@ const HOVER_TARGET_VW = 25;
 // Minimum multiplier so every image — even the one already close to target — still has
 // a perceptible "come forward" gesture on hover.
 const HOVER_SCALE_MIN = 1.05;
-// Convex-lens field — images near the hovered one recede LESS than images far from it,
-// producing a local bulge around the focus.
-const LENS_RADIUS_PX = 550;  // how far the bulge extends
-const LENS_SCALE_BUMP = 0.10; // near neighbours get this much of their push reversed
-const LENS_BLUR_RELIEF = 0.3; // near neighbours blur less aggressively
+// Proximity pull — images near the hovered one scale UP slightly (come forward on Z),
+// producing a local depth field around the focus. Far images stay at baseline.
+const LENS_RADIUS_PX = 550;  // how far the pull field extends
+const PROXIMITY_PULL_SCALE = 0.05; // max scale boost for the nearest neighbour
 // Gather: near non-hovered images also drift slightly toward the focal point, weighted
 // by their proximity factor (near = most drift, far = no drift). This is the initial snap.
 const GATHER_MAX_PX = 40;
@@ -234,6 +230,7 @@ function CollageImage({
   onOpen: (p: Project) => void;
 }) {
   const imgRef = useRef<HTMLDivElement>(null);
+  const idleRef = useRef<HTMLDivElement>(null);
   const [hasSettled, setHasSettled] = useState(false);
   const [proximityFactor, setProximityFactor] = useState(0);
   // Drift vector toward the hovered image's centre (0,0 when nobody is hovered or
@@ -285,6 +282,35 @@ function CollageImage({
     const t = setTimeout(() => setHasSettled(true), 1050);
     return () => clearTimeout(t);
   }, [allImagesIn]);
+
+  // ── Idle sine float — each image drifts with unique rhythm after settle ──
+  useEffect(() => {
+    if (!hasSettled) return;
+    const el = idleRef.current;
+    if (!el) return;
+    // Deterministic per-image params from idx
+    const seed = (n: number) => ((n * 9301 + 49297) % 233280) / 233280;
+    const freqX = 0.3 + seed(idx * 7 + 1) * 0.5;       // ~0.3-0.8 rad/s (8-20s period)
+    const freqY = 0.25 + seed(idx * 7 + 2) * 0.45;
+    const ampX  = 3 + seed(idx * 7 + 3) * 3;            // 3-6px
+    const ampY  = 3 + seed(idx * 7 + 4) * 3;
+    const phaseX = seed(idx * 7 + 5) * Math.PI * 2;
+    const phaseY = seed(idx * 7 + 6) * Math.PI * 2;
+    const freqS = 0.2 + seed(idx * 7 + 7) * 0.3;       // scale breathing freq
+    const phaseS = seed(idx * 7) * Math.PI * 2;
+    let raf: number;
+    const startTime = performance.now();
+    const loop = () => {
+      const t = (performance.now() - startTime) / 1000;
+      const x = Math.sin(t * freqX + phaseX) * ampX;
+      const y = Math.sin(t * freqY + phaseY) * ampY;
+      const s = 1 + Math.sin(t * freqS + phaseS) * 0.01; // 0.99-1.01 breathing
+      el.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [hasSettled, idx]);
 
   // Convex-lens proximity + sustained drift:
   //  1. Compute proximity factor (for blur/scale bulge, based on LENS_RADIUS_PX).
@@ -348,11 +374,11 @@ function CollageImage({
     targetBlurPx = 0;
     targetScale = hoverScale;
   } else if (anyHovered) {
-    // Lens bulge: near neighbours resist the push-back, far ones receive the full push.
-    const lensBump  = proximityFactor * LENS_SCALE_BUMP;        // 0 (far) → 0.10 (near)
-    const blurEase  = 1 - proximityFactor * LENS_BLUR_RELIEF;   // 1 (far) → 0.70 (near)
-    targetBlurPx = Math.min(baseBlurPx * HOVER_BLUR_MULT * blurEase, HOVER_BLUR_CAP);
-    targetScale  = SCALE_PUSHED + lensBump;
+    // Proximity pull: nearby images come forward (scale up) instead of receding.
+    // Far images stay at baseline, near ones grow slightly — Z-axis depth pull.
+    const pullForward = proximityFactor * PROXIMITY_PULL_SCALE;
+    targetBlurPx = baseBlurPx;
+    targetScale  = SCALE_SETTLED + pullForward;
   } else {
     targetBlurPx = baseBlurPx;
     targetScale = SCALE_SETTLED;
@@ -384,7 +410,7 @@ function CollageImage({
   const effectiveX = isHovered ? compX : pull.x;
   const effectiveY = isHovered ? 0    : pull.y;
 
-  const duration = !hasSettled ? 1.0 : anyHovered ? 0.25 : 0.7;
+  const duration = !hasSettled ? 1.0 : anyHovered ? 0.5 : 0.7;
   const blurTransition = {
     filter: { duration, ease: "easeInOut" as const },
     scale:  { duration, ease: "easeInOut" as const },
@@ -434,6 +460,8 @@ function CollageImage({
         y: scrollTranslateY,
       }}
     >
+      {/* Idle float wrapper — sine-driven ambient drift after settle */}
+      <div ref={idleRef} style={{ willChange: "transform" }}>
       {/* Tilt + opacity wrapper — contains both ID and image */}
       <motion.div
         ref={imgRef}
@@ -500,6 +528,7 @@ function CollageImage({
           />
         </motion.div>
       </motion.div>
+      </div>
     </motion.div>
   );
 }
