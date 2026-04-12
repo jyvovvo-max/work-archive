@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { FONT_MODAL_TITLE, FONT_MODAL_BODY, FONT_MODAL_BTN } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
+const FONT_CONTENT = "'Noto Sans KR', sans-serif";
 const K85 = "#262626";
 const PAD_X = "clamp(28px, 5vw, 52px)";
 
@@ -129,7 +130,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   };
 
   const fieldText: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 300, fontSize: FONT_MODAL_BODY,
+    fontFamily: FONT_CONTENT, fontWeight: 300, fontSize: FONT_MODAL_BODY,
     letterSpacing: "0.01em", lineHeight: 1.7,
     color: "#000000", background: "transparent",
     border: "none", borderRadius: 0, padding: 0,
@@ -238,7 +239,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               style={{ paddingTop: "18px", paddingBottom: "18px" }}
             >
               <div style={{
-                fontFamily: FONT, fontWeight: 300, fontSize: FONT_MODAL_BODY,
+                fontFamily: FONT_CONTENT, fontWeight: 300, fontSize: FONT_MODAL_BODY,
                 color: "rgba(0,0,0,0.45)", letterSpacing: "0.02em",
               }}>
                 To: {email}
