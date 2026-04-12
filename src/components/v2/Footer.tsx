@@ -69,7 +69,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
     fontSize: "13px",
     letterSpacing: "0.03em",
     color: textColor,
-    lineHeight: 2.0,
+    lineHeight: "26px",
   };
   const linkStyle: React.CSSProperties = {
     ...valueStyle, cursor: "pointer", textDecoration: "none", transition: "color 0.18s",
@@ -91,7 +91,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
     fontSize: "13px",
     letterSpacing: "0.03em", color: overrideColors?.textStrong ?? "#0A0A0A",
     whiteSpace: "pre-line",
-    lineHeight: 2.0,
+    lineHeight: "26px",
   };
 
   return (
@@ -159,7 +159,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
           gridTemplateColumns: "repeat(7, 1fr)",
           columnGap: "clamp(16px, 2vw, 32px)",
           marginBottom: SPACE_C,
-          alignItems: "baseline",
+          alignItems: "start",
         }}>
           <BlurIn style={{ gridColumn: "1 / 3" }}>
             <span style={headlineStyle}>{headline}</span>
