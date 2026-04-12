@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { FONT_MODAL_TITLE, FONT_BODY } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
-// K85% — 인쇄 기준 85% 블랙
 const K85 = "#262626";
 
 interface Props {
@@ -86,21 +86,21 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   };
 
   const inputStyle: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 400, fontSize: "15px",
+    fontFamily: FONT, fontWeight: 300, fontSize: FONT_BODY,
     letterSpacing: "0.01em", lineHeight: 1.7,
     color: "#000000", background: "transparent",
     border: `1px solid ${K85}`,
-    borderRadius: 0, padding: "10px 16px",
+    borderRadius: 0, padding: "12px 16px",
     outline: "none", width: "100%", boxSizing: "border-box",
     transition: "border-color 0.18s",
   };
 
   const btnBase: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 600,
-    fontSize: "13px", letterSpacing: "0.08em",
+    fontFamily: FONT, fontWeight: 400,
+    fontSize: FONT_BODY, letterSpacing: "0.04em",
     textTransform: "uppercase",
     borderRadius: 0,
-    padding: "10px 24px", cursor: "pointer",
+    padding: "12px 28px", cursor: "pointer",
     transition: "opacity 0.15s, background 0.18s",
   };
 
@@ -115,8 +115,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
           onClick={onClose}
           style={{
             position: "fixed", inset: 0, zIndex: 900,
-            background: "rgba(10,10,10,0.4)",
-            backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+            background: "rgba(0,0,0,0.18)",
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: "20px",
           }}
@@ -131,17 +130,17 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={{
-              // Frosted white acrylic — translucent, grainy
-              background: "rgba(240,240,240,0.52)",
+              // Frosted white acrylic — opaque with grain
+              background: "linear-gradient(180deg, rgba(248,248,248,0.88) 0%, rgba(232,232,232,0.92) 100%)",
               backdropFilter: "blur(40px) saturate(160%)",
               WebkitBackdropFilter: "blur(40px) saturate(160%)",
-              // Edge highlight — glassmorphism
-              boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.7), inset 0 -1px 0 0 rgba(255,255,255,0.15), inset 1px 0 0 0 rgba(255,255,255,0.3), inset -1px 0 0 0 rgba(255,255,255,0.3), 0 25px 60px rgba(0,0,0,0.15)",
+              // Glassmorphism edge highlights
+              boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.8), inset 0 -1px 0 0 rgba(255,255,255,0.2), inset 1px 0 0 0 rgba(255,255,255,0.4), inset -1px 0 0 0 rgba(255,255,255,0.4), 0 25px 60px rgba(0,0,0,0.12)",
               border: "none",
               borderRadius: 0,
-              padding: "clamp(28px, 4vh, 48px) clamp(24px, 4vw, 44px)",
-              width: "100%", maxWidth: "480px",
-              display: "flex", flexDirection: "column", gap: "20px",
+              padding: "clamp(32px, 5vh, 56px) clamp(28px, 5vw, 52px)",
+              width: "100%", maxWidth: "520px",
+              display: "flex", flexDirection: "column", gap: "24px",
               position: "relative",
               overflow: "hidden",
               // Tilt
@@ -150,34 +149,37 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               transformPerspective: 800,
             }}
           >
-            {/* Grain texture overlay */}
+            {/* Heavy grain texture overlay */}
             <div style={{
               position: "absolute", inset: 0,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-              backgroundSize: "128px 128px",
-              opacity: 0.12,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+              backgroundSize: "200px 200px",
+              opacity: 0.22,
               mixBlendMode: "multiply",
               pointerEvents: "none",
             }} />
 
-            {/* Header row */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative" }}>
+            {/* Close — top right */}
+            <button
+              onClick={onClose}
+              style={{
+                position: "absolute", top: "clamp(16px, 2vh, 28px)", right: "clamp(20px, 3vw, 36px)",
+                background: "none", border: "none", cursor: "pointer",
+                fontFamily: FONT, fontWeight: 300, fontSize: "20px",
+                color: K85, lineHeight: 1, zIndex: 1,
+                transition: "color 0.15s", padding: 0,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#000")}
+              onMouseLeave={e => (e.currentTarget.style.color = K85)}
+            >✕</button>
+
+            {/* Title — centered, bold scale */}
+            <div style={{ textAlign: "center", position: "relative" }}>
               <span style={{
-                fontFamily: FONT, fontWeight: 600,
-                fontSize: "14px", letterSpacing: "0.10em",
+                fontFamily: FONT, fontWeight: 300,
+                fontSize: FONT_MODAL_TITLE, letterSpacing: "0.08em",
                 textTransform: "uppercase", color: "#000000",
               }}>Contact</span>
-              <button
-                onClick={onClose}
-                style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  fontFamily: FONT, fontWeight: 300, fontSize: "20px",
-                  color: K85, lineHeight: 1,
-                  transition: "color 0.15s", padding: 0,
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#000")}
-                onMouseLeave={e => (e.currentTarget.style.color = K85)}
-              >✕</button>
             </div>
 
             {/* Divider — K85 */}
@@ -185,8 +187,8 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
 
             {/* To */}
             <div style={{
-              fontFamily: FONT, fontWeight: 400, fontSize: "15px",
-              color: "rgba(0,0,0,0.5)", letterSpacing: "0.02em",
+              fontFamily: FONT, fontWeight: 300, fontSize: FONT_BODY,
+              color: "rgba(0,0,0,0.45)", letterSpacing: "0.02em",
               position: "relative",
             }}>
               To: {email}

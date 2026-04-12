@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP, SPACE_C, SPACE_D } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_C, SPACE_D, FONT_FOOTER, FONT_FOOTER_BOTTOM } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -66,10 +66,10 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
   const textHover = overrideColors?.textHover ?? "#0A0A0A";
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300,
-    fontSize: "13px",
+    fontSize: FONT_FOOTER,
     letterSpacing: "0.03em",
     color: textColor,
-    lineHeight: "26px",
+    lineHeight: 2.0,
   };
   const linkStyle: React.CSSProperties = {
     ...valueStyle, cursor: "pointer", textDecoration: "none", transition: "color 0.18s",
@@ -88,10 +88,10 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
 
   const headlineStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 400,
-    fontSize: "13px",
+    fontSize: FONT_FOOTER,
     letterSpacing: "0.03em", color: overrideColors?.textStrong ?? "#0A0A0A",
     whiteSpace: "pre-line",
-    lineHeight: "26px",
+    lineHeight: 2.0,
   };
 
   return (
@@ -211,7 +211,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
       }}>
         <span style={{
           fontFamily: FONT, fontWeight: 300,
-          fontSize: "12px",
+          fontSize: FONT_FOOTER_BOTTOM,
           letterSpacing: "0.04em", color: overrideColors?.textFaint ?? "rgba(0,0,0,0.45)",
         }}>
           {name}
