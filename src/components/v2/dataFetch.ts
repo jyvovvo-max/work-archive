@@ -1,7 +1,9 @@
 import { Project, SiteData } from "./types";
 
-export const CLD       = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
-export const CLD_VIDEO = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/portfolio-images/";
+// Cache-bust: daily rotation so replaced images appear within 24h
+const CLD_VER = `v${Math.floor(Date.now() / 86400000)}`;
+export const CLD       = `https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/${CLD_VER}/portfolio-images/`;
+export const CLD_VIDEO = `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/${CLD_VER}/portfolio-images/`;
 
 // Always returns image URLs — video detection is automatic client-side via URL probe
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
