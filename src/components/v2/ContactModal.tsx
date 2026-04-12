@@ -214,11 +214,11 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               onMouseLeave={e => (e.currentTarget.style.color = K85)}
             >✕</button>
 
-            {/* Block 1 — Title (most opaque, fine grain) */}
+            {/* Block 1 — Title (brightest, fine grain, warm) */}
             <AcrylicBlock
-              tint="rgba(255,255,255,0.12)"
-              grain={0.9}
-              grainOpacity={0.24}
+              tint="rgba(255,255,255,0.22)"
+              grain={0.95}
+              grainOpacity={0.28}
               style={{ paddingTop: "clamp(32px, 5vh, 56px)", paddingBottom: "24px" }}
             >
               <div style={{ textAlign: "center" }}>
@@ -230,11 +230,11 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               </div>
             </AcrylicBlock>
 
-            {/* Block 2 — To (subtle tint, medium grain) */}
+            {/* Block 2 — To (cool tint, medium grain) */}
             <AcrylicBlock
-              tint="rgba(255,255,255,0.04)"
+              tint="rgba(230,232,238,0.12)"
               grain={0.7}
-              grainOpacity={0.16}
+              grainOpacity={0.18}
               style={{ paddingTop: "18px", paddingBottom: "18px" }}
             >
               <div style={{
@@ -245,11 +245,11 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               </div>
             </AcrylicBlock>
 
-            {/* Block 3 — From (slightly warmer, coarser grain) */}
+            {/* Block 3 — From (warm neutral, coarser grain) */}
             <AcrylicBlock
-              tint="rgba(255,255,255,0.08)"
+              tint="rgba(245,240,232,0.16)"
               grain={0.8}
-              grainOpacity={0.20}
+              grainOpacity={0.24}
               style={{ paddingTop: "18px", paddingBottom: "18px" }}
             >
               <input
@@ -261,11 +261,11 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               />
             </AcrylicBlock>
 
-            {/* Block 4 — Message (deepest block, densest grain) */}
+            {/* Block 4 — Message (deepest, grey tint, densest grain) */}
             <AcrylicBlock
-              tint="rgba(255,255,255,0.02)"
-              grain={0.6}
-              grainOpacity={0.26}
+              tint="rgba(210,212,218,0.14)"
+              grain={0.55}
+              grainOpacity={0.30}
               style={{ paddingTop: "18px", paddingBottom: "18px" }}
             >
               <textarea
@@ -277,57 +277,68 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               />
             </AcrylicBlock>
 
-            {/* Block 5 — Actions (clean, lightest grain) */}
+            {/* Block 5 — Actions (clean, bright, lightest grain) */}
             <AcrylicBlock
-              tint="rgba(255,255,255,0.10)"
-              grain={0.85}
-              grainOpacity={0.15}
+              tint="rgba(248,248,250,0.18)"
+              grain={0.9}
+              grainOpacity={0.16}
               style={{ paddingTop: "20px", paddingBottom: "clamp(32px, 5vh, 56px)" }}
             >
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                <button
-                  onClick={handleSend}
-                  disabled={status === "sending" || !message.trim()}
-                  style={{
-                    ...btnBase,
-                    color: "#F0EDE8",
-                    background: "#0A0A0A",
-                    opacity: status === "sending" || !message.trim() ? 0.35 : 1,
-                    cursor: status === "sending" || !message.trim() ? "default" : "pointer",
-                  }}
-                  onMouseEnter={e => {
-                    if (status !== "sending" && message.trim()) e.currentTarget.style.opacity = "0.8";
-                  }}
-                  onMouseLeave={e => {
-                    if (status !== "sending" && message.trim()) e.currentTarget.style.opacity = "1";
-                  }}
-                >
-                  {status === "sending" ? "Sending…" : "Send"}
-                </button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                  <button
+                    onClick={handleSend}
+                    disabled={status === "sending" || !message.trim()}
+                    style={{
+                      ...btnBase,
+                      color: "#0A0A0A",
+                      background: "transparent",
+                      border: `1px solid ${K85}`,
+                      opacity: status === "sending" || !message.trim() ? 0.35 : 1,
+                      cursor: status === "sending" || !message.trim() ? "default" : "pointer",
+                    }}
+                    onMouseEnter={e => {
+                      if (status !== "sending" && message.trim()) e.currentTarget.style.opacity = "0.7";
+                    }}
+                    onMouseLeave={e => {
+                      if (status !== "sending" && message.trim()) e.currentTarget.style.opacity = "1";
+                    }}
+                  >
+                    {status === "sending" ? "Sending…" : "Send"}
+                  </button>
+                  {status === "sent" && (
+                    <span style={{
+                      fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
+                      textTransform: "uppercase", color: "#1a6b1a",
+                    }}>
+                      메시지 전송됨
+                    </span>
+                  )}
+                  {status === "error" && (
+                    <span style={{
+                      fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
+                      textTransform: "uppercase", color: "#8b1a1a",
+                    }}>
+                      전송 실패
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={handleInstagram}
-                  style={{ ...btnBase, color: "#0A0A0A", background: "transparent" }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = "#000")}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = K85)}
+                  style={{
+                    fontFamily: FONT, fontWeight: 300,
+                    fontSize: FONT_MODAL_BTN, letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: K85, background: "none",
+                    border: "none", borderRadius: 0,
+                    padding: 0, cursor: "pointer",
+                    transition: "color 0.15s",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "#000")}
+                  onMouseLeave={e => (e.currentTarget.style.color = K85)}
                 >
-                  DM {igHandle}
+                  Instagram
                 </button>
-                {status === "sent" && (
-                  <span style={{
-                    fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
-                    textTransform: "uppercase", color: "#1a6b1a",
-                  }}>
-                    메시지 전송됨
-                  </span>
-                )}
-                {status === "error" && (
-                  <span style={{
-                    fontFamily: FONT, fontSize: "11px", letterSpacing: "0.08em",
-                    textTransform: "uppercase", color: "#8b1a1a",
-                  }}>
-                    전송 실패. 다시 시도해 주세요
-                  </span>
-                )}
               </div>
             </AcrylicBlock>
           </motion.div>
