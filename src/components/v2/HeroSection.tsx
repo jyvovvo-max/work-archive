@@ -296,16 +296,13 @@ function CollageImage({
     const ampY  = 3 + seed(idx * 7 + 4) * 3;
     const phaseX = seed(idx * 7 + 5) * Math.PI * 2;
     const phaseY = seed(idx * 7 + 6) * Math.PI * 2;
-    const freqS = 0.2 + seed(idx * 7 + 7) * 0.3;       // scale breathing freq
-    const phaseS = seed(idx * 7) * Math.PI * 2;
     let raf: number;
     const startTime = performance.now();
     const loop = () => {
       const t = (performance.now() - startTime) / 1000;
       const x = Math.sin(t * freqX + phaseX) * ampX;
       const y = Math.sin(t * freqY + phaseY) * ampY;
-      const s = 1 + Math.sin(t * freqS + phaseS) * 0.01; // 0.99-1.01 breathing
-      el.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+      el.style.transform = `translate(${x}px, ${y}px)`;
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -375,8 +372,10 @@ function CollageImage({
     targetScale = hoverScale;
   } else if (anyHovered) {
     // Proximity pull: nearby images come forward (scale up) instead of receding.
-    // Far images stay at baseline, near ones grow slightly — Z-axis depth pull.
-    const pullForward = proximityFactor * PROXIMITY_PULL_SCALE;
+    // Smaller images (low depth) get a bigger boost — they "travel further" on Z,
+    // reinforcing the sense that the hovered image is pulling its neighbourhood forward.
+    const depthWeight = 1.4 - depth * 0.8;  // small(far)=1.4×, large(near)=0.6×
+    const pullForward = proximityFactor * PROXIMITY_PULL_SCALE * depthWeight;
     targetBlurPx = baseBlurPx;
     targetScale  = SCALE_SETTLED + pullForward;
   } else {
@@ -410,7 +409,7 @@ function CollageImage({
   const effectiveX = isHovered ? compX : pull.x;
   const effectiveY = isHovered ? 0    : pull.y;
 
-  const duration = !hasSettled ? 1.0 : anyHovered ? 0.5 : 0.7;
+  const duration = !hasSettled ? 1.0 : anyHovered ? 0.35 : 1.0;
   const blurTransition = {
     filter: { duration, ease: "easeInOut" as const },
     scale:  { duration, ease: "easeInOut" as const },
