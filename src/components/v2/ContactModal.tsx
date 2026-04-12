@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { FONT_MODAL_TITLE, FONT_BODY } from "./layout";
+import { FONT_MODAL_TITLE, FONT_MODAL_BODY, FONT_MODAL_BTN } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const K85 = "#262626";
@@ -86,7 +86,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   };
 
   const inputStyle: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 300, fontSize: FONT_BODY,
+    fontFamily: FONT, fontWeight: 300, fontSize: FONT_MODAL_BODY,
     letterSpacing: "0.01em", lineHeight: 1.7,
     color: "#000000", background: "transparent",
     border: `1px solid ${K85}`,
@@ -97,7 +97,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
 
   const btnBase: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 400,
-    fontSize: FONT_BODY, letterSpacing: "0.04em",
+    fontSize: FONT_MODAL_BTN, letterSpacing: "0.04em",
     textTransform: "uppercase",
     borderRadius: 0,
     padding: "12px 28px", cursor: "pointer",
@@ -187,7 +187,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
 
             {/* To */}
             <div style={{
-              fontFamily: FONT, fontWeight: 300, fontSize: FONT_BODY,
+              fontFamily: FONT, fontWeight: 300, fontSize: FONT_MODAL_BODY,
               color: "rgba(0,0,0,0.45)", letterSpacing: "0.02em",
               position: "relative",
             }}>
