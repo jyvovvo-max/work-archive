@@ -84,18 +84,18 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
   };
 
   const inputStyle: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 400, fontSize: "13px",
-    letterSpacing: "0.02em", lineHeight: 1.7,
-    color: "#0A0A0A", background: "rgba(0,0,0,0.03)",
-    border: "1px solid rgba(0,0,0,0.10)",
+    fontFamily: FONT, fontWeight: 400, fontSize: "15px",
+    letterSpacing: "0.01em", lineHeight: 1.7,
+    color: "#000000", background: "rgba(0,0,0,0.03)",
+    border: "1px solid rgba(0,0,0,0.12)",
     borderRadius: 0, padding: "10px 16px",
     outline: "none", width: "100%", boxSizing: "border-box",
     transition: "border-color 0.18s",
   };
 
   const btnBase: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 500,
-    fontSize: "11px", letterSpacing: "0.1em",
+    fontFamily: FONT, fontWeight: 600,
+    fontSize: "13px", letterSpacing: "0.08em",
     textTransform: "uppercase",
     border: "none", borderRadius: 0,
     padding: "10px 24px", cursor: "pointer",
@@ -157,16 +157,16 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
             {/* Header row */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{
-                fontFamily: FONT, fontWeight: 500,
-                fontSize: "11px", letterSpacing: "0.12em",
-                textTransform: "uppercase", color: "rgba(10,10,10,0.45)",
+                fontFamily: FONT, fontWeight: 600,
+                fontSize: "14px", letterSpacing: "0.10em",
+                textTransform: "uppercase", color: "#000000",
               }}>Contact</span>
               <button
                 onClick={onClose}
                 style={{
                   background: "none", border: "none", cursor: "pointer",
-                  fontFamily: FONT, fontWeight: 300, fontSize: "18px",
-                  color: "rgba(10,10,10,0.25)", lineHeight: 1,
+                  fontFamily: FONT, fontWeight: 300, fontSize: "20px",
+                  color: "rgba(0,0,0,0.35)", lineHeight: 1,
                   transition: "color 0.15s", padding: 0,
                 }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#0A0A0A")}
@@ -182,8 +182,8 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
 
             {/* To */}
             <div style={{
-              fontFamily: FONT, fontWeight: 400, fontSize: "13px",
-              color: "rgba(10,10,10,0.35)", letterSpacing: "0.02em",
+              fontFamily: FONT, fontWeight: 400, fontSize: "15px",
+              color: "rgba(0,0,0,0.5)", letterSpacing: "0.02em",
             }}>
               To: {email}
             </div>
