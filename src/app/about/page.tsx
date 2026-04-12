@@ -16,7 +16,6 @@ export default function AboutPage() {
   const [siteData, setSiteData] = useState<SiteData>(FALLBACK_SITE);
   const [lang, setLang] = useState<Lang>("ko");
   const [contactOpen, setContactOpen] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -28,31 +27,15 @@ export default function AboutPage() {
     ]).then(() => setReady(true));
   }, []);
 
-  const handleBack = async () => {
-    setIsExiting(true);
-    await new Promise(r => setTimeout(r, 350));
-    router.back();
-  };
-
   const openProject = (p: Project) => router.push(`/project/${p.id}`);
 
   return (
     <div style={{ background: "#F0F0F0", color: "#0A0A0A", minHeight: "100vh" }}>
-      {isExiting && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.35 }}
-          style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#F0F0F0" }}
-        />
-      )}
-
       <Header
         onHome={() => router.push("/")}
         onViewAll={() => router.push("/work")}
         onAbout={() => {}}
         onContact={() => setContactOpen(true)}
-        onBack={handleBack}
         zIndex={500}
         alwaysVisible
         siteData={siteData}
