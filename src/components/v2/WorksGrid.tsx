@@ -30,8 +30,10 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
   const folder = project.img.split("/portfolio-images/")[1]?.replace("/cover", "");
   const slot1IsVideo = project.videoSlots?.includes(1) ?? false;
   const useVideoThumb = project.thumbVideo ?? slot1IsVideo;
+  // CLD_VIDEO 에 이미 CLD_VER 이 포함되어 있으므로 캐시 우회됨.
+  // so_0,eo_15 는 비디오 프리뷰용 (0~15초 구간).
   const videoSrc = useVideoThumb && slot1IsVideo && folder
-    ? `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto,so_0,eo_15/portfolio-images/${folder}/001`
+    ? CLD_VIDEO.replace("q_auto,f_auto", "q_auto,f_auto,so_0,eo_15") + `${folder}/001`
     : null;
 
   // Loop at 15s mark

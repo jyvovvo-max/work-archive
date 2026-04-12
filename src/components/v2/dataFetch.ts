@@ -1,7 +1,7 @@
 import { Project, SiteData } from "./types";
 
 // Cache-bust: daily rotation so replaced images appear within 24h
-const CLD_VER = `v${Math.floor(Date.now() / 86400000)}`;
+export const CLD_VER = `v${Math.floor(Date.now() / 86400000)}`;
 export const CLD       = `https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/${CLD_VER}/portfolio-images/`;
 export const CLD_VIDEO = `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/${CLD_VER}/portfolio-images/`;
 

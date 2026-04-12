@@ -294,12 +294,21 @@ async function updateGoogleSheets(results) {
     const existingIdx = rows.findIndex((r, i) => i > 0 && r[col("folder")] === result.folder);
 
     const videoSlotsStr = (result.videoSlots || []).join(",");
+    // thumb_video: 비디오가 있으면 빈값(=TRUE, 비디오가 썸네일). 없으면 건드리지 않음.
+    // 슬롯 1이 비디오가 아니면 비디오 썸네일 의미가 없으므로 빈값 유지.
+    const hasVideo = videoSlotsStr.length > 0;
 
     if (existingIdx > 0) {
       const updates = [];
       if (col("id") >= 0 && result.id !== undefined) updates.push({ c: col("id"), v: result.id });
       if (col("imageCount") >= 0) updates.push({ c: col("imageCount"), v: result.imageCount });
-      if (col("videos") >= 0) updates.push({ c: col("videos"), v: videoSlotsStr });
+      if (col("Video") >= 0) updates.push({ c: col("Video"), v: videoSlotsStr });
+      // thumb_video: 비디오가 있으면 기본 TRUE(빈값), 없으면 기존값 유지
+      if (col("thumb_video") >= 0 && hasVideo) {
+        const currentVal = rows[existingIdx][col("thumb_video")];
+        // 기존에 FALSE 로 명시된 경우 존중, 그 외(비어있거나 TRUE)는 유지
+        if (!currentVal && currentVal !== 'FALSE') updates.push({ c: col("thumb_video"), v: "" });
+      }
 
       for (const { c, v } of updates) {
         const cell = `시트1!${String.fromCharCode(65 + c)}${existingIdx + 1}`;
@@ -315,7 +324,8 @@ async function updateGoogleSheets(results) {
       const maxCol = Math.max(
         col("id"), col("title"), col("year"), col("month"),
         col("folder"), col("imageCount"), col("category"),
-        col("description"), col("coworkers")
+        col("description"), col("coworkers"), col("Video"),
+        col("thumb_video"), col("selected"), col("Award")
       );
       const newRow = new Array(maxCol + 1).fill("");
       if (col("id")          >= 0) newRow[col("id")]          = result.id;
@@ -327,7 +337,8 @@ async function updateGoogleSheets(results) {
       if (col("category")    >= 0) newRow[col("category")]    = "";
       if (col("description") >= 0) newRow[col("description")] = "";
       if (col("coworkers")   >= 0) newRow[col("coworkers")]   = "";
-      if (col("videos")      >= 0) newRow[col("videos")]      = videoSlotsStr;
+      if (col("Video")        >= 0) newRow[col("Video")]        = videoSlotsStr;
+      if (col("thumb_video")  >= 0) newRow[col("thumb_video")]  = "";  // 빈값 = TRUE (비디오가 썸네일). FALSE 원하면 시트에서 수동 변경
 
       await sheets.spreadsheets.values.append({
         spreadsheetId, range: "시트1!A:Z",
