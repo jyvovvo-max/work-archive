@@ -220,7 +220,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               tint="rgba(255,255,255,0.22)"
               grain={0.95}
               grainOpacity={0.28}
-              style={{ paddingTop: "clamp(32px, 5vh, 56px)", paddingBottom: "24px" }}
+              style={{ paddingTop: "clamp(20px, 3vh, 32px)", paddingBottom: "clamp(20px, 3vh, 32px)" }}
             >
               <div style={{ textAlign: "center" }}>
                 <span style={{
@@ -283,7 +283,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
               tint="rgba(248,248,250,0.18)"
               grain={0.9}
               grainOpacity={0.16}
-              style={{ paddingTop: "20px", paddingBottom: "clamp(32px, 5vh, 56px)" }}
+              style={{ paddingTop: "20px", paddingBottom: "clamp(20px, 3vh, 32px)" }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
