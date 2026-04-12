@@ -91,6 +91,10 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
     fontSize: "clamp(12px, 1.28vw, 16px)",
     letterSpacing: "0.01em", color: overrideColors?.textStrong ?? "#0A0A0A",
     whiteSpace: "pre-line",
+    // Match info stack's per-line rhythm (13px × 2.0 = 26px/line) so
+    // each headline line shares a baseline with the corresponding info
+    // item on desktop.
+    lineHeight: "26px",
   };
 
   return (
@@ -158,7 +162,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
           gridTemplateColumns: "repeat(7, 1fr)",
           columnGap: "clamp(16px, 2vw, 32px)",
           marginBottom: SPACE_C,
-          alignItems: "start",
+          alignItems: "baseline",
         }}>
           <BlurIn style={{ gridColumn: "1 / 3" }}>
             <span style={headlineStyle}>{headline}</span>
