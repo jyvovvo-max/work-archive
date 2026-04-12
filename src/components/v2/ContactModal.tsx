@@ -142,7 +142,7 @@ export default function ContactModal({ open, onClose, email, igHandle, igUrl }: 
     fontSize: FONT_MODAL_BTN, letterSpacing: "0.04em",
     textTransform: "uppercase",
     border: `1px solid ${K85}`,
-    borderRadius: 0,
+    borderRadius: "100px",
     padding: "12px 28px", cursor: "pointer",
     transition: "opacity 0.15s, background 0.18s",
   };
