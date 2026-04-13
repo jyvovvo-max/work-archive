@@ -659,8 +659,16 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
   scrollTranslateY: MotionValue<number>;
   onOpen: (p: Project) => void;
 }) {
-  const items = projects.slice(0, ORBIT_COUNT);
   const [tick, setTick] = useState(0);
+  // Rotate through all projects — each tick cycle shows a different set of 6
+  const totalProjects = projects.length;
+  const startIdx = totalProjects > ORBIT_COUNT
+    ? (Math.floor(tick / ORBIT_COUNT) * ORBIT_COUNT) % totalProjects
+    : 0;
+  const items: typeof projects = [];
+  for (let i = 0; i < ORBIT_COUNT; i++) {
+    items.push(projects[(startIdx + i) % totalProjects]);
+  }
   const [orbiting, setOrbiting] = useState(false);
   const [settled, setSettled] = useState(false); // after initial settle (blur+shrink)
 
