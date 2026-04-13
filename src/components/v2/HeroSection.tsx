@@ -753,15 +753,13 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
 
   return (
     <motion.div
-      animate={{ y: pullOffset }}
-      transition={pullOffset > 0
-        ? { duration: 0 } // instant follow while dragging
-        : { type: "spring", stiffness: 300, damping: 25 } // springy snap back
-      }
       style={{
         position: "absolute", inset: 0,
         zIndex: 2,
         y: scrollTranslateY,
+        // Pull-down follows finger, springs back on release
+        paddingTop: pullOffset,
+        transition: pullOffset > 0 ? "none" : "padding-top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
       }}
     >
       {items.map((project, i) => {
