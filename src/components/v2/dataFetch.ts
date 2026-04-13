@@ -1,15 +1,20 @@
 import { Project, SiteData } from "./types";
 
-export const CLD       = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
-export const CLD_VIDEO = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/portfolio-images/";
+// Cache-bust: daily rotation so replaced images appear within 24h
+export const CLD_VER = `v${Math.floor(Date.now() / 86400000)}`;
+export const CLD       = `https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/${CLD_VER}/portfolio-images/`;
+export const CLD_VIDEO = `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto,f_auto/${CLD_VER}/portfolio-images/`;
 
-// Always returns image URLs — video detection is automatic client-side via URL probe
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const cldImgs = (folder: string, count: number, _videoSlots?: number[]) =>
-  Array.from({ length: count }, (_, i) => {
+// Returns image URLs. GIF slots use f_gif to preserve animation.
+export const cldImgs = (folder: string, count: number, gifSlots?: number[]) => {
+  const gifSet = new Set(gifSlots ?? []);
+  const CLD_GIF = CLD.replace("f_auto,q_auto", "f_gif,q_auto");
+  return Array.from({ length: count }, (_, i) => {
     const num = String(i + 1).padStart(3, "0");
-    return `${CLD}${folder}/${num}`;
+    const base = gifSet.has(i + 1) ? CLD_GIF : CLD;
+    return `${base}${folder}/${num}`;
   });
+};
 
 // Sheet 1: projects
 const SHEETS_CSV =
@@ -80,7 +85,9 @@ function rowToProject(row: Record<string, string>): Project | null {
       ? row.coworkers.split(",").map(s => s.trim()).filter(Boolean)
       : [],
     img: `${CLD}${row.folder}/cover`,
-    images: imageCount > 0 ? cldImgs(row.folder, imageCount) : undefined,
+    images: imageCount > 0 ? cldImgs(row.folder, imageCount, row.Gif
+      ? row.Gif.split(",").map((s: string) => parseInt(s.trim(), 10)).filter((n: number) => n > 0)
+      : undefined) : undefined,
     pairs: row.pairs || undefined,
     videoUrl: row.videoUrl || undefined,
     videoSlots: row.Video
@@ -95,6 +102,12 @@ function rowToProject(row: Record<string, string>): Project | null {
       if (v === "FALSE") return false;
       return undefined;
     })(),
+    gifSlots: row.Gif
+      ? row.Gif
+          .split(",")
+          .map((s: string) => parseInt(s.trim(), 10))
+          .filter((n: number) => Number.isInteger(n) && n > 0)
+      : undefined,
     selected: row.selected?.toUpperCase() === "TRUE",
     award: row.Award?.trim() || undefined,
   };

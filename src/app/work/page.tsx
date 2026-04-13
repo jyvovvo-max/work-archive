@@ -240,7 +240,6 @@ export default function WorkPage() {
         onViewAll={() => {}}
         onAbout={handleAbout}
         onContact={() => setContactOpen(true)}
-        onBack={handleBack}
         zIndex={500}
         alwaysVisible
         siteData={siteData}

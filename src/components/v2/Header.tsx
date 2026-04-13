@@ -11,7 +11,7 @@ interface HeaderProps {
   onViewAll: () => void;
   onAbout: () => void;
   onContact: () => void;
-  onBack?: () => void;
+  dark?: boolean;
   zIndex?: number;
   alwaysVisible?: boolean;
   siteData?: SiteData | null;
@@ -19,7 +19,7 @@ interface HeaderProps {
 }
 
 export default function Header({
-  onHome, onViewAll, onAbout, onContact, onBack, zIndex = 500, alwaysVisible = false, siteData,
+  onHome, onViewAll, onAbout, onContact, dark = false, zIndex = 500, alwaysVisible = false, siteData,
   lang = "ko",
 }: HeaderProps) {
   const siteName = siteData?.siteName || "Jinyoung Hwang";
@@ -65,30 +65,16 @@ export default function Header({
     suppressRef.current = false;
   };
 
-  // Brief reveal when onBack is set (detail view context); hide when onBack removed
-  useEffect(() => {
-    if (!onBack || isMobile || alwaysVisible) {
-      if (!onBack && !alwaysVisible && !isMobile) setVisible(false);
-      return;
-    }
-    setVisible(true);
-    const t = setTimeout(() => setVisible(false), 2500);
-    return () => clearTimeout(t);
-  }, [onBack, isMobile, alwaysVisible]);
-
   const show = isMobile || visible;
 
-  // Dark theme when in detail view (onBack + dark zIndex)
-  const isDark = !!onBack && zIndex >= 600;
-  // More transparent backgrounds with stronger blur
-  const bg      = isDark ? "rgba(6,6,6,0.58)"        : "rgba(240,240,240,0.48)";
-  const border  = isDark ? "rgba(240,237,232,0.10)"   : "rgba(0,0,0,0.12)";
-  const nameColor  = isDark ? "rgba(240,237,232,0.60)" : "rgba(10,10,10,0.75)";
-  const navColor   = isDark ? "rgba(240,237,232,0.38)" : "rgba(0,0,0,0.38)";
-  const navHover   = isDark ? "#F0EDE8"                : "#0A0A0A";
-  const arrowColor = isDark ? "#F0EDE8"                : "#0A0A0A";
-  const arrowBg    = isDark ? "rgba(240,237,232,0.07)" : "rgba(0,0,0,0.04)";
-  const arrowBorder= isDark ? "rgba(240,237,232,0.10)" : "rgba(0,0,0,0.12)";
+  // Mobile: 105% larger font
+  const headerFont = isMobile ? "clamp(13px, 1.8vw, 26px)" : "clamp(12px, 1.7vw, 25px)";
+
+  const bg      = dark ? "rgba(6,6,6,0.58)"        : "rgba(240,240,240,0.48)";
+  const border  = dark ? "rgba(240,237,232,0.10)"   : "rgba(0,0,0,0.12)";
+  const nameColor  = dark ? "rgba(240,237,232,0.60)" : "rgba(10,10,10,0.75)";
+  const navColor   = dark ? "rgba(240,237,232,0.38)" : "rgba(0,0,0,0.38)";
+  const navHover   = dark ? "#F0EDE8"                : "#0A0A0A";
 
   return (
     <AnimatePresence>
@@ -115,58 +101,30 @@ export default function Header({
             border: `1px solid ${border}`,
             borderTop: "none",
             borderRadius: 0,
-            padding: onBack ? "0" : `0 ${GUTTER}`,
+            padding: `0 ${GUTTER}`,
           }}
         >
-          {/* Left: optional back arrow (outside gutter) + site name */}
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {onBack && (
-              <button
-                onClick={onBack}
-                style={{
-                  width: "52px", height: "52px",
-                  flexShrink: 0,
-                  border: "none",
-                  borderRight: `1px solid ${arrowBorder}`,
-                  background: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = arrowBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "none")}
-              >
-                <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-                  <line x1="8" y1="2" x2="2" y2="8" stroke={arrowColor} strokeWidth="1.5" strokeLinecap="round"/>
-                  <line x1="2" y1="8" x2="8" y2="14" stroke={arrowColor} strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </button>
-            )}
-            <span
-              onClick={onHome}
-              style={{
-                fontFamily: FONT,
-                fontWeight: 300,
-                fontSize: "clamp(12px, 1.7vw, 25px)",
-                letterSpacing: "-0.01em",
-                color: nameColor,
-                userSelect: "none",
-                cursor: "pointer",
-                paddingLeft: onBack ? `calc(${GUTTER} - 52px)` : "0",
-              }}
-            >
-              {siteName}
-            </span>
-          </div>
+          {/* Left: site name */}
+          <span
+            onClick={onHome}
+            style={{
+              fontFamily: FONT,
+              fontWeight: 300,
+              fontSize: headerFont,
+              letterSpacing: "-0.01em",
+              color: nameColor,
+              userSelect: "none",
+              cursor: "pointer",
+            }}
+          >
+            {siteName}
+          </span>
 
           {/* Right nav */}
           <nav style={{
             display: "flex",
             gap: "clamp(16px, 2.8vw, 40px)",
             alignItems: "center",
-            paddingRight: onBack ? GUTTER : "0",
           }}>
             {[
               { label: "View all", action: onViewAll },
@@ -179,7 +137,7 @@ export default function Header({
                 style={{
                   fontFamily: FONT,
                   fontWeight: 300,
-                  fontSize: "clamp(12px, 1.7vw, 25px)",
+                  fontSize: headerFont,
                   letterSpacing: "0.01em",
                   textTransform: "uppercase",
                   color: navColor,

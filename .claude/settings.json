@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/jyvov/.gemini/antigravity/brain/01ec4197-f0bc-47d0-a902-54eb4ee51cfb/**)",
+      "Bash(npm run:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\jyvov\\.claude\\projects\\c--Users-jyvov--gemini-antigravity-scratch-portfolio\\memory"
+    ]
+  }
+}

@@ -17,6 +17,11 @@ export const FONT_HEADLINE = "clamp(29px, 2.57vw, 40px)";        // Awards proje
 export const FONT_BODY = "clamp(15px, 1.3vw, 19px)";             // About bio text
 export const FONT_LIST = "clamp(12px, 1.0vw, 15px)";             // Services, Experience items
 export const FONT_LABEL = "clamp(10px, 0.8vw, 12px)";            // Services/Experience/Award caption titles
+export const FONT_FOOTER = "clamp(12px, 0.9vw, 14px)";           // Footer — hierarchy lowest tier
+export const FONT_FOOTER_BOTTOM = "clamp(11px, 0.75vw, 12px)";   // Footer bottom bar name
+export const FONT_MODAL_TITLE = "clamp(15px, 1.87vw, 27px)";      // Modal section titles (×0.85)
+export const FONT_MODAL_BODY = "clamp(13px, 1.1vw, 16px)";       // Modal body/input text (×0.85)
+export const FONT_MODAL_BTN = "clamp(11px, 0.94vw, 14px)";       // Modal button text (×0.85)
 
 // Optical right-edge correction (px) — tune each independently.
 // Positive = element shifts further right past the GUTTER baseline.

@@ -53,7 +53,7 @@ export default function ProjectPage() {
           onViewAll={() => router.push("/work")}
           onAbout={() => router.push("/about")}
           onContact={() => setContactOpen(true)}
-          onBack={handleClose}
+          dark
           zIndex={700}
           alwaysVisible
           siteData={siteData}
@@ -75,7 +75,7 @@ export default function ProjectPage() {
         onViewAll={() => router.push("/work")}
         onAbout={() => router.push("/about")}
         onContact={() => setContactOpen(true)}
-        onBack={handleClose}
+        dark
         zIndex={700}
         siteData={siteData}
         lang={lang}

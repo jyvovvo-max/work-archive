@@ -238,8 +238,9 @@ function rowToProject(row: Record<string, string>): Project | null {
   };
 }
 
-// ── Cloudinary base ──
-const CLD = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/portfolio-images/";
+// ── Cloudinary base (cache-bust: daily version tag) ──
+const CLD_VER_ARCH = `v${Math.floor(Date.now() / 86400000)}`;
+const CLD = `https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/${CLD_VER_ARCH}/portfolio-images/`;
 const cldImgs = (folder: string, count: number) =>
   Array.from({length: count}, (_, i) => `${CLD}${folder}/${String(i+1).padStart(3,"0")}`);
 

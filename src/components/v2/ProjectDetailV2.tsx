@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Project, SiteData, Lang } from "./types";
 import { GUTTER, GRID_GAP } from "./layout";
+import { CLD_VER } from "./dataFetch";
 import Footer from "./Footer";
 import { RetryImg } from "./RetryImg";
 
@@ -89,8 +90,9 @@ function useExtractedColor(imgSrc: string) {
 // f_auto intentionally omitted from video prefix: the Cloudinary auto-format pipeline
 // occasionally fails on specific source encodings (e.g. puuvilla_society/001), returning
 // 404 even when the raw asset exists. q_auto alone is safe across all sources.
-const CLD_IMG_PREFIX  = "https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/";
-const CLD_VID_PREFIX  = "https://res.cloudinary.com/doyfzvsly/video/upload/q_auto/";
+// Cache-bust: CLD_VER 은 빌드 시점 기준 일자 태그. 이미지 교체 후 재배포 시 즉시 반영.
+const CLD_IMG_PREFIX  = `https://res.cloudinary.com/doyfzvsly/image/upload/f_auto,q_auto/${CLD_VER}/`;
+const CLD_VID_PREFIX  = `https://res.cloudinary.com/doyfzvsly/video/upload/q_auto/${CLD_VER}/`;
 const toVideoUrl = (src: string) =>
   src.startsWith(CLD_IMG_PREFIX)
     ? src.replace(CLD_IMG_PREFIX, CLD_VID_PREFIX)

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { SiteData, Lang } from "./types";
-import { GUTTER, GRID_GAP, SPACE_C, SPACE_D } from "./layout";
+import { GUTTER, GRID_GAP, SPACE_C, SPACE_D, FONT_FOOTER, FONT_FOOTER_BOTTOM } from "./layout";
 
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
@@ -43,7 +43,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => setIsMobile(window.innerWidth < 1024);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -66,7 +66,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
   const textHover = overrideColors?.textHover ?? "#0A0A0A";
   const valueStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 300,
-    fontSize: "13px",
+    fontSize: FONT_FOOTER,
     letterSpacing: "0.03em",
     color: textColor,
     lineHeight: 2.0,
@@ -87,14 +87,11 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
   };
 
   const headlineStyle: React.CSSProperties = {
-    fontFamily: FONT, fontWeight: 300,
-    fontSize: "clamp(12px, 1.28vw, 16px)",
-    letterSpacing: "0.01em", color: overrideColors?.textStrong ?? "#0A0A0A",
+    fontFamily: FONT, fontWeight: 400,
+    fontSize: FONT_FOOTER,
+    letterSpacing: "0.03em", color: overrideColors?.textStrong ?? "#0A0A0A",
     whiteSpace: "pre-line",
-    // Match info stack's per-line rhythm (13px × 2.0 = 26px/line) so
-    // each headline line shares a baseline with the corresponding info
-    // item on desktop.
-    lineHeight: "26px",
+    lineHeight: 2.0,
   };
 
   return (
@@ -162,7 +159,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
           gridTemplateColumns: "repeat(7, 1fr)",
           columnGap: "clamp(16px, 2vw, 32px)",
           marginBottom: SPACE_C,
-          alignItems: "baseline",
+          alignItems: "start",
         }}>
           <BlurIn style={{ gridColumn: "1 / 3" }}>
             <span style={headlineStyle}>{headline}</span>
@@ -214,7 +211,7 @@ export default function Footer({ siteData, lang = "ko", overrideColors, onContac
       }}>
         <span style={{
           fontFamily: FONT, fontWeight: 300,
-          fontSize: "12px",
+          fontSize: FONT_FOOTER_BOTTOM,
           letterSpacing: "0.04em", color: overrideColors?.textFaint ?? "rgba(0,0,0,0.45)",
         }}>
           {name}
