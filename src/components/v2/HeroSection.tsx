@@ -628,29 +628,28 @@ function generateSlots(): Slot[] {
 
 // Parallax scroll wrapper — each card scrolls up at its own speed
 
-// Momentum drift — continues in the direction the card was traveling (like inertia)
+// Momentum drift — CSS-only for zero JS overhead on mobile
 function DriftWrapper({ dirX, dirY, children }: {
-  dirX: number; // movement direction X (-1 to 1 normalized)
-  dirY: number; // movement direction Y
+  dirX: number;
+  dirY: number;
   children: React.ReactNode;
 }) {
-  // Drift 15~20px in the same direction the card arrived from
   const dist = 18;
   const mag = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
-  const nx = dirX / mag; // normalize
+  const nx = dirX / mag;
   const ny = dirY / mag;
 
   return (
-    <motion.div
-      animate={{ x: nx * dist, y: ny * dist }}
-      transition={{
-        duration: 16,
-        ease: "linear",
+    <div
+      style={{
+        position: "relative",
+        transform: `translate(${nx * dist}px, ${ny * dist}px)`,
+        transition: "transform 16s linear",
+        willChange: "transform",
       }}
-      style={{ position: "relative" }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -693,6 +692,22 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
     return () => clearInterval(interval);
   }, [orbiting]);
 
+  // Touch swipe to shuffle — drag and release reshuffles positions
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || !orbiting) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    touchStartRef.current = null;
+    if (dist > 40) setTick(t => t + 1); // 40px 이상 드래그하면 재배치
+  };
+
   const slots = slotsRef.current;
 
   // Track previous slot index per card to compute movement direction
@@ -714,10 +729,12 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
 
   return (
     <motion.div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{
         position: "absolute", inset: 0,
         zIndex: 2,
-        y: scrollTranslateY, // whole carousel drifts up gently on scroll
+        y: scrollTranslateY,
       }}
     >
       {items.map((project, i) => {
@@ -742,62 +759,47 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
         // Parallax speed: large=0.8, medium=1.0, small=1.3 (smaller = faster scroll-away)
         const parallaxSpeed = slot.w >= 50 ? 0.8 : slot.w >= 30 ? 1.0 : 1.3;
 
+        // Use transform (x/y) instead of left/top for GPU-composited animation.
+        // left/top/width are set as static CSS; x/y handle the centering + position offset.
+        // This avoids layout recalculation every frame → much smoother on mobile.
         return (
           <motion.div
             key={project.id}
             onClick={() => onOpen(project)}
             initial={{
               opacity: 0,
-              filter: "blur(10px)",
               scale: 1,
               x: "-50%", y: "-50%",
-              left: `${slot.x}%`,
-              top: `${slot.y}%`,
-              width: `${slot.w}vw`,
             }}
             animate={{
               opacity: 1,
               scale: activeScale,
               x: "-50%",
               y: "-50%",
+            }}
+            transition={orbiting ? {
+              opacity: { duration: 0.6 },
+            } : settled ? {
+              scale: { duration: 1.0, ease: "easeInOut" },
+            } : {
+              opacity: { duration: 1.0, delay: 0.15 + i * 0.1, ease: [0.16, 1, 0.3, 1] },
+              scale: { duration: 0 },
+            }}
+            style={{
+              position: "absolute",
               left: `${slot.x}%`,
               top: `${slot.y}%`,
               width: `${slot.w}vw`,
               filter: `blur(${activeBlur}px)`,
-            }}
-            transition={orbiting ? {
-              // Fast launch → slow drift into place
-              left:   { duration: ORBIT_MOVE_DURATION, ease: [0.08, 0.7, 0.35, 0.98] },
-              top:    { duration: ORBIT_MOVE_DURATION, ease: [0.08, 0.7, 0.35, 0.98] },
-              width:  { duration: ORBIT_MOVE_DURATION, ease: [0.08, 0.7, 0.35, 0.98] },
-              filter: { duration: 0.8, ease: "easeOut" },
-              opacity:{ duration: 0.6 },
-              x: { duration: 0 },
-              y: { duration: 0 },
-            } : settled ? {
-              // Settle phase: shrink + blur (matches desktop 0.95 scale + 1px blur)
-              scale:  { duration: 1.0, ease: "easeInOut" },
-              filter: { duration: 1.0, ease: "easeInOut" },
-              left:  { duration: 0 },
-              top:   { duration: 0 },
-              width: { duration: 0 },
-              x: { duration: 0 },
-              y: { duration: 0 },
-            } : {
-              // Initial appear: in-place blur→clean (matches desktop timing)
-              opacity: { duration: 1.0, delay: 0.15 + i * 0.1, ease: [0.16, 1, 0.3, 1] },
-              filter:  { duration: 1.0, delay: 0.15 + i * 0.1, ease: [0.16, 1, 0.3, 1] },
-              scale:   { duration: 0 },
-              left:  { duration: 0 },
-              top:   { duration: 0 },
-              width: { duration: 0 },
-              x: { duration: 0 },
-              y: { duration: 0 },
-            }}
-            style={{
-              position: "absolute",
               zIndex: isFront ? 10 : 1,
               cursor: "pointer",
+              willChange: "transform, opacity",
+              // GPU-composited movement via CSS transition (not Framer layout)
+              transition: orbiting
+                ? `left ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), top ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), width ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), filter 0.8s ease-out`
+                : settled
+                  ? "filter 1s ease-in-out"
+                  : `filter 1s ease ${0.15 + i * 0.1}s`,
             }}
           >
             {/* Momentum drift — continues in the orbit movement direction */}
