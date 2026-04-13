@@ -630,6 +630,31 @@ color: overrideColors?.textStrong ?? "#0A0A0A"
 
 **교훈**: 배포 관련 설정은 **현재 상태를 직접 확인**. 기억에만 의존하지 말기.
 
+### 7-6. 모바일 히어로 이미지가 화면 맨 위로 몰리는 버그
+
+**증상**: 모바일 히어로 캐러셀의 이미지 6개가 전부 화면 최상단에 쌓여서 보이지 않음. `top: 52%` 같은 값이 적용되지 않는 것처럼 동작.
+
+**원인**: `ParallaxCard` 컴포넌트가 `motion.div` + `style={{ y: transformValue }}`를 사용했는데, CSS에서 **`transform` 속성이 있는 요소는 새로운 containing block**을 생성함. 그래서 내부의 `position: absolute` 카드가 뷰포트 전체가 아니라 `ParallaxCard`(높이 0px)를 기준으로 위치를 잡게 됨.
+
+- `top: 52%` of 0px = 0px → 모든 카드가 y=0으로 이동
+- `ParallaxCard` 자체는 크기 지정이 없어서 높이 0
+
+**해결**: `ParallaxCard` wrapper를 제거하고, parallax `y`를 캐러셀 **전체 컨테이너**에 직접 적용.
+
+```tsx
+// Before — 각 카드를 wrapper로 감싸서 깨짐
+<ParallaxCard speed={1.3}>
+  <motion.div style={{ position: "absolute", top: "52%" }}>...</motion.div>
+</ParallaxCard>
+
+// After — 컨테이너에 한번에 적용
+<motion.div style={{ position: "absolute", inset: 0, y: scrollTranslateY }}>
+  {cards.map(card => <motion.div style={{ position: "absolute", top: "52%" }}>...</motion.div>)}
+</motion.div>
+```
+
+**교훈**: CSS `transform`은 containing block을 새로 만든다. `position: absolute` 자식이 있는 요소에 `transform`을 걸면 자식의 위치 기준이 바뀜. 특히 Framer Motion의 `style={{ y: ... }}`는 내부적으로 `transform: translateY()`를 사용하므로 주의.
+
 ---
 
 ## 8. 배운 점과 앞으로
@@ -786,6 +811,21 @@ npx vercel logs
 - 빌드 가이드에 **용어 사전** (섹션 9) 추가 — Git, 배포, 개발도구, 프레임워크, 데이터, 코드 기초 용어 약 50개
 - **세션 노트** (섹션 10) 구조 추가 — 앞으로 매 세션 종료 시 여기에 작업 기록
 - 이전 세션까지의 작업: 캐시버스터 전체 적용, 컨택트 모달 디자인 완성 (아크릴 글라스 + 타이포 + Send 버튼)
+
+### 2026-04-14
+
+**모바일 최적화 대작업**
+
+- **모바일 헤더**: 폰트 105% 확대 (`clamp(13px, 1.8vw, 26px)`)
+- **모바일 히어로**: scatter 레이아웃 → **타원 궤도 캐러셀**로 전면 교체
+  - 6개 이미지, 대(50vw)/중(33vw)/소(24vw) 3단계 크기
+  - 회전: 빠르게 출발 → 느리게 안착, 3초 정지 후 다음
+  - wander: 매 회전마다 기본 위치 ±10~14% 랜덤 오프셋 (충돌 검사 포함)
+  - 관성 drift: 이동 방향 그대로 서서히 밀려감 (멈추는 시간 없음)
+  - 등장: 웹과 동일하게 제자리에서 blur→clean 페이드인 + settle(0.95 축소)
+- **타이틀 런타임 피팅**: 숨겨진 span으로 텍스트 폭 측정 → GUTTER 양끝에 정확히 맞춤 (웹과 동일 방식)
+- **영상 썸네일**: IntersectionObserver play/pause + webkit-playsinline 추가
+- **스크롤 버그 수정**: ParallaxCard wrapper의 `transform`이 CSS containing block을 생성하여 absolute 위치 깨짐 → wrapper 제거, 컨테이너에 직접 적용 (트러블슈팅 7-6 참조)
 
 ---
 

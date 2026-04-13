@@ -554,7 +554,7 @@ type Slot = { x: number; y: number; w: number };
 
 // 6 base slots: Large center + 2 Medium + 3 Small
 const BASE_SLOTS: Slot[] = [
-  { x: 53, y: 52, w: 52.5 },  // 0: center — Large (10px right ≈ +3%, 105% of 50vw)
+  { x: 56, y: 52, w: 52.5 },  // 0: center — Large (+20px right ≈ +6%, 105% of 50vw)
   { x: 18, y: 32, w: 33 },  // 1: left-top — Medium
   { x: 82, y: 72, w: 33 },  // 2: right-bottom — Medium
   { x: 78, y: 28, w: 24 },  // 3: right-top — Small
@@ -1145,8 +1145,8 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   // Mobile: hero is position:fixed, covered by WorksGrid scrolling over it.
   // Spacer = 100vh + 440px ≈ 1250px. Images only need gentle upward drift as content covers.
   // No opacity fade needed — the covering layer handles the "disappear".
-  const mobileScrollOpacity = useTransform(scrollY, [0, 99999], [1, 1]); // always visible
-  const mobileScrollTranslateY = useTransform(scrollY, [0, 1500], [0, -30]); // very subtle drift
+  const mobileScrollOpacity = useTransform(scrollY, [0, 99999], [1, 1]); // always visible (covered by WorksGrid)
+  const mobileScrollTranslateY = useTransform(scrollY, [0, 800], [0, -80]); // noticeable upward drift
 
   if (isMobile) {
     return (
