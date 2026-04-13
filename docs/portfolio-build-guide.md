@@ -840,4 +840,19 @@ npx vercel logs
 
 ---
 
-*이 문서는 Deep Field 포트폴리오 작업 기록입니다. 2026-04-11 기준 최종 수정.*
+### 세션 노트 — 2026-04-14
+
+**모바일 히어로 SSR 렌더링 수정**
+
+- **문제:** 모바일에서 "This page couldn't load" 에러. 원인 2가지:
+  1. `isMobile = useState(false)` → SSR에서 항상 데스크톱 HTML만 보냄 → 모바일 레이아웃 지연/미표시
+  2. `OrbitCarousel`에서 `projects = []`(초기값)일 때 `% 0` 연산으로 JS 크래시
+- **해결:**
+  - `if (isMobile) return <Mobile/>` 패턴 제거 → 모바일/데스크톱 **동시 렌더링** + CSS 미디어쿼리(`hero-mobile-only`, `hero-desktop-only`)로 표시 전환
+  - `OrbitCarousel` 빈 배열 방어 코드 추가 (`projects.length || 1`, items 생성 가드)
+- **배포:** Vercel 빌드 시간 소진(0s 남음) → `vercel deploy --prod` CLI로 직접 배포 성공
+- **교훈:** 화면 크기 분기는 JS(`useState`) 대신 CSS(`@media`)로 해야 SSR에서도 안전
+
+---
+
+*이 문서는 Deep Field 포트폴리오 작업 기록입니다. 2026-04-14 기준 최종 수정.*
