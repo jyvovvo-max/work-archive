@@ -30,6 +30,13 @@ body {
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* Hero: show mobile or desktop layout via CSS so SSR sends correct version */
+.hero-mobile-only { display: none; }
+@media (max-width: 767px) {
+  .hero-mobile-only { display: contents; }
+  .hero-desktop-only { display: none !important; }
+}
+
 ::selection { background: #fff; color: #000; }
 
 /* Prevent brightness/color shift in screenshots */

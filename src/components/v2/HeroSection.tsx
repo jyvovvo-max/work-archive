@@ -661,13 +661,15 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
 }) {
   const [tick, setTick] = useState(0);
   // Rotate through all projects — each tick cycle shows a different set of 6
-  const totalProjects = projects.length;
+  const totalProjects = projects.length || 1; // prevent % 0 during SSR prerender
   const startIdx = totalProjects > ORBIT_COUNT
     ? (Math.floor(tick / ORBIT_COUNT) * ORBIT_COUNT) % totalProjects
     : 0;
   const items: typeof projects = [];
-  for (let i = 0; i < ORBIT_COUNT; i++) {
-    items.push(projects[(startIdx + i) % totalProjects]);
+  if (projects.length) {
+    for (let i = 0; i < ORBIT_COUNT; i++) {
+      items.push(projects[(startIdx + i) % totalProjects]);
+    }
   }
   const [orbiting, setOrbiting] = useState(false);
   const [settled, setSettled] = useState(false); // after initial settle (blur+shrink)
@@ -1175,27 +1177,29 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   const mobileScrollOpacity = useTransform(scrollY, [0, 99999], [1, 1]); // always visible (covered by WorksGrid)
   const mobileScrollTranslateY = useTransform(scrollY, [0, 800], [0, -80]); // noticeable upward drift
 
-  if (isMobile) {
-    return (
-      <MobileHeroLayout
-        projects={projects}
-        siteData={siteData}
-        scrollOpacity={mobileScrollOpacity}
-        scrollTranslateY={mobileScrollTranslateY}
-        onOpen={onOpen}
-      />
-    );
-  }
-
   return (
-    <section
-      style={{
-        position: "absolute",
-        inset: 0,
-        background: "#F0F0F0",
-        overflow: "hidden",
-      }}
-    >
+    <>
+      {/* ── Mobile hero: visible only below 768px ── */}
+      <div style={{ display: "contents" }} className="hero-mobile-only">
+        <MobileHeroLayout
+          projects={projects}
+          siteData={siteData}
+          scrollOpacity={mobileScrollOpacity}
+          scrollTranslateY={mobileScrollTranslateY}
+          onOpen={onOpen}
+        />
+      </div>
+
+      {/* ── Desktop hero: visible only at 768px and above ── */}
+      <section
+        className="hero-desktop-only"
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "#F0F0F0",
+          overflow: "hidden",
+        }}
+      >
       {/* ── Title area — zIndex 20, scroll-linked translateY after latch ── */}
       <motion.div
         ref={titleContainerRef}
@@ -1300,5 +1304,6 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
         <DescriptionText text={desc} y={descY} />
       )}
     </section>
+    </>
   );
 }
