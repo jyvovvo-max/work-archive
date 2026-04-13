@@ -47,7 +47,18 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
     const el = ref.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setIsCentered(entry.isIntersecting),
+      ([entry]) => {
+        setIsCentered(entry.isIntersecting);
+        // Mobile: manually play/pause video when centered (iOS requires user-gesture or IntersectionObserver play)
+        const v = videoRef.current;
+        if (v) {
+          if (entry.isIntersecting) {
+            v.play().catch(() => {});
+          } else {
+            v.pause();
+          }
+        }
+      },
       { rootMargin: "-42% 0px -42% 0px", threshold: 0 }
     );
     observer.observe(el);
@@ -76,6 +87,7 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
             animate={{ scale: (!isMobile && hovered) || (isMobile && isCentered) ? 1.04 : 1 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               ref={videoRef}
               src={videoSrc}
@@ -83,6 +95,8 @@ function WorkCard({ project, onOpen, colIdx, isMobile }: {
               muted
               loop
               playsInline
+              webkit-playsinline=""
+              preload="metadata"
               onTimeUpdate={handleTimeUpdate}
               poster={project.img}
               style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}

@@ -67,6 +67,9 @@ export default function Header({
 
   const show = isMobile || visible;
 
+  // Mobile: 105% larger font
+  const headerFont = isMobile ? "clamp(13px, 1.8vw, 26px)" : "clamp(12px, 1.7vw, 25px)";
+
   const bg      = dark ? "rgba(6,6,6,0.58)"        : "rgba(240,240,240,0.48)";
   const border  = dark ? "rgba(240,237,232,0.10)"   : "rgba(0,0,0,0.12)";
   const nameColor  = dark ? "rgba(240,237,232,0.60)" : "rgba(10,10,10,0.75)";
@@ -107,7 +110,7 @@ export default function Header({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "clamp(12px, 1.7vw, 25px)",
+              fontSize: headerFont,
               letterSpacing: "-0.01em",
               color: nameColor,
               userSelect: "none",
@@ -134,7 +137,7 @@ export default function Header({
                 style={{
                   fontFamily: FONT,
                   fontWeight: 300,
-                  fontSize: "clamp(12px, 1.7vw, 25px)",
+                  fontSize: headerFont,
                   letterSpacing: "0.01em",
                   textTransform: "uppercase",
                   color: navColor,

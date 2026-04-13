@@ -18,48 +18,7 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
 // ── Mobile scatter (B+C hybrid) ──
 // 6-column grid with runtime container dimensions for accurate overlap detection
-const M_COLS = 6;
-const M_COL_W_PCT = 100 / M_COLS; // 16.67%
-const M_Y_LEVELS = [24, 39, 54, 67, 79]; // % of scatter container height
-const M_GAP_PCT = 4;   // min gap between images (% of container)
-const M_IMG_RATIO = 0.75; // 4:3 crop applied to 16:9 source
-const M_SPAN_MIN = 2;
-const M_SPAN_MAX = 4;
-
-type MPos = { leftPct: number; topPct: number; widthPct: number };
-
-function makeMobileScatter(containerW: number, containerH: number): MPos[] {
-  function imgH(span: number): number {
-    // height as % of container, using actual pixel dimensions
-    return (span * M_COL_W_PCT / 100 * containerW * M_IMG_RATIO) / containerH * 100;
-  }
-  type Box = { x1: number; x2: number; y1: number; y2: number };
-  const placed: Box[] = [];
-  const positions: MPos[] = [];
-  const candidates: { col: number; span: number; topPct: number }[] = [];
-  for (const topPct of M_Y_LEVELS) {
-    for (let col = 0; col < M_COLS; col++) {
-      for (let span = M_SPAN_MIN; span <= M_SPAN_MAX; span++) {
-        if (col + span <= M_COLS) candidates.push({ col, span, topPct });
-      }
-    }
-  }
-  candidates.sort(() => Math.random() - 0.5);
-  for (const c of candidates) {
-    if (positions.length >= 8) break;
-    const h = imgH(c.span);
-    const box: Box = {
-      x1: c.col * M_COL_W_PCT,              // no x-gap: column boundaries are precise
-      x2: (c.col + c.span) * M_COL_W_PCT,
-      y1: c.topPct - M_GAP_PCT,             // gap only on y-axis
-      y2: c.topPct + h + M_GAP_PCT,
-    };
-    if (placed.some(p => !(box.x2 <= p.x1 || p.x2 <= box.x1 || box.y2 <= p.y1 || p.y2 <= box.y1))) continue;
-    placed.push(box);
-    positions.push({ leftPct: c.col * M_COL_W_PCT, topPct: c.topPct, widthPct: c.span * M_COL_W_PCT });
-  }
-  return positions;
-}
+// (Mobile scatter removed — replaced by 3D carousel below)
 
 type ScatterPos = { left: string; top: string; w: string; span: number };
 
@@ -581,64 +540,316 @@ function MobileGrid({
   );
 }
 
-function ScatterCard({ project, pos, idx, allImagesIn, scrollTranslateY, onOpen }: {
-  project: Project;
-  pos: MPos;
-  idx: number;
-  allImagesIn: boolean;
+// ── Elliptical Orbit Carousel for Mobile Hero ──
+// 6 images orbit in a ring. CENTER = largest & clear, others = smaller & blurred.
+// No overlap: each image in its own zone.
+const ORBIT_COUNT = 6;
+const ORBIT_MOVE_DURATION = 1.8;  // movement phase — fast start, slow finish
+const ORBIT_PAUSE_DURATION = 3.0; // hover/pause after settling
+const ORBIT_STEP_DURATION = ORBIT_MOVE_DURATION + ORBIT_PAUSE_DURATION;
+
+// Fixed slot positions — spread across the whole screen, no overlap.
+// Each tick: base position + random offset for variety.
+type Slot = { x: number; y: number; w: number };
+
+// 6 base slots: Large center + 2 Medium + 3 Small
+const BASE_SLOTS: Slot[] = [
+  { x: 53, y: 52, w: 52.5 },  // 0: center — Large (10px right ≈ +3%, 105% of 50vw)
+  { x: 18, y: 32, w: 33 },  // 1: left-top — Medium
+  { x: 82, y: 72, w: 33 },  // 2: right-bottom — Medium
+  { x: 78, y: 28, w: 24 },  // 3: right-top — Small
+  { x: 22, y: 80, w: 24 },  // 4: left-bottom — Small
+  { x: 50, y: 90, w: 22 },  // 5: bottom-center — Small
+];
+
+// How much each slot can wander from its base (% units)
+const SLOT_WANDER: { dx: number; dy: number }[] = [
+  { dx: 2,  dy: 2  },  // 0: center
+  { dx: 10, dy: 8  },  // 1: medium
+  { dx: 10, dy: 8  },  // 2: medium
+  { dx: 12, dy: 10 },  // 3: small
+  { dx: 12, dy: 10 },  // 4: small
+  { dx: 14, dy: 4  },  // 5: small bottom
+];
+
+function clamp(val: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, val));
+}
+
+// Bounding box collision detection.
+// Mobile portrait: 1vw ≈ 0.46vh, so card height in vh% = w * 0.75 * 0.46
+const MOBILE_VW_TO_VH = 0.46;
+type Rect = { x1: number; y1: number; x2: number; y2: number };
+
+function slotRect(s: Slot): Rect {
+  const hw = s.w / 2;
+  const hh = (s.w * 0.75 * MOBILE_VW_TO_VH) / 2;
+  return { x1: s.x - hw, y1: s.y - hh, x2: s.x + hw, y2: s.y + hh };
+}
+
+function overlaps(a: Rect, b: Rect, gap: number): boolean {
+  return !(a.x2 + gap <= b.x1 || b.x2 + gap <= a.x1 ||
+           a.y2 + gap <= b.y1 || b.y2 + gap <= a.y1);
+}
+
+function generateSlots(): Slot[] {
+  const placed: Slot[] = [];
+  const GAP = 1.5; // minimum gap between cards (%)
+
+  for (let i = 0; i < BASE_SLOTS.length; i++) {
+    const base = BASE_SLOTS[i];
+    const wander = SLOT_WANDER[i];
+    let best: Slot | null = null;
+
+    // Try up to 30 random offsets, pick first non-overlapping one
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const x = clamp(
+        base.x + (Math.random() - 0.5) * 2 * wander.dx,
+        10 + base.w / 2, 90 - base.w / 2
+      );
+      const y = clamp(
+        base.y + (Math.random() - 0.5) * 2 * wander.dy,
+        24, 94
+      );
+      const candidate = { x, y, w: base.w };
+      const rect = slotRect(candidate);
+      const collides = placed.some(p => overlaps(rect, slotRect(p), GAP));
+      if (!collides) {
+        best = candidate;
+        break;
+      }
+    }
+    // Fallback: use base position if all attempts collide
+    placed.push(best ?? { x: base.x, y: base.y, w: base.w });
+  }
+  return placed;
+}
+
+
+// Parallax scroll wrapper — each card scrolls up at its own speed
+function ParallaxCard({ scrollBase, scrollOpacity, speed, children }: {
+  scrollBase: MotionValue<number>;
+  scrollOpacity: MotionValue<number>;
+  speed: number;
+  children: React.ReactNode;
+}) {
+  const y = useTransform(scrollBase, v => v * speed);
+  // Per-card opacity: smaller cards fade out faster
+  const opacity = useTransform(scrollOpacity, v => Math.max(0, Math.min(1, v * (1 / speed))));
+  return <motion.div style={{ y, opacity }}>{children}</motion.div>;
+}
+
+// Momentum drift — continues in the direction the card was traveling (like inertia)
+function DriftWrapper({ dirX, dirY, children }: {
+  dirX: number; // movement direction X (-1 to 1 normalized)
+  dirY: number; // movement direction Y
+  children: React.ReactNode;
+}) {
+  // Drift 15~20px in the same direction the card arrived from
+  const dist = 18;
+  const mag = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
+  const nx = dirX / mag; // normalize
+  const ny = dirY / mag;
+
+  return (
+    <motion.div
+      animate={{ x: nx * dist, y: ny * dist }}
+      transition={{
+        duration: 16,
+        ease: "linear",
+      }}
+      style={{ position: "relative" }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
+  projects: Project[];
+  scrollOpacity: MotionValue<number>;
   scrollTranslateY: MotionValue<number>;
   onOpen: (p: Project) => void;
 }) {
+  const items = projects.slice(0, ORBIT_COUNT);
+  const [tick, setTick] = useState(0);
+  const [orbiting, setOrbiting] = useState(false);
+  const [settled, setSettled] = useState(false); // after initial settle (blur+shrink)
+
+  // Slots regenerated each tick — positions shuffle completely
+  const slotsRef = useRef<Slot[]>(generateSlots());
+  useEffect(() => {
+    if (tick > 0) slotsRef.current = generateSlots();
+  }, [tick]);
+
+  // Match desktop timing: images appear clean, then at 2.65s settle (blur+scale 0.95)
+  useEffect(() => {
+    const settleTimer = setTimeout(() => setSettled(true), 2650);
+    return () => clearTimeout(settleTimer);
+  }, []);
+
+  // Start orbiting after settle + 1s buffer
+  useEffect(() => {
+    if (!settled) return;
+    const startDelay = setTimeout(() => setOrbiting(true), 1000);
+    return () => clearTimeout(startDelay);
+  }, [settled]);
+
+  // Advance one step at a time
+  useEffect(() => {
+    if (!orbiting) return;
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, ORBIT_STEP_DURATION * 1000);
+    return () => clearInterval(interval);
+  }, [orbiting]);
+
+  const slots = slotsRef.current;
+
+  // Track previous slot index per card to compute movement direction
+  const prevSlotsRef = useRef<number[]>(items.map((_, i) => i));
+  const prevCoordsRef = useRef<Slot[]>(slots);
+
+  // Update prev tracking when tick changes
+  useEffect(() => {
+    // Save current as prev for next tick
+    return () => {
+      prevSlotsRef.current = items.map((_, i) => {
+        return orbiting
+          ? ((ORBIT_COUNT - (tick % ORBIT_COUNT)) + i) % ORBIT_COUNT
+          : i;
+      });
+      prevCoordsRef.current = slotsRef.current;
+    };
+  }, [tick, orbiting, items]);
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.15 + idx * 0.1, duration: 1.0, ease: [0.55, 0, 1, 0.6] }}
-      onClick={() => onOpen(project)}
       style={{
-        position: "absolute",
-        left: `${pos.leftPct}%`,
-        top: `${pos.topPct}%`,
-        width: `${pos.widthPct}%`,
-        cursor: "pointer",
-        y: scrollTranslateY,
+        position: "absolute", inset: 0,
+        zIndex: 2,
       }}
     >
-      {/* ID label */}
-      <span style={{
-        position: "absolute", top: "-11px", right: "1px",
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: "9px", fontWeight: 300,
-        letterSpacing: "0.1em", color: "rgba(10,10,10,0.3)",
-        lineHeight: 1, pointerEvents: "none",
-      }}>
-        {String(project.id).padStart(3, "0")}
-      </span>
+      {items.map((project, i) => {
+        // Which slot is this image currently in?
+        const slotIdx = orbiting
+          ? ((ORBIT_COUNT - (tick % ORBIT_COUNT)) + i) % ORBIT_COUNT
+          : i;
+        const slot = slots[slotIdx];
 
-      <motion.img
-        src={project.img}
-        alt={project.title}
-        draggable={false}
-        animate={{
-          filter: allImagesIn ? "blur(3px)" : "blur(0px)",
-          scale:  allImagesIn ? 0.95 : 1,
-        }}
-        transition={{ duration: allImagesIn ? 1.0 : 0.1, ease: "easeInOut" }}
-        style={{
-          width: "100%",
-          aspectRatio: "4/3",
-          objectFit: "cover",
-          display: "block",
-          borderRadius: "2px",
-          boxShadow: "0 4px 18px rgba(0,0,0,0.16)",
-        }}
-      />
+        // Movement direction: current position - previous position
+        const prevSlotIdx = prevSlotsRef.current[i] ?? i;
+        const prevSlot = prevCoordsRef.current[prevSlotIdx] ?? slot;
+        const dirX = slot.x - prevSlot.x;
+        const dirY = slot.y - prevSlot.y;
+        const isFront = slotIdx === 0;
+        // Blur: center=0 (sharp), all others=0.9 (uniform, slightly more than before)
+        const tierBlur = isFront ? 0 : 0.9;
+        const activeBlur = settled ? tierBlur : 0;
+        // Scale: before settle=1, after settle=0.95 (matches desktop SCALE_SETTLED)
+        const activeScale = settled ? 0.95 : 1;
+
+        // Parallax speed: large=0.8, medium=1.0, small=1.3 (smaller = faster scroll-away)
+        const parallaxSpeed = slot.w >= 50 ? 0.8 : slot.w >= 30 ? 1.0 : 1.3;
+
+        return (
+          <ParallaxCard key={project.id} scrollBase={scrollTranslateY} scrollOpacity={scrollOpacity} speed={parallaxSpeed}>
+          <motion.div
+            onClick={() => onOpen(project)}
+            initial={{
+              opacity: 0,
+              filter: "blur(10px)",
+              scale: 1,
+              x: "-50%", y: "-50%",
+              left: `${slot.x}%`,
+              top: `${slot.y}%`,
+              width: `${slot.w}vw`,
+            }}
+            animate={{
+              opacity: 1,
+              scale: activeScale,
+              x: "-50%",
+              y: "-50%",
+              left: `${slot.x}%`,
+              top: `${slot.y}%`,
+              width: `${slot.w}vw`,
+              filter: `blur(${activeBlur}px)`,
+            }}
+            transition={orbiting ? {
+              // Fast launch → slow drift into place
+              left:   { duration: ORBIT_MOVE_DURATION, ease: [0.08, 0.7, 0.35, 0.98] },
+              top:    { duration: ORBIT_MOVE_DURATION, ease: [0.08, 0.7, 0.35, 0.98] },
+              width:  { duration: ORBIT_MOVE_DURATION, ease: [0.08, 0.7, 0.35, 0.98] },
+              filter: { duration: 0.8, ease: "easeOut" },
+              opacity:{ duration: 0.6 },
+              x: { duration: 0 },
+              y: { duration: 0 },
+            } : settled ? {
+              // Settle phase: shrink + blur (matches desktop 0.95 scale + 1px blur)
+              scale:  { duration: 1.0, ease: "easeInOut" },
+              filter: { duration: 1.0, ease: "easeInOut" },
+              left:  { duration: 0 },
+              top:   { duration: 0 },
+              width: { duration: 0 },
+              x: { duration: 0 },
+              y: { duration: 0 },
+            } : {
+              // Initial appear: in-place blur→clean (matches desktop timing)
+              opacity: { duration: 1.0, delay: 0.15 + i * 0.1, ease: [0.16, 1, 0.3, 1] },
+              filter:  { duration: 1.0, delay: 0.15 + i * 0.1, ease: [0.16, 1, 0.3, 1] },
+              scale:   { duration: 0 },
+              left:  { duration: 0 },
+              top:   { duration: 0 },
+              width: { duration: 0 },
+              x: { duration: 0 },
+              y: { duration: 0 },
+            }}
+            style={{
+              position: "absolute",
+              zIndex: isFront ? 10 : 1,
+              cursor: "pointer",
+            }}
+          >
+            {/* Momentum drift — continues in the orbit movement direction */}
+            <DriftWrapper dirX={dirX} dirY={dirY}>
+              {/* ID label */}
+              <span style={{
+                position: "absolute", top: "-13px", right: "2px",
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "9px", fontWeight: 300,
+                letterSpacing: "0.1em", color: "rgba(10,10,10,0.35)",
+                lineHeight: 1, pointerEvents: "none",
+              }}>
+                {String(project.id).padStart(3, "0")}
+              </span>
+
+              <img
+                src={project.img}
+                alt={project.title}
+                draggable={false}
+                style={{
+                  width: "100%",
+                  aspectRatio: "4/3",
+                  objectFit: "cover",
+                  display: "block",
+                  borderRadius: "4px",
+                  boxShadow: isFront
+                    ? "0 12px 40px rgba(0,0,0,0.22)"
+                    : "0 4px 14px rgba(0,0,0,0.10)",
+                }}
+              />
+            </DriftWrapper>
+
+          </motion.div>
+          </ParallaxCard>
+        );
+      })}
     </motion.div>
   );
 }
 
 // ── Mobile Hero Layout ──
-// Flow order: Title → Subtitle → Description → Scatter images (B+C hybrid scatter)
+// Elliptical orbit carousel of 5 project images + text overlay
 function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY, onOpen }: {
   projects: Project[];
   siteData: SiteData | null;
@@ -646,9 +857,6 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
   scrollTranslateY: MotionValue<number>;
   onOpen: (p: Project) => void;
 }) {
-  const [positions, setPositions] = useState<MPos[]>([]);
-  const [allImagesIn, setAllImagesIn] = useState(false);
-  const scatterRef = useRef<HTMLDivElement>(null);
   const titleControls = useAnimationControls();
 
   useEffect(() => {
@@ -656,27 +864,35 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
       filter: "blur(0px)", opacity: 1,
       transition: { duration: 1.5, delay: 4.0, ease: [0.16, 1, 0.3, 1] },
     });
-    const t = setTimeout(() => setAllImagesIn(true), 2650);
-    return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Calculate scatter once layout settles (actual container dimensions)
-  useEffect(() => {
-    const calc = () => {
-      const el = scatterRef.current;
-      if (!el) return;
-      const { width, height } = el.getBoundingClientRect();
-      if (width > 0 && height > 0) setPositions(makeMobileScatter(width, height));
-    };
-    const t = setTimeout(calc, 200);
-    return () => clearTimeout(t);
   }, []);
 
   const title    = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
   const desc = siteData?.landingDescriptionEn || siteData?.landingDescription || "";
-  const heroProjects = projects.slice(0, 8);
+
+  // Runtime title fitting — same approach as desktop.
+  // Measure text width with a hidden span, then scale font to fill container.
+  const titleContainerRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [titleFontSize, setTitleFontSize] = useState("calc((100vw - 40px) / 7.2)");
+
+  useEffect(() => {
+    const fit = () => {
+      const span = measureRef.current;
+      const container = titleContainerRef.current;
+      if (!span || !container) return;
+      const textW = span.getBoundingClientRect().width;
+      // Inner width = clientWidth minus padding (so title fits between GUTTER edges)
+      const cs = getComputedStyle(container);
+      const innerW = container.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      if (textW === 0 || innerW === 0) return;
+      setTitleFontSize(`${(innerW / textW) * 100}px`);
+    };
+    document.fonts.ready.then(fit);
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [siteData]);
 
   return (
     <section style={{
@@ -684,47 +900,47 @@ function MobileHeroLayout({ projects, siteData, scrollOpacity, scrollTranslateY,
       background: "#F0F0F0",
       overflow: "hidden",
     }}>
-      {/* ── Scatter images — fill entire section, behind text ── */}
-      <motion.div
-        ref={scatterRef}
+      {/* ── Orbit Carousel ── */}
+      <OrbitCarousel
+        projects={projects}
+        scrollOpacity={scrollOpacity}
+        scrollTranslateY={scrollTranslateY}
+        onOpen={onOpen}
+      />
+
+      {/* Hidden span for measuring title text width */}
+      <span
+        ref={measureRef}
+        aria-hidden
         style={{
-          position: "absolute", inset: 0,
-          opacity: scrollOpacity,
-          zIndex: 2,
+          position: "absolute", top: -9999, left: -9999,
+          fontFamily: FONT, fontWeight: 300,
+          fontSize: "100px",
+          letterSpacing: "-0.045em", lineHeight: 0.88,
+          whiteSpace: "nowrap", visibility: "hidden",
         }}
       >
-        {heroProjects.map((project, i) => {
-          const pos = positions[i];
-          if (!pos) return null;
-          return (
-            <ScatterCard
-              key={project.id}
-              project={project}
-              pos={pos}
-              idx={i}
-              allImagesIn={allImagesIn}
-              scrollTranslateY={scrollTranslateY}
-              onOpen={onOpen}
-            />
-          );
-        })}
-      </motion.div>
+        {title}
+      </span>
 
-      {/* ── Text — absolute, on top of images ── */}
-      <div style={{
-        position: "absolute",
-        top: 0, left: 0, right: 0,
-        padding: "62px 20px 20px",
-        zIndex: 20,
-        pointerEvents: "none",
-        mixBlendMode: "difference",
-      }}>
+      {/* ── Text — absolute, on top of carousel ── */}
+      <div
+        ref={titleContainerRef}
+        style={{
+          position: "absolute",
+          top: 0, left: 0, right: 0,
+          padding: `62px var(--gutter) 20px`,
+          zIndex: 20,
+          pointerEvents: "none",
+          mixBlendMode: "difference",
+        }}
+      >
         <motion.h1
           initial={{ filter: "blur(28px)", opacity: 0 }}
           animate={titleControls}
           style={{
             fontFamily: FONT, fontWeight: 300,
-            fontSize: "calc((100vw - 40px) / 7.2)",
+            fontSize: titleFontSize,
             letterSpacing: "-0.045em", lineHeight: 0.88,
             color: "#FFFFFF", margin: "0 0 8px",
             whiteSpace: "nowrap", display: "block",
@@ -936,14 +1152,18 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   const heroProjects = projects.slice(0, 10);
   const scatterLen = Math.max(scatter.length, 1);
 
-  // ── Mobile: separate layout with flow text + B+C hybrid scatter ──
+  // ── Mobile: separate scroll values (slower, more gradual) ──
+  // Mobile: very gradual — one swipe ≈ 300-400px, need several swipes to fully dismiss
+  const mobileScrollOpacity = useTransform(scrollY, [0, 2000], [1, 0]);
+  const mobileScrollTranslateY = useTransform(scrollY, [0, 2000], [0, -50]);
+
   if (isMobile) {
     return (
       <MobileHeroLayout
         projects={projects}
         siteData={siteData}
-        scrollOpacity={scrollOpacity}
-        scrollTranslateY={scrollTranslateY}
+        scrollOpacity={mobileScrollOpacity}
+        scrollTranslateY={mobileScrollTranslateY}
         onOpen={onOpen}
       />
     );
