@@ -692,21 +692,33 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
     return () => clearInterval(interval);
   }, [orbiting]);
 
-  // Touch swipe to shuffle — drag and release reshuffles positions
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const t = e.touches[0];
-    touchStartRef.current = { x: t.clientX, y: t.clientY };
-  };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current || !orbiting) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartRef.current.x;
-    const dy = t.clientY - touchStartRef.current.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    touchStartRef.current = null;
-    if (dist > 40) setTick(t => t + 1); // 40px 이상 드래그하면 재배치
-  };
+  // Touch swipe to shuffle — any touch interaction on the hero reshuffles
+  // Uses window-level listener so scroll doesn't eat the event
+  const touchStartRef = useRef<{ x: number; y: number; scrollY: number } | null>(null);
+  useEffect(() => {
+    if (!orbiting) return;
+    const onStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      touchStartRef.current = { x: t.clientX, y: t.clientY, scrollY: window.scrollY };
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (!touchStartRef.current) return;
+      // Only trigger when near top of page (hero visible)
+      if (touchStartRef.current.scrollY > 100) { touchStartRef.current = null; return; }
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStartRef.current.x;
+      const dy = t.clientY - touchStartRef.current.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      touchStartRef.current = null;
+      if (dist > 30) setTick(prev => prev + 1);
+    };
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchend", onEnd);
+    };
+  }, [orbiting]);
 
   const slots = slotsRef.current;
 
@@ -729,8 +741,6 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
 
   return (
     <motion.div
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       style={{
         position: "absolute", inset: 0,
         zIndex: 2,
