@@ -700,33 +700,37 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
     return () => clearInterval(interval);
   }, [orbiting]);
 
-  // Touch swipe to shuffle — any touch interaction on the hero reshuffles
-  // Uses window-level listener so scroll doesn't eat the event
-  const touchStartRef = useRef<{ x: number; y: number; scrollY: number } | null>(null);
+  // Touch pull-to-shuffle: drag down → carousel follows finger → release → shuffle + snap back
+  const touchStartRef = useRef<{ y: number; scrollY: number } | null>(null);
+  const [pullOffset, setPullOffset] = useState(0); // px the carousel is pulled down
   useEffect(() => {
     if (!orbiting) return;
     const onStart = (e: TouchEvent) => {
-      const t = e.touches[0];
-      touchStartRef.current = { x: t.clientX, y: t.clientY, scrollY: window.scrollY };
+      touchStartRef.current = { y: e.touches[0].clientY, scrollY: window.scrollY };
     };
-    const onEnd = (e: TouchEvent) => {
+    const onMove = (e: TouchEvent) => {
+      if (!touchStartRef.current || touchStartRef.current.scrollY > 100) return;
+      const dy = e.touches[0].clientY - touchStartRef.current.y;
+      // Only follow downward pull, with resistance (sqrt curve)
+      if (dy > 0) setPullOffset(Math.sqrt(dy) * 3);
+    };
+    const onEnd = () => {
       if (!touchStartRef.current) return;
-      // Only trigger when near top of page (hero visible)
-      if (touchStartRef.current.scrollY > 100) { touchStartRef.current = null; return; }
-      const t = e.changedTouches[0];
-      const dx = t.clientX - touchStartRef.current.x;
-      const dy = t.clientY - touchStartRef.current.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const wasPulled = pullOffset > 15;
       touchStartRef.current = null;
-      if (dist > 30) setTick(prev => prev + 1);
+      setPullOffset(0); // snap back
+      if (wasPulled) setTick(prev => prev + 1); // shuffle on release
     };
     window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: true });
     window.addEventListener("touchend", onEnd, { passive: true });
     return () => {
       window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onEnd);
     };
-  }, [orbiting]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orbiting, pullOffset]);
 
   const slots = slotsRef.current;
 
@@ -749,6 +753,11 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
 
   return (
     <motion.div
+      animate={{ y: pullOffset }}
+      transition={pullOffset > 0
+        ? { duration: 0 } // instant follow while dragging
+        : { type: "spring", stiffness: 300, damping: 25 } // springy snap back
+      }
       style={{
         position: "absolute", inset: 0,
         zIndex: 2,
