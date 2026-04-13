@@ -627,17 +627,6 @@ function generateSlots(): Slot[] {
 
 
 // Parallax scroll wrapper — each card scrolls up at its own speed
-function ParallaxCard({ scrollBase, scrollOpacity, speed, children }: {
-  scrollBase: MotionValue<number>;
-  scrollOpacity: MotionValue<number>;
-  speed: number;
-  children: React.ReactNode;
-}) {
-  const y = useTransform(scrollBase, v => v * speed);
-  // Per-card opacity: smaller cards fade out faster
-  const opacity = useTransform(scrollOpacity, v => Math.max(0, Math.min(1, v * (1 / speed))));
-  return <motion.div style={{ y, opacity }}>{children}</motion.div>;
-}
 
 // Momentum drift — continues in the direction the card was traveling (like inertia)
 function DriftWrapper({ dirX, dirY, children }: {
@@ -728,6 +717,7 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
       style={{
         position: "absolute", inset: 0,
         zIndex: 2,
+        y: scrollTranslateY, // whole carousel drifts up gently on scroll
       }}
     >
       {items.map((project, i) => {
@@ -753,8 +743,8 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
         const parallaxSpeed = slot.w >= 50 ? 0.8 : slot.w >= 30 ? 1.0 : 1.3;
 
         return (
-          <ParallaxCard key={project.id} scrollBase={scrollTranslateY} scrollOpacity={scrollOpacity} speed={parallaxSpeed}>
           <motion.div
+            key={project.id}
             onClick={() => onOpen(project)}
             initial={{
               opacity: 0,
@@ -841,7 +831,6 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
             </DriftWrapper>
 
           </motion.div>
-          </ParallaxCard>
         );
       })}
     </motion.div>
@@ -1153,9 +1142,11 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   const scatterLen = Math.max(scatter.length, 1);
 
   // ── Mobile: separate scroll values (slower, more gradual) ──
-  // Mobile: very gradual — one swipe ≈ 300-400px, need several swipes to fully dismiss
-  const mobileScrollOpacity = useTransform(scrollY, [0, 2000], [1, 0]);
-  const mobileScrollTranslateY = useTransform(scrollY, [0, 2000], [0, -50]);
+  // Mobile: hero is position:fixed, covered by WorksGrid scrolling over it.
+  // Spacer = 100vh + 440px ≈ 1250px. Images only need gentle upward drift as content covers.
+  // No opacity fade needed — the covering layer handles the "disappear".
+  const mobileScrollOpacity = useTransform(scrollY, [0, 99999], [1, 1]); // always visible
+  const mobileScrollTranslateY = useTransform(scrollY, [0, 1500], [0, -30]); // very subtle drift
 
   if (isMobile) {
     return (
