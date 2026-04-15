@@ -542,34 +542,33 @@ function MobileGrid({
 
 // ── Elliptical Orbit Carousel for Mobile Hero ──
 // 6 images orbit in a ring. CENTER = largest & clear, others = smaller & blurred.
-// No overlap: each image in its own zone.
+// Orbit rotation = auto. Image swap = pull-down only (blur→clean transition).
 const ORBIT_COUNT = 6;
-const ORBIT_MOVE_DURATION = 1.8;  // movement phase — fast start, slow finish
-const ORBIT_PAUSE_DURATION = 3.0; // hover/pause after settling
+const ORBIT_MOVE_DURATION = 1.0;  // movement phase — light & snappy
+const ORBIT_PAUSE_DURATION = 3.0; // pause between orbit steps
 const ORBIT_STEP_DURATION = ORBIT_MOVE_DURATION + ORBIT_PAUSE_DURATION;
 
-// Fixed slot positions — spread across the whole screen, no overlap.
-// Each tick: base position + random offset for variety.
+// Fixed slot positions — gutter-aligned (x ~14–86%) to match title margins.
 type Slot = { x: number; y: number; w: number };
 
 // 6 base slots: Large center + 2 Medium + 3 Small
 const BASE_SLOTS: Slot[] = [
-  { x: 56, y: 52, w: 52.5 },  // 0: center — Large (+20px right ≈ +6%, 105% of 50vw)
-  { x: 18, y: 32, w: 33 },  // 1: left-top — Medium
-  { x: 82, y: 72, w: 33 },  // 2: right-bottom — Medium
-  { x: 78, y: 28, w: 24 },  // 3: right-top — Small
-  { x: 22, y: 80, w: 24 },  // 4: left-bottom — Small
-  { x: 50, y: 90, w: 22 },  // 5: bottom-center — Small
+  { x: 50, y: 52, w: 50 },   // 0: center — Large, screen center
+  { x: 18, y: 32, w: 33 },   // 1: left-top — Medium
+  { x: 82, y: 72, w: 33 },   // 2: right-bottom — Medium
+  { x: 78, y: 28, w: 24 },   // 3: right-top — Small
+  { x: 22, y: 80, w: 24 },   // 4: left-bottom — Small
+  { x: 50, y: 90, w: 22 },   // 5: bottom-center — Small
 ];
 
 // How much each slot can wander from its base (% units)
 const SLOT_WANDER: { dx: number; dy: number }[] = [
-  { dx: 2,  dy: 2  },  // 0: center
-  { dx: 10, dy: 8  },  // 1: medium
-  { dx: 10, dy: 8  },  // 2: medium
-  { dx: 12, dy: 10 },  // 3: small
-  { dx: 12, dy: 10 },  // 4: small
-  { dx: 14, dy: 4  },  // 5: small bottom
+  { dx: 1,  dy: 1  },  // 0: center — minimal wander
+  { dx: 8,  dy: 6  },  // 1: medium
+  { dx: 8,  dy: 6  },  // 2: medium
+  { dx: 10, dy: 8  },  // 3: small
+  { dx: 10, dy: 8  },  // 4: small
+  { dx: 12, dy: 3  },  // 5: small bottom
 ];
 
 function clamp(val: number, min: number, max: number) {
@@ -659,22 +658,27 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
   scrollTranslateY: MotionValue<number>;
   onOpen: (p: Project) => void;
 }) {
+  // ── Two separate clocks ──
+  // tick: orbit rotation (auto) — controls which slot each image occupies
+  // setIndex: which 6 projects from full list (pull-down only)
   const [tick, setTick] = useState(0);
-  // Rotate through all projects — each tick cycle shows a different set of 6
-  const totalProjects = projects.length || 1; // prevent % 0 during SSR prerender
-  const startIdx = totalProjects > ORBIT_COUNT
-    ? (Math.floor(tick / ORBIT_COUNT) * ORBIT_COUNT) % totalProjects
-    : 0;
+  const [setIndex, setSetIndex] = useState(0);
+
+  const totalProjects = projects.length || 1;
+  const startIdx = (setIndex * ORBIT_COUNT) % totalProjects;
   const items: typeof projects = [];
   if (projects.length) {
     for (let i = 0; i < ORBIT_COUNT; i++) {
       items.push(projects[(startIdx + i) % totalProjects]);
     }
   }
-  const [orbiting, setOrbiting] = useState(false);
-  const [settled, setSettled] = useState(false); // after initial settle (blur+shrink)
 
-  // Slots regenerated each tick — positions shuffle completely
+  const [orbiting, setOrbiting] = useState(false);
+  const [settled, setSettled] = useState(false);
+  // blur→clean transition: true during image swap crossfade
+  const [swapping, setSwapping] = useState(false);
+
+  // Slots regenerated on orbit tick for position variety
   const slotsRef = useRef<Slot[]>(generateSlots());
   useEffect(() => {
     if (tick > 0) slotsRef.current = generateSlots();
@@ -693,7 +697,7 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
     return () => clearTimeout(startDelay);
   }, [settled]);
 
-  // Advance one step at a time
+  // Auto orbit rotation — keeps images moving through slots
   useEffect(() => {
     if (!orbiting) return;
     const interval = setInterval(() => {
@@ -702,26 +706,52 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
     return () => clearInterval(interval);
   }, [orbiting]);
 
-  // Touch pull-to-shuffle: drag down → carousel follows finger → release → shuffle + snap back
-  const touchStartRef = useRef<{ y: number; scrollY: number } | null>(null);
-  const [pullOffset, setPullOffset] = useState(0); // px the carousel is pulled down
+  // ── Touch pull-to-swap ──
+  // Pull down → images gather toward touch point → release → blur all → swap set → clean
+  const touchStartRef = useRef<{ y: number; x: number; scrollY: number } | null>(null);
+  const [pullOffset, setPullOffset] = useState(0);
+  // Touch position as % of viewport (for gather effect)
+  const [touchPos, setTouchPos] = useState<{ x: number; y: number } | null>(null);
+
   useEffect(() => {
     if (!orbiting) return;
     const onStart = (e: TouchEvent) => {
-      touchStartRef.current = { y: e.touches[0].clientY, scrollY: window.scrollY };
+      touchStartRef.current = {
+        y: e.touches[0].clientY,
+        x: e.touches[0].clientX,
+        scrollY: window.scrollY,
+      };
+      setTouchPos({
+        x: (e.touches[0].clientX / window.innerWidth) * 100,
+        y: (e.touches[0].clientY / window.innerHeight) * 100,
+      });
     };
     const onMove = (e: TouchEvent) => {
       if (!touchStartRef.current || touchStartRef.current.scrollY > 100) return;
       const dy = e.touches[0].clientY - touchStartRef.current.y;
-      // Only follow downward pull, with resistance (sqrt curve)
       if (dy > 0) setPullOffset(Math.sqrt(dy) * 3);
+      // Track finger position for gather effect
+      setTouchPos({
+        x: (e.touches[0].clientX / window.innerWidth) * 100,
+        y: (e.touches[0].clientY / window.innerHeight) * 100,
+      });
     };
     const onEnd = () => {
       if (!touchStartRef.current) return;
       const wasPulled = pullOffset > 15;
       touchStartRef.current = null;
-      setPullOffset(0); // snap back
-      if (wasPulled) setTick(prev => prev + 1); // shuffle on release
+      setPullOffset(0);
+      setTouchPos(null);
+
+      if (wasPulled) {
+        // blur→clean swap: blur everything, swap images, then unblur
+        setSwapping(true);
+        setTimeout(() => {
+          setSetIndex(prev => prev + 1); // next set from full portfolio
+          slotsRef.current = generateSlots(); // fresh positions
+          setTimeout(() => setSwapping(false), 50); // unblur after paint
+        }, 350); // blur duration before swap
+      }
     };
     window.addEventListener("touchstart", onStart, { passive: true });
     window.addEventListener("touchmove", onMove, { passive: true });
@@ -736,13 +766,11 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
 
   const slots = slotsRef.current;
 
-  // Track previous slot index per card to compute movement direction
+  // Track previous slot positions for drift direction
   const prevSlotsRef = useRef<number[]>(items.map((_, i) => i));
   const prevCoordsRef = useRef<Slot[]>(slots);
 
-  // Update prev tracking when tick changes
   useEffect(() => {
-    // Save current as prev for next tick
     return () => {
       prevSlotsRef.current = items.map((_, i) => {
         return orbiting
@@ -753,45 +781,49 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
     };
   }, [tick, orbiting, items]);
 
+  // Gather strength: how much images pull toward touch point (0–1)
+  const gatherStrength = pullOffset > 0 ? Math.min(pullOffset / 80, 1) : 0;
+
   return (
     <motion.div
       style={{
         position: "absolute", inset: 0,
         zIndex: 2,
         y: scrollTranslateY,
-        // Pull-down follows finger, springs back on release
         paddingTop: pullOffset,
         transition: pullOffset > 0 ? "none" : "padding-top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
       }}
     >
       {items.map((project, i) => {
-        // Which slot is this image currently in?
         const slotIdx = orbiting
           ? ((ORBIT_COUNT - (tick % ORBIT_COUNT)) + i) % ORBIT_COUNT
           : i;
         const slot = slots[slotIdx];
 
-        // Movement direction: current position - previous position
+        // Gather toward touch point
+        let displayX = slot.x;
+        let displayY = slot.y;
+        if (touchPos && gatherStrength > 0) {
+          const gatherAmount = gatherStrength * 0.25; // max 25% pull toward finger
+          displayX = slot.x + (touchPos.x - slot.x) * gatherAmount;
+          displayY = slot.y + (touchPos.y - slot.y) * gatherAmount;
+        }
+
+        // Movement direction for drift
         const prevSlotIdx = prevSlotsRef.current[i] ?? i;
         const prevSlot = prevCoordsRef.current[prevSlotIdx] ?? slot;
         const dirX = slot.x - prevSlot.x;
         const dirY = slot.y - prevSlot.y;
         const isFront = slotIdx === 0;
-        // Blur: center=0 (sharp), all others=0.9 (uniform, slightly more than before)
+
+        // Blur: swapping = all blurred, normal = center sharp / others soft
         const tierBlur = isFront ? 0 : 0.9;
-        const activeBlur = settled ? tierBlur : 0;
-        // Scale: before settle=1, after settle=0.95 (matches desktop SCALE_SETTLED)
+        const activeBlur = swapping ? 4 : (settled ? tierBlur : 0);
         const activeScale = settled ? 0.95 : 1;
 
-        // Parallax speed: large=0.8, medium=1.0, small=1.3 (smaller = faster scroll-away)
-        const parallaxSpeed = slot.w >= 50 ? 0.8 : slot.w >= 30 ? 1.0 : 1.3;
-
-        // Use transform (x/y) instead of left/top for GPU-composited animation.
-        // left/top/width are set as static CSS; x/y handle the centering + position offset.
-        // This avoids layout recalculation every frame → much smoother on mobile.
         return (
           <motion.div
-            key={project.id}
+            key={`${setIndex}-${project.id}`}
             onClick={() => onOpen(project)}
             initial={{
               opacity: 0,
@@ -799,13 +831,13 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
               x: "-50%", y: "-50%",
             }}
             animate={{
-              opacity: 1,
+              opacity: swapping ? 0.6 : 1,
               scale: activeScale,
               x: "-50%",
               y: "-50%",
             }}
             transition={orbiting ? {
-              opacity: { duration: 0.6 },
+              opacity: { duration: swapping ? 0.3 : 0.6 },
             } : settled ? {
               scale: { duration: 1.0, ease: "easeInOut" },
             } : {
@@ -814,24 +846,24 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
             }}
             style={{
               position: "absolute",
-              left: `${slot.x}%`,
-              top: `${slot.y}%`,
+              left: `${displayX}%`,
+              top: `${displayY}%`,
               width: `${slot.w}vw`,
               filter: `blur(${activeBlur}px)`,
               zIndex: isFront ? 10 : 1,
               cursor: "pointer",
-              willChange: "transform, opacity",
-              // GPU-composited movement via CSS transition (not Framer layout)
-              transition: orbiting
-                ? `left ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), top ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), width ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), filter 0.8s ease-out`
-                : settled
-                  ? "filter 1s ease-in-out"
-                  : `filter 1s ease ${0.15 + i * 0.1}s`,
+              willChange: "transform",
+              // Lighter transitions — fewer properties, shorter duration
+              transition: touchPos
+                ? `left 0.15s ease-out, top 0.15s ease-out, filter 0.3s ease-out`
+                : orbiting
+                  ? `left ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), top ${ORBIT_MOVE_DURATION}s cubic-bezier(0.08,0.7,0.35,0.98), width ${ORBIT_MOVE_DURATION}s ease, filter 0.5s ease-out`
+                  : settled
+                    ? "filter 1s ease-in-out"
+                    : `filter 1s ease ${0.15 + i * 0.1}s`,
             }}
           >
-            {/* Momentum drift — continues in the orbit movement direction */}
             <DriftWrapper dirX={dirX} dirY={dirY}>
-              {/* ID label */}
               <span style={{
                 position: "absolute", top: "-13px", right: "2px",
                 fontFamily: "'JetBrains Mono', monospace",
@@ -858,7 +890,6 @@ function OrbitCarousel({ projects, scrollOpacity, scrollTranslateY, onOpen }: {
                 }}
               />
             </DriftWrapper>
-
           </motion.div>
         );
       })}
