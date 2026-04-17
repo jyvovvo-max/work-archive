@@ -48,13 +48,15 @@ export default function Page() {
   }, [projects]);
 
   const [shuffledWorks, setShuffledWorks] = useState<Project[]>([]);
+  const [shuffledAll, setShuffledAll] = useState<Project[]>([]);
   const didShuffle = useRef(false);
   useEffect(() => {
     if (!didShuffle.current && selectedWorks.length > 0) {
       didShuffle.current = true;
       setShuffledWorks([...selectedWorks].sort(() => Math.random() - 0.5));
+      setShuffledAll([...projects].sort(() => Math.random() - 0.5));
     }
-  }, [selectedWorks]);
+  }, [selectedWorks, projects]);
 
   const openProject = (p: Project) => router.push(`/project/${p.id}`);
 
@@ -99,7 +101,7 @@ export default function Page() {
       {/* Layer 1: Hero — fixed behind */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100vh", zIndex: 1 }}>
         <HeroSection
-          projects={shuffledWorks}
+          projects={shuffledAll.length > 0 ? shuffledAll : shuffledWorks}
           siteData={siteData}
           onOpen={openProject}
           lang={lang}
