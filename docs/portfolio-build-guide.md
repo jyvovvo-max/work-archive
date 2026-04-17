@@ -869,4 +869,23 @@ npx vercel logs
 
 ---
 
-*이 문서는 Deep Field 포트폴리오 작업 기록입니다. 2026-04-16 기준 최종 수정.*
+### 2026-04-18 세션 노트
+
+**히어로 레이아웃 실험 + ProjectDetail 개선 + 도메인 연결**
+
+- **모바일 캐러셀 풀다운 → 전체 프로젝트 순환:** `selectedWorks`만이 아니라 전체 프로젝트에서 순환하도록 변경 (page.tsx에 `shuffledAll` 추가)
+- **데스크톱/모바일 겹침 수정:** `hero-mobile-only` div의 인라인 `display:contents`가 CSS 클래스보다 우선순위 높아서 데스크톱에서도 모바일 레이아웃 표시됨 → 인라인 style 제거
+- **ProjectDetail Prev/Next 개선:**
+  - 배경색 명도 구분: Previous 어둡게(-30), Next 밝게(+30)
+  - 글자 크기 유동화: 고정값 → `clamp()` 기반 vw 반응형
+  - 라이트박스 X 버튼: 화면 우측상단 → 이미지 바로 우측 상단으로 이동
+- **workarchive.kr 도메인:** Vercel에 도메인 추가 + 후이즈 네임서버를 `ns1/ns2.vercel-dns.com`으로 변경
+- **히어로 레이아웃 실험 (WIP):**
+  - scatter 방식의 근본적 문제 분석: vw↔vh 변환 오류, 추정 높이 부정확, 중앙 비는 현상
+  - 템플릿 기반 레이아웃 시스템 시도 — 5개 사전 디자인 템플릿 + 16:9 고정 비율
+  - 아직 이전 scatter 버전이 더 유효. 추가 검토 필요
+- **배포:** `vercel deploy --prod` + git push 완료
+
+---
+
+*이 문서는 Deep Field 포트폴리오 작업 기록입니다. 2026-04-18 기준 최종 수정.*
