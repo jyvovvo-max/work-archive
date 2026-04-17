@@ -22,94 +22,93 @@ const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 
 type ScatterPos = { left: string; top: string; w: string; span: number };
 
-// Y-quantized grid: 16 columns × 6 discrete Y levels
-// Bounding box collision detection with estimated image heights (4:3 ratio)
-const GRID_COLS = 16;
-const COL_W = 100 / GRID_COLS; // 6.25vw
-const QUANTIZED_Y = [23, 31, 39, 47, 55, 62]; // vh top positions
-const VW_TO_VH = 1.6; // at 1440×900: 1vw = 1.6vh
-const IMG_RATIO = 0.75; // assumed 4:3 aspect ratio → height = width * 0.75
-const GAP_VH = 2; // minimum vertical gap between images
+// ── Template-based layout (desktop hero) ──
+// All images are 16:9 thumbnails. Height = width × 9/16 = width × 0.5625.
+// 16-column grid (COL_W = 6.25vw). Sizes: XL(6col=37.5vw), L(4col=25vw), M(3col=18.75vw), S(2col=12.5vw)
+// Heights at 16:9: XL≈21.1vw, L≈14.1vw, M≈10.5vw, S≈7.0vw
+// Templates are hand-designed: no overlaps guaranteed, centre-heavy, size contrast enforced.
+const COL_W = 6.25; // vw per column (100/16)
 
-type Box = { x1: number; x2: number; y1: number; y2: number };
+type SlotDef = { col: number; row: number; span: number }; // col in grid units, row in vh
 
-function estimatedHeightVh(span: number): number {
-  return span * COL_W * VW_TO_VH * IMG_RATIO;
-}
-
-function boxesOverlap(a: Box, b: Box): boolean {
-  return !(a.x2 <= b.x1 || b.x2 <= a.x1 || a.y2 <= b.y1 || b.y2 <= a.y1);
-}
-
-function runScatterAttempt(enforceAdjacency: boolean): ScatterPos[] {
-  type PlacedItem = { box: Box; col: number; span: number; yVh: number };
-  const placed: PlacedItem[] = [];
-  const positions: ScatterPos[] = [];
-
-  type Candidate = { yVh: number; startCol: number; span: number };
-  const candidates: Candidate[] = [];
-  for (const yVh of QUANTIZED_Y) {
-    for (let startCol = 0; startCol < GRID_COLS; startCol++) {
-      for (let span = 2; span <= 5; span++) {
-        if (startCol + span <= GRID_COLS) {
-          candidates.push({ yVh, startCol, span });
-        }
-      }
-    }
-  }
-  candidates.sort(() => Math.random() - 0.5);
-
-  for (const c of candidates) {
-    if (positions.length >= 10) break;
-
-    const h = estimatedHeightVh(c.span);
-    const newBox: Box = {
-      x1: c.startCol * COL_W,
-      x2: (c.startCol + c.span) * COL_W,
-      y1: c.yVh - GAP_VH,
-      y2: c.yVh + h + GAP_VH,
-    };
-
-    // Rule 1: no bounding box overlap
-    let hasOverlap = false;
-    for (const p of placed) {
-      if (boxesOverlap(newBox, p.box)) { hasOverlap = true; break; }
-    }
-    if (hasOverlap) continue;
-
-    // Rule 2: same-Y horizontal neighbours must differ in span
-    if (enforceAdjacency) {
-      let spanConflict = false;
-      for (const p of placed) {
-        if (p.yVh !== c.yVh) continue;
-        const rightOf = p.col + p.span === c.startCol;
-        const leftOf = c.startCol + c.span === p.col;
-        if ((rightOf || leftOf) && p.span === c.span) {
-          spanConflict = true;
-          break;
-        }
-      }
-      if (spanConflict) continue;
-    }
-
-    placed.push({ box: newBox, col: c.startCol, span: c.span, yVh: c.yVh });
-    positions.push({
-      left: `${c.startCol * COL_W}vw`,
-      top: `${c.yVh}vh`,
-      w: `${c.span * COL_W}vw`,
-      span: c.span,
-    });
-  }
-
-  return positions;
-}
+// 5 layout templates — each has 10 slots, randomly picked per page load
+// Slots are ordered: [0]=XL, [1]=L, [2..9]=M/S — first 2 always centre
+const TEMPLATES: SlotDef[][] = [
+  // Template A: XL centre-left, L centre-right
+  [
+    { col: 1,  row: 32, span: 6 }, // XL
+    { col: 9,  row: 38, span: 4 }, // L
+    { col: 0,  row: 18, span: 2 }, // S
+    { col: 4,  row: 20, span: 3 }, // M
+    { col: 9,  row: 22, span: 2 }, // S
+    { col: 13, row: 19, span: 3 }, // M
+    { col: 0,  row: 56, span: 3 }, // M
+    { col: 5,  row: 58, span: 2 }, // S
+    { col: 9,  row: 58, span: 3 }, // M
+    { col: 14, row: 55, span: 2 }, // S
+  ],
+  // Template B: XL centre-right, L upper-left
+  [
+    { col: 8,  row: 34, span: 6 }, // XL
+    { col: 1,  row: 28, span: 4 }, // L
+    { col: 0,  row: 18, span: 3 }, // M
+    { col: 5,  row: 19, span: 2 }, // S
+    { col: 12, row: 20, span: 3 }, // M
+    { col: 6,  row: 30, span: 2 }, // S
+    { col: 0,  row: 52, span: 2 }, // S
+    { col: 4,  row: 56, span: 3 }, // M
+    { col: 9,  row: 58, span: 2 }, // S
+    { col: 13, row: 54, span: 3 }, // M
+  ],
+  // Template C: XL upper-centre, L lower-centre
+  [
+    { col: 4,  row: 24, span: 6 }, // XL
+    { col: 6,  row: 50, span: 4 }, // L
+    { col: 0,  row: 20, span: 2 }, // S
+    { col: 12, row: 22, span: 3 }, // M
+    { col: 0,  row: 40, span: 3 }, // M
+    { col: 4,  row: 46, span: 2 }, // S
+    { col: 12, row: 42, span: 2 }, // S
+    { col: 0,  row: 56, span: 2 }, // S
+    { col: 4,  row: 60, span: 3 }, // M
+    { col: 12, row: 56, span: 3 }, // M
+  ],
+  // Template D: XL left, L right — diagonal tension
+  [
+    { col: 0,  row: 30, span: 6 }, // XL
+    { col: 10, row: 42, span: 4 }, // L
+    { col: 8,  row: 20, span: 3 }, // M
+    { col: 13, row: 22, span: 2 }, // S
+    { col: 0,  row: 19, span: 2 }, // S
+    { col: 7,  row: 34, span: 3 }, // M
+    { col: 0,  row: 54, span: 3 }, // M
+    { col: 5,  row: 56, span: 2 }, // S
+    { col: 10, row: 60, span: 2 }, // S
+    { col: 13, row: 56, span: 3 }, // M
+  ],
+  // Template E: XL right, L left — reverse diagonal
+  [
+    { col: 9,  row: 28, span: 6 }, // XL
+    { col: 1,  row: 40, span: 4 }, // L
+    { col: 0,  row: 20, span: 3 }, // M
+    { col: 5,  row: 22, span: 2 }, // S
+    { col: 6,  row: 32, span: 2 }, // S
+    { col: 13, row: 20, span: 2 }, // S
+    { col: 0,  row: 56, span: 2 }, // S
+    { col: 4,  row: 54, span: 3 }, // M
+    { col: 9,  row: 56, span: 3 }, // M
+    { col: 14, row: 54, span: 2 }, // S
+  ],
+];
 
 function makeScatter(): ScatterPos[] {
-  for (let i = 0; i < 30; i++) {
-    const result = runScatterAttempt(true);
-    if (result.length >= 10) return result;
-  }
-  return runScatterAttempt(false);
+  const template = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
+  return template.map(slot => ({
+    left: `${slot.col * COL_W}vw`,
+    top: `${slot.row}vh`,
+    w: `${slot.span * COL_W}vw`,
+    span: slot.span,
+  }));
 }
 
 // ── Depth system (desktop hero) ──
@@ -119,7 +118,7 @@ function makeScatter(): ScatterPos[] {
 // mushy on the far plane. Hover pulls the target forward to a fixed target size while
 // nearby images also pull forward slightly (scale up), creating a depth-coherent field.
 const SCATTER_MIN_SPAN = 2;
-const SCATTER_MAX_SPAN = 5;
+const SCATTER_MAX_SPAN = 6;
 const BLUR_UNIFORM = 1;      // px — baseline blur for every image
 const TILT_BASE    = 8;      // max tilt degrees for the largest image
 const SCALE_SETTLED = 0.95;  // baseline scale after initial settle
@@ -197,7 +196,7 @@ function CollageImage({
   const [pull, setPull] = useState({ x: 0, y: 0 });
   // Actual rendered image aspect (height / width). Captured onLoad so the label
   // offset can follow the real image corner, not a hard-coded 4:3 assumption.
-  const [imgAspect, setImgAspect] = useState(IMG_RATIO);
+  const [imgAspect, setImgAspect] = useState(0.5625);
 
   // Depth from span: 0 = smallest (far), 1 = largest (near). Used for tilt weighting.
   const depth = (pos.span - SCATTER_MIN_SPAN) / (SCATTER_MAX_SPAN - SCATTER_MIN_SPAN);
@@ -366,7 +365,7 @@ function CollageImage({
 
   // Label tracks the image's visual top-right corner as it scales AND the current
   // translate (gather pull OR edge compensation). Uses the real image aspect captured
-  // on load — a 16:9 image would otherwise overshoot with IMG_RATIO=0.75.
+  // on load — a 16:9 image would otherwise overshoot with 0.5625=0.75.
   // translateZ lifts the label slightly forward in the preserve-3d stacking context so
   // the scaled image (same Z=0) never paints over it, regardless of DOM sibling order.
   const posWvw = parseFloat(pos.w);
@@ -448,7 +447,7 @@ function CollageImage({
           style={{
             borderRadius: "2px",
             overflow: "hidden",
-            boxShadow: "0 4px 18px rgba(0,0,0,0.16)",
+            boxShadow: "none",
           }}
         >
           <RetryImg
@@ -1198,7 +1197,9 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   const title = siteData?.landingTitle || "Work Archive";
   const subtitle = siteData?.landingSubtitle || "2015–Present";
   const desc = siteData?.landingDescriptionEn || siteData?.landingDescription || "";
-  const heroProjects = projects.slice(0, 10);
+  // Fewer images on smaller screens: PC 10 → laptop 9 → tablet 8
+  const heroCount = screenW >= 1280 ? 10 : screenW >= 1024 ? 9 : 8;
+  const heroProjects = projects.slice(0, heroCount);
   const scatterLen = Math.max(scatter.length, 1);
 
   // ── Mobile: separate scroll values (slower, more gradual) ──

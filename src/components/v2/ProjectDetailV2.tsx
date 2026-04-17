@@ -491,18 +491,20 @@ export default function ProjectDetailV2({
       {/* ── Bottom navigation ── */}
       {(() => {
         const mx = (a: number, b: number) => Math.round(a * 0.7 + b * 0.3);
-        const dk = (v: number) => Math.round(v * 0.7);
+        const darken = (v: number, amt: number) => Math.max(Math.round(v - amt), 0);
+        const lighten = (v: number, amt: number) => Math.min(Math.round(v + amt), 255);
         const [cr, cg, cb] = colors.avg;
         const [pr, pg, pb] = prevColors.avg;
         const [nr, ng, nb] = nextColors.avg;
-        const prevBg = [mx(cr, pr), mx(cg, pg), mx(cb, pb)];
-        const nextBg = [mx(cr, nr), mx(cg, ng), mx(cb, nb)];
-        const prevBorder = "rgba(0,0,0,0.5)";
-        const nextBorder = "rgba(0,0,0,0.5)";
+        const prevBase = [mx(cr, pr), mx(cg, pg), mx(cb, pb)];
+        const nextBase = [mx(cr, nr), mx(cg, ng), mx(cb, nb)];
+        // Previous: darken by 30, Next: lighten by 30 — ensures contrast with main bg
+        const prevBg = prevBase.map(v => darken(v, 30));
+        const nextBg = nextBase.map(v => lighten(v, 30));
         const prevBgStr = `rgb(${prevBg[0]}, ${prevBg[1]}, ${prevBg[2]})`;
         const nextBgStr = `rgb(${nextBg[0]}, ${nextBg[1]}, ${nextBg[2]})`;
-        const prevHoverBg = `rgb(${Math.min(prevBg[0] + 20, 255)}, ${Math.min(prevBg[1] + 20, 255)}, ${Math.min(prevBg[2] + 20, 255)})`;
-        const nextHoverBg = `rgb(${Math.min(nextBg[0] + 20, 255)}, ${Math.min(nextBg[1] + 20, 255)}, ${Math.min(nextBg[2] + 20, 255)})`;
+        const prevHoverBg = `rgb(${darken(prevBg[0], 15)}, ${darken(prevBg[1], 15)}, ${darken(prevBg[2], 15)})`;
+        const nextHoverBg = `rgb(${lighten(nextBg[0], 15)}, ${lighten(nextBg[1], 15)}, ${lighten(nextBg[2], 15)})`;
         return (
       <div style={{
         display: "grid",
@@ -534,7 +536,7 @@ export default function ProjectDetailV2({
             <span style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "18px",
+              fontSize: "clamp(12px, 2.4vw, 18px)",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               color: T.nav,
@@ -545,7 +547,7 @@ export default function ProjectDetailV2({
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "25px" : "clamp(25px, 2.88vw, 34px)",
+            fontSize: "clamp(18px, 5vw, 34px)",
             letterSpacing: "-0.01em",
             color: prevProject ? T.solid : T.faint,
             wordBreak: "keep-all",
@@ -574,7 +576,7 @@ export default function ProjectDetailV2({
             <span style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: "18px",
+              fontSize: "clamp(12px, 2.4vw, 18px)",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               color: T.nav,
@@ -589,7 +591,7 @@ export default function ProjectDetailV2({
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: isMobile ? "25px" : "clamp(25px, 2.88vw, 34px)",
+            fontSize: "clamp(18px, 5vw, 34px)",
             letterSpacing: "-0.01em",
             color: nextProject ? T.solid : T.faint,
             textAlign: "right",
@@ -621,27 +623,44 @@ export default function ProjectDetailV2({
               justifyContent: "center",
             }}
           >
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={lightboxIdx}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.18 }}
-                src={allImages[lightboxIdx]}
-                alt=""
-                onClick={e => e.stopPropagation()}
+            {/* Image + close button wrapper */}
+            <div style={{ position: "relative", display: "inline-flex" }} onClick={e => e.stopPropagation()}>
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={lightboxIdx}
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.18 }}
+                  src={allImages[lightboxIdx]}
+                  alt=""
+                  style={{
+                    maxWidth: "88vw",
+                    maxHeight: "88vh",
+                    width: "auto",
+                    height: "auto",
+                    objectFit: "contain",
+                    borderRadius: "2px",
+                    display: "block",
+                  }}
+                />
+              </AnimatePresence>
+
+              <button
+                onClick={() => setLightboxIdx(null)}
                 style={{
-                  maxWidth: "88vw",
-                  maxHeight: "88vh",
-                  width: "auto",
-                  height: "auto",
-                  objectFit: "contain",
-                  borderRadius: "2px",
-                  display: "block",
+                  position: "absolute", top: "-32px", right: "0px",
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "rgba(240,240,240,0.3)", zIndex: 810,
+                  fontSize: "18px", fontFamily: FONT, fontWeight: 200,
+                  transition: "color 0.18s",
                 }}
-              />
-            </AnimatePresence>
+                onMouseEnter={e => (e.currentTarget.style.color = "#F0F0F0")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,240,240,0.3)")}
+              >
+                ✕
+              </button>
+            </div>
 
             <button
               onClick={e => { e.stopPropagation(); goLightbox(-1); }}
@@ -682,21 +701,6 @@ export default function ProjectDetailV2({
             }}>
               {lightboxIdx + 1} / {allImages.length}
             </div>
-
-            <button
-              onClick={() => setLightboxIdx(null)}
-              style={{
-                position: "absolute", top: "20px", right: "28px",
-                background: "none", border: "none", cursor: "pointer",
-                color: "rgba(240,240,240,0.3)", zIndex: 810,
-                fontSize: "18px", fontFamily: FONT, fontWeight: 200,
-                transition: "color 0.18s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#F0F0F0")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,240,240,0.3)")}
-            >
-              ✕
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
