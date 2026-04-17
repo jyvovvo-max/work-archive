@@ -1211,7 +1211,7 @@ export default function HeroSection({ projects, siteData, onOpen, lang = "ko" }:
   return (
     <>
       {/* ── Mobile hero: visible only below 768px ── */}
-      <div style={{ display: "contents" }} className="hero-mobile-only">
+      <div className="hero-mobile-only">
         <MobileHeroLayout
           projects={projects}
           siteData={siteData}
