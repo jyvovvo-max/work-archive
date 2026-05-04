@@ -888,4 +888,25 @@ npx vercel logs
 
 ---
 
-*이 문서는 Deep Field 포트폴리오 작업 기록입니다. 2026-04-18 기준 최종 수정.*
+### 2026-05-04 세션 노트
+
+**이미지 생성 워크플로우 — 별도 프로젝트 신규 생성**
+
+- **위치:** `c:\Users\jyvov\.gemini\antigravity\scratch\image-generation-workflow` (포트폴리오와 별개 프로젝트)
+- **목적:** Claude로 기획·프롬프트 패키지 생성 → Gemini Nano Banana 2 (베이스/캐릭터 일관성) → ChatGPT gpt-image-2 (스타일라이즈/한글 텍스트) 순서로 이미지 시리즈 만드는 개인 워크플로우
+- **모델 조사 (2026-05 기준):**
+  - **Gemini Nano Banana 2** (`gemini-3.1-flash-image-preview`, 2026-02-26 출시): 4K 해상도, 캐릭터 일관성·이미지 편집 강함
+  - **ChatGPT gpt-image-2** (2026-04-21 웹, 2026-05 초 API): 한글 등 다국어 텍스트 렌더링 압도적, O-series reasoning 통합
+  - 미드저니 제외(공식 API 없음)
+- **비용 전략:** Claude Max + ChatGPT Pro + Gemini Pro 모두 보유 → API ❌, 모든 이미지 생성은 웹/앱에서 수동 복붙 → **추가 비용 0원**
+- **1단계 구현 — 프롬프트 패키지 생성기:**
+  - `CLAUDE.md`: Claude가 따라야 할 4파일 패키지 생성 규칙 (`00_brief.md`, `01_character-sheet.md`, `02_scenes.md` Gemini A/ChatGPT B 분리, `03_workflow.md`)
+  - `templates/character-sheet.md`, `scene-prompt.md`, `workflow.md`: 참조 템플릿
+  - `outputs/` 폴더에 `YYYY-MM-DD_프로젝트명/` 형식으로 저장 (.gitignore로 PNG 제외)
+  - `README.md`: 사용법 정리
+- **설계 원칙:** 영문 프롬프트 우선 / 한글 텍스트는 ChatGPT 단계에서만 / Gemini reference 이미지를 모든 씬에 재첨부(일관성 핵심)
+- **다음 단계 (미구현):** 2단계 피드백 기반 프롬프트 자동 개선, 3단계 API 자동화(대량 생성 시)
+
+---
+
+*이 문서는 Deep Field 포트폴리오 작업 기록입니다. 2026-05-04 기준 최종 수정.*
