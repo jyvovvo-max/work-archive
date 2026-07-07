@@ -7,10 +7,46 @@ import { CLD_VER } from "./dataFetch";
 import Footer from "./Footer";
 import { RetryImg } from "./RetryImg";
 
+const GALLERY_GAP = "clamp(6.4px, 0.96vw, 12.8px)";
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const FONT_KR = "'Noto Sans KR', 'JetBrains Mono', sans-serif";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtDate = (m: string, y: string) => `${MONTHS[Math.max(0,parseInt(m,10)-1)]}, ${y}`;
+
+function saturateColor(color: string, factor: number): string {
+  const m = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!m) return color;
+  const r = +m[1] / 255, g = +m[2] / 255, b = +m[3] / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h /= 6;
+  }
+  s = Math.min(s * factor, 1);
+  const hue = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  let nr = l, ng = l, nb = l;
+  if (s !== 0) {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    nr = hue(p, q, h + 1 / 3);
+    ng = hue(p, q, h);
+    nb = hue(p, q, h - 1 / 3);
+  }
+  return `rgb(${Math.round(nr * 255)}, ${Math.round(ng * 255)}, ${Math.round(nb * 255)})`;
+}
 
 // pairs: 1-based index matching file numbering (001, 002, ...)
 function buildRows(images: string[], pairs?: string): string[][] {
@@ -238,7 +274,7 @@ function ParallelRow({ row, ri, videoUrlSet, onLightbox }: {
 }) {
   const [ratios, setRatios] = useState<number[]>(() => row.map(() => 1));
   return (
-    <div style={{ display: "flex", gap: "clamp(8px, 1.2vw, 16px)", alignItems: "flex-start" }}>
+    <div style={{ display: "flex", gap: GALLERY_GAP, alignItems: "flex-start" }}>
       {row.map((src, ci) => (
         <div key={ci} style={{ flex: ratios[ci], minWidth: 0 }}>
           <GalleryImage
@@ -321,7 +357,7 @@ export default function ProjectDetailV2({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       style={{
-        background: colors.bg,
+        background: saturateColor(colors.bg, 1.1),
         transition: "background-color 0.8s ease",
         overflowX: "hidden",
         color: T.solid,
@@ -364,7 +400,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT,
               fontWeight: 300,
-              fontSize: isMobile ? "clamp(22px, 7.1vw, 40px)" : "clamp(31px, 3.78vw, 55px)",
+              fontSize: isMobile ? "clamp(23.1px, 7.5vw, 42px)" : "clamp(32.6px, 3.97vw, 57.8px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
               color: T.solid,
@@ -386,7 +422,7 @@ export default function ProjectDetailV2({
               color: T.dim,
             }}
           >
-            {String(project.id).padStart(3, "0")}-{MONTHS[Math.max(0, parseInt(project.month, 10) - 1)]}-{project.year}
+            #{String(project.id).padStart(3, "0")}-{MONTHS[Math.max(0, parseInt(project.month, 10) - 1)]}-{project.year}
           </motion.div>
         </div>
 
@@ -401,7 +437,7 @@ export default function ProjectDetailV2({
             style={{
               fontFamily: FONT_KR,
               fontWeight: 300,
-              fontSize: isMobile ? "13.9px" : "clamp(14px, 1.18vw, 18px)",
+              fontSize: isMobile ? "14.6px" : "clamp(14.7px, 1.24vw, 18.9px)",
               lineHeight: 1.75,
               color: T.solid,
               margin: "0 0 28px",
@@ -450,7 +486,7 @@ export default function ProjectDetailV2({
         padding: `0 ${hPad}`,
         display: "flex",
         flexDirection: "column",
-        gap: "clamp(12px, 1.8vw, 20px)",
+        gap: GALLERY_GAP,
       }}>
         {project.videoUrl && (() => {
           const vid = getYouTubeId(project.videoUrl!);
@@ -518,7 +554,7 @@ export default function ProjectDetailV2({
           onMouseEnter={() => setPrevHover(true)}
           onMouseLeave={() => setPrevHover(false)}
           style={{
-            padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
+            padding: `clamp(19px, 3.2vh, 32px) ${GUTTER}`,
             cursor: "pointer",
             borderRight: "none",
             background: prevHover ? prevHoverBg : prevBgStr,
@@ -547,7 +583,7 @@ export default function ProjectDetailV2({
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: "clamp(18px, 5vw, 34px)",
+            fontSize: "clamp(14.4px, 4vw, 27.2px)",
             letterSpacing: "-0.01em",
             color: prevProject ? T.solid : T.faint,
             wordBreak: "keep-all",
@@ -562,7 +598,7 @@ export default function ProjectDetailV2({
           onMouseEnter={() => setNextHover(true)}
           onMouseLeave={() => setNextHover(false)}
           style={{
-            padding: `clamp(24px, 4vh, 40px) ${GUTTER}`,
+            padding: `clamp(19px, 3.2vh, 32px) ${GUTTER}`,
             cursor: "pointer",
             background: nextHover ? nextHoverBg : nextBgStr,
             transition: "background 0.22s ease",
@@ -591,7 +627,7 @@ export default function ProjectDetailV2({
           <span style={{
             fontFamily: FONT,
             fontWeight: 300,
-            fontSize: "clamp(18px, 5vw, 34px)",
+            fontSize: "clamp(14.4px, 4vw, 27.2px)",
             letterSpacing: "-0.01em",
             color: nextProject ? T.solid : T.faint,
             textAlign: "right",

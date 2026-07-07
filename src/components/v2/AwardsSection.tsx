@@ -7,7 +7,7 @@ import { GUTTER, GRID_COLS, SPACE_A, SPACE_B, FONT_SECTION_TITLE, FONT_HEADLINE,
 const FONT = "'JetBrains Mono', 'Noto Sans KR', monospace";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtCode = (id: number, month: string, year: string) =>
-  `${String(id).padStart(3, "0")}-${MONTHS[Math.max(0, parseInt(month, 10) - 1)]}-${year}`;
+  `#${String(id).padStart(3, "0")}-${MONTHS[Math.max(0, parseInt(month, 10) - 1)]}-${year}`;
 
 function HoverIn({
   children,
